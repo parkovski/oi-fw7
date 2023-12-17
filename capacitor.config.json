@@ -1,0 +1,12 @@
+{
+  "appId": "com.parkovski.openinvite",
+  "appName": "OpenInvite",
+  "npmClient": "pnpm",
+  "webDir": "www",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  },
+  "cordova": {}
+}

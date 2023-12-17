@@ -1,0 +1,27 @@
+{
+  "cwd": "/home/parker/Documents/dev/oi-fw7",
+  "type": [
+    "web",
+    "pwa",
+    "capacitor"
+  ],
+  "name": "OpenInvite",
+  "pkg": "com.parkovski.openinvite",
+  "framework": "svelte",
+  "template": "tabs",
+  "cssPreProcessor": false,
+  "bundler": "vite",
+  "capacitor": {
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "theming": {
+    "customColor": false,
+    "color": "#007aff",
+    "darkMode": false,
+    "iconFonts": true
+  },
+  "customBuild": false
+}
