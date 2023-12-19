@@ -4,20 +4,18 @@
     Navbar,
     Block,
     Button,
-    useStore,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
   import ContactsView from '../components/contacts.svelte';
   import ChatView from '../components/chat.svelte';
-  import GroupsService from '../services/groups';
+  import GroupService from '../services/group';
 
   export let f7route;
 
   let currentButton = 'chat';
-  let service;
-  let group;
-  useStore('groups', value => group = value[+f7route.params.id]);
+  let group = {};
+  let service = new GroupService(f7route.params.id);
 
   function changeView(view) {
     return function() {
@@ -33,7 +31,9 @@
   }
 
   onMount(() => {
-    service = new GroupsService();
+    const subscription = service.subscribe(value => group = value);
+
+    return () => subscription.unsubscribe();
   });
 </script>
 
@@ -55,7 +55,7 @@
 </style>
 
 <Page>
-  <Navbar title={`Group ${f7route.params.id}`} backLink="Back" />
+  <Navbar title={group.name} backLink="Back" />
   <div class="group-container">
     <Block style="margin: 10px 0">
       <div class="grid grid-cols-3 grid-gap">

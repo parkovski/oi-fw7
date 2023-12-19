@@ -1,12 +1,9 @@
-import { getGroups } from '../js/mockdata';
-import store from '../js/store';
+//import { getGroups } from '../js/mockdata';
+import ServiceBase from './base';
+import { fetchJson } from '../js/oifetch';
 
-export default class GroupsService {
-  constructor() {
-    this.refresh();
-  }
-
-  async refresh() {
-    store.dispatch('setGroups', await getGroups());
+export default class GroupsService extends ServiceBase {
+  load() {
+    return fetchJson('/groups');
   }
 };
