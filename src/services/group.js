@@ -9,12 +9,7 @@ export default class GroupService extends ServiceBase {
     this.gid = gid;
   }
 
-  async load() {
-    const info = await Promise.all([
-      fetchJson(`/groups/${this.gid}`),
-      fetchJson(`/groups/${this.gid}/members`),
-    ]);
-    info[0].members = info[1];
-    return info[0];
+  load() {
+    return fetchJson(`/groups/${this.gid}`);
   }
 };

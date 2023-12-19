@@ -1,4 +1,3 @@
-//import { getGroups } from '../js/mockdata';
 import ServiceBase from './base';
 import { fetchJson } from '../js/oifetch';
 
