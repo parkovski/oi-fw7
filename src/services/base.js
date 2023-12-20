@@ -1,25 +1,32 @@
 import { Observable } from 'rxjs';
 
-export default class ServiceBase {
+export class Service {
+  loadfn;
   data = null;
   loading = false;
   subscribers = [];
   observable;
 
-  constructor() {
+  constructor(load) {
+    this.loadfn = load || this.load;
     this.observable = new Observable(subscriber => {
       this.subscribers.push(subscriber);
       if (this.data !== null) {
         subscriber.next(this.data);
-      } else if (!this.loading) {
-        this.loading = true;
-        this.load().then(data => {
-          this.data = data;
-          this.loading = false;
-          this.subscribers.forEach(s => s.next(this.data));
-        });
+      } else {
+        this.refresh();
       }
     });
+  }
+
+  async refresh() {
+    if (this.loading) {
+      return;
+    }
+    this.loading = true;
+    this.data = await this.loadfn();
+    this.loading = false;
+    this.subscribers.forEach(s => s.next(this.data));
   }
 
   subscribe(subscriber) {
@@ -28,5 +35,26 @@ export default class ServiceBase {
       this.subscribers = this.subscribers.filter(s => s !== subscriber);
     });
     return subscription;
+  }
+}
+
+const serviceMap = new Map;
+export class SingletonService {
+  _service;
+
+  constructor() {
+    if (!serviceMap.has(this.constructor)) {
+      serviceMap.set(this.constructor, this._service = new Service(this.load.bind(this)));
+    } else {
+      this._service = serviceMap.get(this.constructor);
+    }
+  }
+
+  refresh() {
+    return this._service.refresh();
+  }
+
+  subscribe(subscriber) {
+    return this._service.subscribe(subscriber);
   }
 };

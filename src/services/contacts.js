@@ -1,12 +1,24 @@
-import { getUsers } from '../js/mockdata';
-import store from '../js/store';
+import { SingletonService } from './base';
+import { fetchAny, fetchJson } from '../js/oifetch';
 
-export default class ContactsService {
-  constructor() {
-    this.refresh();
+export default class ContactsService extends SingletonService {
+  load() {
+    return fetchJson('/contacts');
   }
 
-  async refresh() {
-    store.dispatch('setContacts', await getUsers());
+  async add(uid) {
+    if ((await fetchAny(`/contacts/${uid}/add`, { method: 'POST' })).ok) {
+      await this.refresh();
+      return true;
+    }
+    return false;
+  }
+
+  async remove(uid) {
+    if ((await fetchJson(`/contacts/${uid}/remove`, { method: 'POST' })).ok) {
+      await this.refresh();
+      return true;
+    }
+    return false;
   }
 }

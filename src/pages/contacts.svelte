@@ -2,18 +2,19 @@
   import {
     Page,
     Navbar,
-    useStore,
   } from 'framework7-svelte';
 
   import ContactsView from '../components/contacts.svelte';
   import ContactsService from '../services/contacts';
   import { onMount } from 'svelte';
 
-  let service;
-  let contacts = useStore('contacts', value => contacts = value);
+  let service = new ContactsService;
+  let contacts = [];
 
   onMount(() => {
-    service = new ContactsService();
+    const subscription = service.subscribe(value => contacts = value);
+
+    return () => subscription.unsubscribe();
   });
 </script>
 

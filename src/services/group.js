@@ -1,7 +1,7 @@
-import ServiceBase from './base';
+import { Service } from './base';
 import { fetchJson } from '../js/oifetch';
 
-export default class GroupService extends ServiceBase {
+export default class GroupService extends Service {
   gid;
 
   constructor(gid) {
