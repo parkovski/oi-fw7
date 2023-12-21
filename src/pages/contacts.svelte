@@ -5,14 +5,15 @@
   } from 'framework7-svelte';
 
   import ContactsView from '../components/contacts.svelte';
-  import ContactsService from '../services/contacts';
+  import userService from '../services/user';
   import { onMount } from 'svelte';
 
-  let service = new ContactsService;
   let contacts = [];
 
   onMount(() => {
-    const subscription = service.subscribe(value => contacts = value);
+    const subscription = userService.getContacts().subscribe(
+      value => contacts = value
+    );
 
     return () => subscription.unsubscribe();
   });

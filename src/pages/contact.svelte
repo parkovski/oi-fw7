@@ -10,27 +10,27 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
-  import UserService from '../services/user';
+  import userService from '../services/user';
 
   export let f7route;
 
-  const service = new UserService(f7route.params.id);
   let contact = {
+    id: f7route.params.id,
     name: '',
     username: '',
   };
 
   onMount(() => {
-    const subscription = service.subscribe(user => contact = user);
+    const subscription = userService.getUser(contact.id).subscribe(user => contact = user);
     return () => subscription.unsubscribe();
   });
 
   function addContact() {
-    service.addContact();
+    userService.addContact(contact.id);
   }
 
   function removeContact() {
-    service.removeContact();
+    userService.removeContact(contact.id);
   }
 </script>
 
