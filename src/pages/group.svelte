@@ -9,13 +9,12 @@
 
   import ContactsView from '../components/contacts.svelte';
   import ChatView from '../components/chat.svelte';
-  import GroupService from '../services/group';
+  import groupService from '../services/group';
 
   export let f7route;
 
   let currentButton = 'chat';
   let group = {};
-  let service = new GroupService(f7route.params.id);
 
   function changeView(view) {
     return function() {
@@ -31,7 +30,7 @@
   }
 
   onMount(() => {
-    const subscription = service.subscribe(value => group = value);
+    const subscription = groupService.getGroup(f7route.params.id).subscribe(value => group = value);
 
     return () => subscription.unsubscribe();
   });

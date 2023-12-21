@@ -1,15 +1,27 @@
-import { Service } from './base';
+import Entity from './entity';
 import { fetchJson } from '../js/fetch';
 
-export default class GroupService extends Service {
-  gid;
+class GroupService {
+  groups = null;
+  groupMap = new Map;
 
-  constructor(gid) {
-    super();
-    this.gid = gid;
+  constructor() {
+    this.groups = new Entity(() => fetchJson(`/groups`));
   }
 
-  load() {
-    return fetchJson(`/groups/${this.gid}`);
+  getGroups() {
+    return this.groups;
   }
-};
+
+  getGroup(id) {
+    let group = this.groupMap.get(id);
+    if (!group) {
+      group = new Entity(() => fetchJson(`/groups/${id}`));
+      this.groupMap.set(id, group);
+    }
+    return group;
+  }
+}
+
+const service = new GroupService;
+export default service;

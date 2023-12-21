@@ -7,7 +7,15 @@ function fetchUser(id) {
 
 class UserService {
   users = new Map;
-  contacts = null;
+  contacts;
+
+  constructor() {
+    this.contacts = new Entity(async () => {
+      const contacts = await fetchJson(`/contacts`);
+      this._mapContacts(contacts);
+      return contacts;
+    });
+  }
 
   _mapContacts(data) {
     data.forEach(contact => {
@@ -27,13 +35,6 @@ class UserService {
   }
 
   getContacts() {
-    if (!this.contacts) {
-      this.contacts = new Entity(async () => {
-        const contacts = await fetchJson(`/contacts`);
-        this._mapContacts(contacts);
-        return contacts;
-      });
-    }
     return this.contacts;
   }
 

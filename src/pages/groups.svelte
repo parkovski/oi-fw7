@@ -8,13 +8,12 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
-  import GroupsService from '../services/groups';
+  import groupService from '../services/group';
 
-  let service = new GroupsService;
   let groups = [];
 
   onMount(() => {
-    const subscription = service.subscribe(value => groups = value);
+    const subscription = groupService.getGroups().subscribe(value => groups = value);
 
     return () => subscription.unsubscribe();
   });
