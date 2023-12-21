@@ -24,6 +24,14 @@
     const subscription = service.subscribe(user => contact = user);
     return () => subscription.unsubscribe();
   });
+
+  function addContact() {
+    service.addContact();
+  }
+
+  function removeContact() {
+    service.removeContact();
+  }
 </script>
 
 <Page>
@@ -35,11 +43,11 @@
           /><span style="margin-left: 8px">{contact.name}</span>
       </div>
       {#if contact.has_contact}
-        <Button>
+        <Button onClick={removeContact}>
           <Icon ios="f7:person_badge_minus" md="material:person_remove" />
         </Button>
       {:else}
-        <Button>
+        <Button onClick={addContact}>
           <Icon ios="f7:person_badge_plus" md="material:person_add" />
         </Button>
       {/if}

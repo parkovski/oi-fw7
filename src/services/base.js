@@ -19,6 +19,10 @@ export class Service {
     });
   }
 
+  publish() {
+    this.subscribers.forEach(s => s.next(this.data));
+  }
+
   async refresh() {
     if (this.loading) {
       return;
@@ -26,7 +30,7 @@ export class Service {
     this.loading = true;
     this.data = await this.loadfn();
     this.loading = false;
-    this.subscribers.forEach(s => s.next(this.data));
+    this.publish();
   }
 
   subscribe(subscriber) {
@@ -48,6 +52,10 @@ export class SingletonService {
     } else {
       this._service = serviceMap.get(this.constructor);
     }
+  }
+
+  publish() {
+    this._service.publish();
   }
 
   refresh() {
