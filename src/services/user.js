@@ -1,5 +1,5 @@
 import { Service } from './base';
-import { fetchAny, fetchJson } from '../js/oifetch';
+import { fetchAny, fetchJson } from '../js/fetch';
 
 export default class UserService extends Service {
   id;

@@ -1,5 +1,5 @@
 import { Service } from './base';
-import { fetchJson } from '../js/oifetch';
+import { fetchJson } from '../js/fetch';
 
 export default class GroupService extends Service {
   gid;

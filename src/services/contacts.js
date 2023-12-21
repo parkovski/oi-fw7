@@ -1,5 +1,5 @@
 import { SingletonService } from './base';
-import { fetchAny, fetchJson } from '../js/oifetch';
+import { fetchAny, fetchJson } from '../js/fetch';
 
 export default class ContactsService extends SingletonService {
   load() {
