@@ -55,16 +55,6 @@
     },
   };
 
-  // Login screen demo data
-  let username = '';
-  let password = '';
-
-  function alertLoginData() {
-    f7.dialog.alert('Username: ' + username + '<br>Password: ' + password, () => {
-      f7.loginScreen.close();
-    });
-  }
-
   onMount(() => {
     f7ready(() => {
       // Init capacitor APIs (see capacitor-app.js)
@@ -90,6 +80,9 @@
     });
   })
 
+  let username;
+  let password;
+
   async function login() {
     try {
       const response = await fetch('http://localhost:3000/authorize', {
@@ -101,11 +94,24 @@
         ])
       });
       console.log(response);
+      f7.loginScreen.close();
     }
     catch (e) {
       console.log(e);
     }
-    f7.loginScreen.close();
+  }
+
+  async function logout() {
+    try {
+      const response = await fetch('http://localhost:3000/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      f7.panel.close('#right-panel');
+      f7.loginScreen.open(document.getElementById('login-screen'));
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   function panelNavigate(to) {
@@ -142,6 +148,9 @@
           </ListItem>
           <ListItem>
             <Link text="About" onClick={() => panelNavigate('/about/')}/>
+          </ListItem>
+          <ListItem>
+            <Link text="Log out" onClick={() => logout()}/>
           </ListItem>
         </List>
       </Page>
