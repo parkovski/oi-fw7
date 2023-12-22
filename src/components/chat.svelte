@@ -1,5 +1,12 @@
 <script>
   import { Block, TextEditor } from 'framework7-svelte';
+  import { onMount } from 'svelte';
+
+  let chat;
+
+  onMount(() => {
+    chat.scrollTop = chat.scrollHeight;
+  });
 </script>
 
 <style>
@@ -54,7 +61,7 @@
 </style>
 
 <div class="container">
-  <div class="chat">
+  <div bind:this={chat} class="chat">
     <p class="chat-left">Hello there</p>
     <p class="chat-right">Hello yourself</p>
     <p class="chat-left">This is the chat that never ends it goes on and on and
