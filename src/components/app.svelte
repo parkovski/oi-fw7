@@ -28,6 +28,7 @@
   import capacitorApp from '../js/capacitor-app';
   import routes from '../js/routes';
   import store from '../js/store';
+  import { postLoginEvent, postLogoutEvent } from '../js/onlogin';
 
   const device = getDevice();
 
@@ -71,6 +72,7 @@
             f7.loginScreen.open(document.getElementById('login-screen'));
           } else {
             res.text().then(text => console.log(text));
+            postLoginEvent();
           }
         })
         .catch(e => {
@@ -95,6 +97,7 @@
       });
       console.log(response);
       f7.loginScreen.close();
+      postLoginEvent();
     }
     catch (e) {
       console.log(e);
@@ -109,6 +112,7 @@
       });
       f7.panel.close('#right-panel');
       f7.loginScreen.open(document.getElementById('login-screen'));
+      postLogoutEvent();
     } catch (e) {
       console.log(e);
     }
@@ -125,11 +129,11 @@
     // currently on a different route.
     if (f7.views.current.name !== currentTab) {
       currentTab = f7.views.current.name;
-      return;
     }
     const router = f7.views[name].router;
-    if (router.url !== router.initialUrl) {
-      router.navigate(router.initialUrl, { clearPreviousHistory: true });
+    const initialUrl = router.initialUrl;
+    if (router.url !== initialUrl) {
+      router.navigate(initialUrl, { clearPreviousHistory: true });
     }
   }
 </script>

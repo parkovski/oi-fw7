@@ -2,16 +2,19 @@ import { Observable } from 'rxjs';
 import type { Subscriber } from 'rxjs';
 
 type LoadFn<T> = () => Promise<T>;
+type ErrorFn = (e: any) => void;
 
 export default class Entity<T> {
   data: T | null = null;
   loading: boolean = false;
   subscribers: Subscriber<T>[] = [];
   load: LoadFn<T>;
+  error?: ErrorFn;
   observable: Observable<T>;
 
-  constructor(load: LoadFn<T>) {
+  constructor(load: LoadFn<T>, error?: ErrorFn) {
     this.load = load;
+    this.error = error;
     this.observable = new Observable(subscriber => {
       this.subscribers.push(subscriber);
       if (this.data !== null) {
@@ -25,8 +28,15 @@ export default class Entity<T> {
   async ensureLoaded(): Promise<T> {
     if (!this.data) {
       this.loading = true;
-      await this.load();
-      this.loading = false;
+      try {
+        this.data = await this.load();
+      } catch (e) {
+        if (this.error) {
+          this.error(e);
+        }
+      } finally {
+        this.loading = false;
+      }
     }
     return this.data!;
   }
@@ -44,9 +54,16 @@ export default class Entity<T> {
       return;
     }
     this.loading = true;
-    this.data = await this.load();
-    this.loading = false;
-    this.publish();
+    try {
+      this.data = await this.load();
+      this.publish();
+    } catch (e) {
+      if (this.error) {
+        this.error(e);
+      }
+    } finally {
+      this.loading = false;
+    }
   }
 
   subscribe(subscriber: Subscriber<T>) {

@@ -9,11 +9,13 @@
   import { onMount } from 'svelte';
 
   import groupService from '../services/group';
+  import { onLogin } from '../js/onlogin';
 
   let groups = [];
 
   onMount(() => {
     const subscription = groupService.getGroups().subscribe(value => groups = value);
+    onLogin(() => groupService.getGroups().refresh());
 
     return () => subscription.unsubscribe();
   });
