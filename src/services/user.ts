@@ -1,13 +1,20 @@
 import Entity from './entity';
 import { fetchAny, fetchJson } from '../js/fetch';
 
-function fetchUser(id) {
+interface User {
+  id: string;
+  name: string;
+  username: string;
+  has_contact?: boolean;
+}
+
+function fetchUser(id: string) {
   return fetchJson(`/user/${id}`);
 }
 
 class UserService {
-  users = new Map;
-  contacts;
+  users = new Map<string, Entity<User>>;
+  contacts: Entity<User[]>;
 
   constructor() {
     this.contacts = new Entity(async () => {
@@ -17,11 +24,11 @@ class UserService {
     });
   }
 
-  _mapContacts(data) {
+  _mapContacts(data: User[]) {
     data.forEach(contact => {
       let entity;
       if (this.users.has(contact.id)) {
-        entity = this.users.get(contact.id);
+        entity = this.users.get(contact.id)!;
         entity.data = contact;
         entity.data.has_contact = true;
         entity.publish();
@@ -34,11 +41,11 @@ class UserService {
     });
   }
 
-  getContacts() {
+  getContacts(): Entity<User[]> {
     return this.contacts;
   }
 
-  getUser(id) {
+  getUser(id: string): Entity<User> {
     let user = this.users.get(id);
     if (!user) {
       user = new Entity(() => fetchUser(id));
@@ -47,21 +54,25 @@ class UserService {
     return user;
   }
 
-  async addContact(id) {
+  async addContact(id: string) {
     const user = this.getUser(id);
     if ((await fetchAny(`/contacts/${id}/add`, { method: 'POST' })).ok) {
-      user.data.has_contact = true;
-      this.contacts.data.push(user.data);
+      const userData = await user.ensureLoaded();
+      const contactsData = await this.contacts.ensureLoaded();
+      userData.has_contact = true;
+      contactsData.push(user.data!);
       user.publish();
       this.contacts.publish();
     }
   }
 
-  async removeContact(id) {
+  async removeContact(id: string) {
     const user = this.getUser(id);
     if ((await fetchAny(`/contacts/${id}/remove`, { method: 'POST' })).ok) {
-      user.data.has_contact = false;
-      this.contacts.data = this.contacts.data.filter(c => c.id !== id);
+      const userData = await user.ensureLoaded();
+      const contactsData = await this.contacts.ensureLoaded();
+      userData.has_contact = false;
+      this.contacts.data = contactsData.filter(c => c.id !== id);
       user.publish();
       this.contacts.publish();
     }
