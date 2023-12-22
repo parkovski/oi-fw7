@@ -12,9 +12,7 @@
   let contacts = [];
 
   onMount(() => {
-    const subscription = userService.getContacts().subscribe(
-      value => contacts = value
-    );
+    const subscription = userService.getContacts().subscribe(value => contacts = value);
     onLogin(() => userService.getContacts().refresh());
 
     return () => subscription.unsubscribe();

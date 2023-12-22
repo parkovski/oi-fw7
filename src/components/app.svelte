@@ -129,6 +129,7 @@
     // currently on a different route.
     if (f7.views.current.name !== currentTab) {
       currentTab = f7.views.current.name;
+      return;
     }
     const router = f7.views[name].router;
     const initialUrl = router.initialUrl;
