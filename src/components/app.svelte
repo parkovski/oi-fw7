@@ -150,7 +150,7 @@
             <Link text="About" onClick={() => panelNavigate('/about/')}/>
           </ListItem>
           <ListItem>
-            <Link text="Log out" onClick={() => logout()}/>
+            <Link text="Sign out" onClick={() => logout()}/>
           </ListItem>
         </List>
       </Page>
