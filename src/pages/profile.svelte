@@ -7,6 +7,15 @@
     CardContent,
     Icon,
   } from 'framework7-svelte';
+  import { onMount } from 'svelte';
+
+  import profileService from '../services/profile';
+
+  let profile = {};
+  onMount(() => {
+    const subscription = profileService.getProfile().subscribe(p => profile = p);
+    return () => subscription.unsubscribe();
+  });
 </script>
 
 <Page>
@@ -15,13 +24,20 @@
     <CardHeader>
       <div>
         <Icon ios="f7:person_fill" md="material:person"
-          /><span style="margin-left: 8px">Me</span>
+          /><span style="margin-left: 8px">{profile.name}</span>
       </div>
     </CardHeader>
     <CardContent>
-      <p>Username: (unknown)</p>
-      <p>Phone: (555)555-5555</p>
-      <p>Email: foo@bar.com</p>
+      {#if profile.verified}
+        <p>Verified</p>
+      {/if}
+      <p>Username: {profile.username}</p>
+      {#if profile.phone}
+        <p>Phone: {profile.phone}</p>
+      {/if}
+      {#if profile.email}
+        <p>Email: {profile.email}</p>
+      {/if}
     </CardContent>
   </Card>
 </Page>
