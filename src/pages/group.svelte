@@ -9,12 +9,37 @@
 
   import ContactsView from '../components/contacts.svelte';
   import ChatView from '../components/chat.svelte';
+  import Calendar from '../components/calendar.svelte';
   import groupService from '../services/group';
 
   export let f7route;
 
   let currentButton = 'chat';
   let group = {};
+
+  const events = (function() {
+    const today = new Date();
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    const todayDay = today.getDate();
+
+    return [
+      {
+        date: new Date(todayYear, todayMonth, todayDay),
+        hours: 1,
+        minutes: 0,
+        title: 'Test Event',
+        color: '#2196f3',
+      },
+      {
+        date: new Date(todayYear, todayMonth, todayDay + 1),
+        hours: 2,
+        minutes: 30,
+        title: 'Test Event 2',
+        color: '#4caf50',
+      },
+    ];
+  })();
 
   function changeView(view) {
     return function() {
@@ -68,7 +93,10 @@
       <ChatView />
     </div>
   {:else if currentButton === 'calendar'}
-    <p>Calendar</p>
+    <Block strong class="no-padding no-margin">
+      <div id="group-calendar"></div>
+    </Block>
+    <Calendar {events} elementName="#group-calendar" />
   {:else if currentButton === 'members'}
     <div class="contacts-container">
       <ContactsView contacts={group.members} />
