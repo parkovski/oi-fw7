@@ -64,11 +64,11 @@
           <div class="toolbar calendar-custom-toolbar">
             <div class="toolbar-inner">
               <div class="left">
-                <a  class="link icon-only"><i class="icon icon-back"></i></a>
+                <a class="link icon-only"><i class="icon icon-back"></i></a>
               </div>
               <div class="center"></div>
               <div class="right">
-                <a  class="link icon-only"><i class="icon icon-forward"></i></a>
+                <a class="link icon-only"><i class="icon icon-forward"></i></a>
               </div>
             </div>
           </div>
@@ -76,18 +76,18 @@
       },
       on: {
         init(c) {
-          $('.calendar-custom-toolbar .center').text(
+          $(elementName + ' .calendar-custom-toolbar .center').text(
             `${monthNames[c.currentMonth]}, ${c.currentYear}`,
           );
-          $('.calendar-custom-toolbar .left .link').on('click', () => {
+          $(elementName + ' .calendar-custom-toolbar .left .link').on('click', () => {
             c.prevMonth();
           });
-          $('.calendar-custom-toolbar .right .link').on('click', () => {
+          $(elementName + ' .calendar-custom-toolbar .right .link').on('click', () => {
             c.nextMonth();
           });
         },
         monthYearChangeStart(c) {
-          $('.calendar-custom-toolbar .center').text(
+          $(elementName + ' .calendar-custom-toolbar .center').text(
             `${monthNames[c.currentMonth]}, ${c.currentYear}`,
           );
         },
