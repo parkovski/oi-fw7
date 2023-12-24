@@ -1,11 +1,40 @@
 <script>
   import { Block, TextEditor } from 'framework7-svelte';
   import { onMount } from 'svelte';
+  import webSocketService from '../services/websocket';
 
   let chat;
+  let textEditor;
 
   onMount(() => {
     chat.scrollTop = chat.scrollHeight;
+
+    textEditor.instance().contentEl.addEventListener('keydown', function(e) {
+      if (e.composing || e.keyCode === 229) {
+        return;
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const instance = textEditor.instance();
+        if (instance.value === '') {
+          return;
+        }
+        webSocketService.sendJson({
+          message: 'chat',
+          to: '1',
+          text: instance.value,
+        });
+        instance.value = '';
+        instance.contentEl.innerHTML = '';
+      }
+    });
+
+    webSocketService.subscribe('chat', message => {
+      let el = document.createElement('p');
+      el.classList.add('chat-left');
+      el.innerText = message.text;
+      chat.appendChild(el);
+    });
   });
 </script>
 
@@ -92,6 +121,7 @@
   </div>
   <div class="editor">
     <TextEditor
+      bind:this={textEditor}
       placeholder="Say something..."
       mode="popover"
       buttons={['bold', 'italic', 'underline']}

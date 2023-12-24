@@ -7,8 +7,8 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
-  import ContactsView from '../components/contacts.svelte';
-  import ChatView from '../components/chat.svelte';
+  import Contacts from '../components/contacts.svelte';
+  import Chat from '../components/chat.svelte';
   import Calendar from '../components/calendar.svelte';
   import groupService from '../services/group';
 
@@ -90,7 +90,7 @@
     </Block>
   {#if currentButton === 'chat'}
     <div class="chat-container">
-      <ChatView />
+      <Chat />
     </div>
   {:else if currentButton === 'calendar'}
     <Block strong class="no-padding no-margin">
@@ -99,7 +99,7 @@
     <Calendar {events} elementName="#group-calendar" />
   {:else if currentButton === 'members'}
     <div class="contacts-container">
-      <ContactsView contacts={group.members} />
+      <Contacts contacts={group.members} />
     </div>
   {/if}
 </Page>

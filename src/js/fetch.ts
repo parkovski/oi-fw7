@@ -8,7 +8,7 @@ export function fetchAny(resource: string, options?: RequestInit): Promise<Respo
   }
   let url: string;
   if (process.env.NODE_ENV === 'production') {
-    url = `https://api.openinvite.parkovski.com${resource}`;
+    url = `https://api.oi.parkovski.com${resource}`;
   } else {
     url = `http://localhost:3000${resource}`;
   }
