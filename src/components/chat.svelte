@@ -31,15 +31,16 @@
 
     webSocketService.subscribe('chat', message => {
       let el = document.createElement('p');
+      el.classList.add('chatbubble');
       el.classList.add('chat-left');
       el.innerText = message.text;
-      chat.appendChild(el);
+      chat.insertBefore(el, document.getElementById('chat-clearfix'));
     });
   });
 </script>
 
 <style>
-  p {
+  :global(p.chatbubble) {
     clear: both;
     max-width: 50%;
     display: inline-block;
@@ -48,27 +49,27 @@
     margin: 2em 0 0 0;
   }
 
-  p:first-child {
+  :global(p.chatbubble:first-child) {
     margin-top: 1em;
   }
 
-  .chat-left {
+  :global(.chat-left) {
     float: left;
     background: lightgrey;
   }
 
-  :global(.dark) .chat-left {
+  :global(.dark .chat-left) {
     background: #444;
   }
 
-  .chat-right {
+  :global(.chat-right) {
     float: right;
     text-align: right;
     background: var(--f7-theme-color);
     color: var(--f7-button-fill-text-color, #fff);
   }
 
-  .chat-left + .chat-left, .chat-right + .chat-right {
+  :global(.chat-left + .chat-left), :global(.chat-right + .chat-right) {
     margin-top: .25em;
   }
 
@@ -91,33 +92,33 @@
 
 <div class="container">
   <div bind:this={chat} class="chat">
-    <p class="chat-left">Hello there</p>
-    <p class="chat-right">Hello yourself</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
+    <p class="chatbubble chat-left">Hello there</p>
+    <p class="chatbubble chat-right">Hello yourself</p>
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
       on and on and on and on and on</p>
-    <p class="chat-right">Hello yourself</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
+    <p class="chatchatbubble -right">Hello yourself</p>
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
       on and on and on and on and on</p>
-    <p class="chat-right">Hello yourself</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
+    <p class="chatbubble chat-right">Hello yourself</p>
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
       on and on and on and on and on</p>
-    <p class="chat-right">Hello yourself</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
+    <p class="chatbubble chat-right">Hello yourself</p>
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
       on and on and on and on and on</p>
-    <p class="chat-right">Hello yourself</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
+    <p class="chatbubble chat-right">Hello yourself</p>
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
+      on and on and chatbubble on and on and on</p>
+    <p class="chatbubble chat-right">Hello yourself</p>
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
       on and on and on and on and on</p>
-    <p class="chat-right">Hello yourself</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <p class="chat-right">Hello yourself</p>
-    <p class="chat-right">This is the chat that never ends it goes on and on
+    <p class="chatbubble chat-right">Hello yourself</p>
+    <p class="chatbubble chat-right">This is the chat that never ends it goes on and on
       and on and on and on and on and on</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
       on and on and on and on and on</p>
-    <p class="chat-left">This is the chat that never ends it goes on and on and
+    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
       on and on and on and on and on</p>
-    <div style="clear:both"></div>
+    <div style="clear:both" id="chat-clearfix"></div>
   </div>
   <div class="editor">
     <TextEditor
