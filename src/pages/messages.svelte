@@ -5,15 +5,15 @@
     useStore,
   } from 'framework7-svelte';
   import MessagesView from '../components/messages.svelte';
-  import MessagesService from '../services/messages';
   import { onMount } from 'svelte';
+  import chatService from '../services/chat';
 
-  let service;
-
-  let messages = useStore('messages', value => messages = value);
+  let messages = [];
 
   onMount(() => {
-    service = new MessagesService();
+    chatService.observeChatSummary().subscribe(chat => {
+      messages = [chat, ...messages];
+    });
   });
 </script>
 <Page>

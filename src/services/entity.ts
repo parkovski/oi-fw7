@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs';
-import type { Subscriber } from 'rxjs';
+import type { Subscriber, TeardownLogic } from 'rxjs';
 
 type LoadFn<T> = () => Promise<T>;
 type ErrorFn = (e: any) => void;
+type SubscriberLike<T> = Subscriber<T> | ((msg: T) => TeardownLogic);
 
 export default class Entity<T> {
   data: T | null = null;
@@ -66,7 +67,7 @@ export default class Entity<T> {
     }
   }
 
-  subscribe(subscriber: Subscriber<T>) {
+  subscribe(subscriber: SubscriberLike<T>) {
     const subscription = this.observable.subscribe(subscriber);
     subscription.add(() => {
       this.subscribers = this.subscribers.filter(s => s !== subscriber);

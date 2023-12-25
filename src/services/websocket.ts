@@ -1,7 +1,9 @@
 import { Observable } from 'rxjs';
-import type { Subscriber } from 'rxjs';
+import type { Subscriber, TeardownLogic } from 'rxjs';
 
 declare var process: any;
+
+type SubscriberLike<T> = Subscriber<T> | ((msg: T) => TeardownLogic);
 
 interface MessageHandler<T> {
   observable: Observable<T>;
@@ -70,7 +72,7 @@ class WebSocketService {
     this._webSocket.send(JSON.stringify(data));
   }
 
-  subscribe<T>(message: string, subscriber: Subscriber<T>) {
+  subscribe<T>(message: string, subscriber: SubscriberLike<T>) {
     let handler = this._handlers.get(message);
     if (!handler) {
       const subscribers: Subscriber<unknown>[] = [];
