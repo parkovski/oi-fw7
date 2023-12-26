@@ -47,7 +47,7 @@
     });
 
     let messageReceivedSubscription = chatService.observeMessageReceived().subscribe(msg => {
-      if (msg.from !== myUid) {
+      if (msg.from === f7route.params.id) {
         chats = [...chats, {
           id: msg.id,
           from: msg.from,
