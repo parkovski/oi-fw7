@@ -41,6 +41,7 @@ interface OutgoingGroupChatMessage extends GroupChatMessage {
 interface IncomingGroupChatMessage extends GroupChatMessage {
   m: 'groupchat';
   from: string;
+  time: string;
 }
 
 interface GroupMessageSentMessage {
@@ -48,6 +49,7 @@ interface GroupMessageSentMessage {
   uuid: string;
   id: string;
   time: string;
+  text: string;
 }
 
 class GroupService {
@@ -71,6 +73,10 @@ class GroupService {
     return group;
   }
 
+  getGroupChat(id: string) {
+    return fetchJson(`/groups/${id}/chat`);
+  }
+
   observeMessageSent() {
     return new Observable<GroupMessageSentMessage>(subscriber => {
       const subscription =
@@ -81,7 +87,7 @@ class GroupService {
     });
   }
 
-  observeMesssageReceived() {
+  observeMessageReceived() {
     return new Observable<IncomingGroupChatMessage>(subscriber => {
       const subscription =
         webSocketService.subscribe<IncomingGroupChatMessage>('groupchat', msg => {

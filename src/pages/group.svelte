@@ -6,6 +6,7 @@
     Button,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
+  import cookie from 'cookie';
 
   import Contacts from '../components/contacts.svelte';
   import Chat from '../components/chat.svelte';
@@ -16,6 +17,8 @@
 
   let currentButton = 'chat';
   let group = {};
+  let chats = [];
+  let pendingChats = [];
 
   const events = (function() {
     const today = new Date();
@@ -54,10 +57,55 @@
     };
   }
 
-  onMount(() => {
-    const subscription = groupService.getGroup(f7route.params.id).subscribe(value => group = value);
+  function onSend(text) {
+    const pending = groupService.send({
+      to: f7route.params.id,
+      text,
+    });
+    pendingChats = [...pendingChats, pending];
+  }
 
-    return () => subscription.unsubscribe();
+  onMount(() => {
+    const myUid = cookie.parse(document.cookie)?.uid || '0';
+
+    groupService.getGroupChat(f7route.params.id).then(cs => {
+      chats = cs.map(c => ({
+        id: c.id,
+        to: f7route.params.id,
+        from: c.uid_from === myUid ? undefined : c.uid_from,
+        text: c.message,
+      }));
+    });
+
+    const groupSubscription = groupService.getGroup(f7route.params.id).subscribe(value => group = value);
+
+    const messageSentSubscription = groupService.observeMessageSent().subscribe(msg => {
+      const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
+      if (chat) {
+        pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
+        chats = [...chats, {
+          id: msg.id,
+          to: msg.to,
+          text: msg.text,
+        }];
+      }
+    });
+
+    const messageReceivedSubscription = groupService.observeMessageReceived().subscribe(msg => {
+      if (msg.from !== myUid && msg.to === f7route.params.id) {
+        chats = [...chats, {
+          id: msg.id,
+          from: msg.from,
+          text: msg.text,
+        }];
+      }
+    });
+
+    return () => {
+      groupSubscription.unsubscribe();
+      messageSentSubscription.unsubscribe();
+      messageReceivedSubscription.unsubscribe();
+    };
   });
 </script>
 
@@ -90,7 +138,7 @@
     </Block>
   {#if currentButton === 'chat'}
     <div class="chat-container">
-      <Chat />
+      <Chat {chats} {pendingChats} {onSend} />
     </div>
   {:else if currentButton === 'calendar'}
     <Block strong class="no-padding no-margin">
