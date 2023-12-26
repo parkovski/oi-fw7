@@ -85,7 +85,7 @@ class WebSocketService {
       });
       this._handlers.set(message, handler);
     }
-    const subscription = handler.observable.subscribe(subscriber as Subscriber<unknown>);
+    const subscription = handler.observable.subscribe(subscriber as SubscriberLike<unknown>);
     subscription.add(() => {
       handler!.subscribers = handler!.subscribers.filter(s => s !== subscriber);
     });

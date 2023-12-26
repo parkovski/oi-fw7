@@ -1,14 +1,16 @@
 <script>
   import { Block, TextEditor } from 'framework7-svelte';
-  import { onMount } from 'svelte';
-  import webSocketService from '../services/websocket';
+  import { onMount, afterUpdate } from 'svelte';
+
+  export let chats;
+  export let pendingChats;
+  export let onSend;
 
   let chat;
   let textEditor;
+  let isScrolledToBottom = true;
 
   onMount(() => {
-    chat.scrollTop = chat.scrollHeight;
-
     textEditor.instance().contentEl.addEventListener('keydown', function(e) {
       if (e.composing || e.keyCode === 229) {
         return;
@@ -19,28 +21,26 @@
         if (instance.value === '') {
           return;
         }
-        webSocketService.sendJson({
-          message: 'chat',
-          to: '1',
-          text: instance.value,
-        });
+        onSend(instance.value);
         instance.value = '';
         instance.contentEl.innerHTML = '';
       }
     });
 
-    webSocketService.subscribe('chat', message => {
-      let el = document.createElement('p');
-      el.classList.add('chatbubble');
-      el.classList.add('chat-left');
-      el.innerText = message.text;
-      chat.insertBefore(el, document.getElementById('chat-clearfix'));
-    });
+    chat.addEventListener('scroll', () => {
+      isScrolledToBottom = chat.clientHeight + chat.scrollTop === chat.scrollHeight;
+    })
+  });
+
+  afterUpdate(() => {
+    if (isScrolledToBottom) {
+      chat.scrollTop = chat.scrollHeight;
+    }
   });
 </script>
 
 <style>
-  :global(p.chatbubble) {
+  p.chatbubble {
     clear: both;
     max-width: 50%;
     display: inline-block;
@@ -49,27 +49,32 @@
     margin: 2em 0 0 0;
   }
 
-  :global(p.chatbubble:first-child) {
+  p.chatbubble:first-child {
     margin-top: 1em;
   }
 
-  :global(.chat-left) {
+  .chat-left {
     float: left;
     background: lightgrey;
   }
 
-  :global(.dark .chat-left) {
+  :global(.dark) .chat-left {
     background: #444;
   }
 
-  :global(.chat-right) {
+  .chat-right {
     float: right;
     text-align: right;
     background: var(--f7-theme-color);
     color: var(--f7-button-fill-text-color, #fff);
   }
 
-  :global(.chat-left + .chat-left), :global(.chat-right + .chat-right) {
+  .chat-pending {
+    background: var(--f7-color-yellow);
+    color: black;
+  }
+
+  .chat-left + .chat-left, .chat-right + .chat-right {
     margin-top: .25em;
   }
 
@@ -92,33 +97,17 @@
 
 <div class="container">
   <div bind:this={chat} class="chat">
-    <p class="chatbubble chat-left">Hello there</p>
-    <p class="chatbubble chat-right">Hello yourself</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <p class="chatchatbubble -right">Hello yourself</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <p class="chatbubble chat-right">Hello yourself</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <p class="chatbubble chat-right">Hello yourself</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <p class="chatbubble chat-right">Hello yourself</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and chatbubble on and on and on</p>
-    <p class="chatbubble chat-right">Hello yourself</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <p class="chatbubble chat-right">Hello yourself</p>
-    <p class="chatbubble chat-right">This is the chat that never ends it goes on and on
-      and on and on and on and on and on</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <p class="chatbubble chat-left">This is the chat that never ends it goes on and on and
-      on and on and on and on and on</p>
-    <div style="clear:both" id="chat-clearfix"></div>
+    {#each chats as chat (chat.id)}
+      {#if chat.from}
+        <p class="chatbubble chat-left">{chat.text}</p>
+      {:else}
+        <p class="chatbubble chat-right">{chat.text}</p>
+      {/if}
+    {/each}
+    {#each pendingChats as chat (chat.uuid)}
+      <p class="chatbubble chat-right chat-pending">{chat.text}</p>
+    {/each}
+    <div style="clear:both"></div>
   </div>
   <div class="editor">
     <TextEditor

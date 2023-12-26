@@ -29,6 +29,9 @@ dependencies:
   '@capacitor/status-bar':
     specifier: ^5.0.6
     version: 5.0.6(@capacitor/core@5.6.0)
+  cookie:
+    specifier: ^0.6.0
+    version: 0.6.0
   dom7:
     specifier: ^4.0.6
     version: 4.0.6
@@ -2862,6 +2865,11 @@ packages:
   /convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
     dev: true
+
+  /cookie@0.6.0:
+    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
+    engines: {node: '>= 0.6'}
+    dev: false
 
   /cordova-res@0.15.4:
     resolution: {integrity: sha512-TjFZhjUtK8qq4DVrgR+KI7tKcUL704cnkTPRhHbKlCPzefHoz1tBOX93wc76dOMmOWKTsbJz83DIm6mqdp5Pmg==}

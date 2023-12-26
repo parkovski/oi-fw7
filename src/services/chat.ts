@@ -19,6 +19,8 @@ interface ChatMessage {
 interface UserMessageSentMessage {
   message: 'message_sent';
   uuid: string;
+  id: string;
+  time: string;
 }
 
 interface OutgoingUserChatMessage extends ChatMessage {
@@ -32,24 +34,8 @@ interface IncomingUserChatMessage extends ChatMessage {
 }
 
 class ChatService {
-  _queue: OutgoingUserChatMessage[] = [];
-
-  constructor() {
-    /*
-    webSocketService.subscribe<IncomingUserChatMessage>('chat', _msg => {
-    });*/
-    webSocketService.subscribe<UserMessageSentMessage>('message_sent', msg => {
-      console.log('message ' + msg.uuid + ' sent confirmation');
-      this._queue = this._queue.filter(m => m.uuid !== msg.uuid);
-    });
-
-    /*
-    webSocketService.subscribe<IncomingGroupChatMessage>('groupchat', _msg => {
-    });
-    webSocketService.subscribe<GroupMessageSentMessage>('group_message_sent', msg => {
-      this._groupQueue = this._groupQueue.filter(m => m.uuid !== msg.uuid);
-    });
-    */
+  getChat(id: string) {
+    return fetchJson(`/chat/${id}`);
   }
 
   observeChatSummary() {
@@ -61,15 +47,34 @@ class ChatService {
     });
   }
 
+  observeMessageSent() {
+    return new Observable<UserMessageSentMessage>(subscriber => {
+      const subscription =
+        webSocketService.subscribe<UserMessageSentMessage>('message_sent', msg => {
+          subscriber.next(msg);
+        });
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  observeMessageReceived() {
+    return new Observable<IncomingUserChatMessage>(subscriber => {
+      const subscription =
+        webSocketService.subscribe<IncomingUserChatMessage>('chat', msg => {
+          subscriber.next(msg);
+        });
+      return () => subscription.unsubscribe();
+    });
+  }
+
   send(msg: ChatMessage) {
     const outgoingMsg: OutgoingUserChatMessage = {
       message: 'chat',
       uuid: crypto.randomUUID(),
       ...msg,
     };
-    this._queue.push(outgoingMsg);
     webSocketService.sendJson(outgoingMsg);
-    console.log('posted message ' + outgoingMsg.uuid + ': ' + msg.text);
+    return outgoingMsg;
   }
 }
 
