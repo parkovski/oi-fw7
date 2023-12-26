@@ -34,7 +34,7 @@
       }));
     });
 
-    chatService.observeMessageSent().subscribe(msg => {
+    let messageSentSubscription = chatService.observeMessageSent().subscribe(msg => {
       const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
       if (chat) {
         pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
@@ -46,7 +46,7 @@
       }
     });
 
-    chatService.observeMessageReceived().subscribe(msg => {
+    let messageReceivedSubscription = chatService.observeMessageReceived().subscribe(msg => {
       if (msg.from !== myUid) {
         chats = [...chats, {
           id: msg.id,
@@ -55,6 +55,11 @@
         }];
       }
     });
+
+    return () => {
+      messageSentSubscription.unsubscribe();
+      messageReceivedSubscription.unsubscribe();
+    };
   });
 </script>
 
