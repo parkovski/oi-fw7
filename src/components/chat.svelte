@@ -75,11 +75,6 @@
     color: var(--f7-button-fill-text-color, #fff);
   }
 
-  .chat-pending {
-    background: var(--f7-color-yellow);
-    color: black;
-  }
-
   .chat-left + .chat-left, .chat-right + .chat-right {
     margin-top: .25em;
   }
