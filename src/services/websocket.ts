@@ -10,16 +10,26 @@ interface MessageHandler<T> {
   subscribers: Subscriber<T>[];
 }
 
+const webSocketUrl = process.env.NODE_ENV === 'production'
+  ? 'wss://api.oi.parkovski.com'
+  : 'ws://localhost:3000';
+
 class WebSocketService {
   _webSocket: WebSocket;
   _handlers: Map<string, MessageHandler<unknown>> = new Map;
+  _retries: number = 0;
 
   constructor() {
-    if (process.env.NODE_ENV === 'production') {
-      this._webSocket = new WebSocket('wss://api.oi.parkovski.com');
-    } else {
-      this._webSocket = new WebSocket('ws://localhost:3000');
-    }
+    this._webSocket = new WebSocket(webSocketUrl);
+    this._webSocket.addEventListener('error', this._onError.bind(this));
+    this._webSocket.addEventListener('close', this._onClose.bind(this));
+    this._webSocket.addEventListener('open', this._onOpen.bind(this));
+    this._webSocket.addEventListener('message', this._onMessage.bind(this));
+  }
+
+  reconnect() {
+    ++this._retries;
+    this._webSocket = new WebSocket(webSocketUrl);
     this._webSocket.addEventListener('error', this._onError.bind(this));
     this._webSocket.addEventListener('close', this._onClose.bind(this));
     this._webSocket.addEventListener('open', this._onOpen.bind(this));
@@ -27,15 +37,29 @@ class WebSocketService {
   }
 
   _onError(_event: Event) {
-    console.error('WebSocket error');
   }
 
   _onClose(_event: CloseEvent) {
-    console.log('WebSocket closed');
+    switch (this._retries) {
+    case 0:
+      this.reconnect();
+      break;
+    case 1:
+      setTimeout(this.reconnect.bind(this), 1000);
+      break;
+    case 2:
+      setTimeout(this.reconnect.bind(this), 3000);
+      break;
+    case 3:
+      setTimeout(this.reconnect.bind(this), 5000);
+      break;
+    default:
+      break;
+    }
   }
 
   _onOpen(_event: Event) {
-    console.log('WebSocket opened');
+    this._retries = 0;
   }
 
   _onMessage(event: MessageEvent) {

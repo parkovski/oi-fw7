@@ -1,9 +1,6 @@
 import { Observable } from 'rxjs';
-//import type { Subscriber, TeardownLogic } from 'rxjs';
 import webSocketService from './websocket';
 import { fetchJson } from '../js/fetch';
-
-//type SubscriberLike<T> = Subscriber<T> | ((msg: T) => TeardownLogic);
 
 interface UserChatSummary {
   uid: string;
