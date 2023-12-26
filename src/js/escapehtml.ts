@@ -27,8 +27,14 @@ function isAllowedTag(html: string): [number, string] {
     return [1, '&lt;'];
   case '>':
     return [1, '&gt;'];
-  //case '&':
-    //return [1, '&amp;'];
+  case '&':
+    {
+      const match = /&[a-zA-Z]+;/.exec(html);
+      if (match) {
+        return [match[0].length, match[0]];
+      }
+      return [1, '&amp;'];
+    }
   default:
     throw 'Unreachable: ' + one;
   }
@@ -38,7 +44,7 @@ export default function escapeHtml(html: string) {
   let out = '';
   let i = 0;
   while (true) {
-    i = html.search(/[<>]/);
+    i = html.search(/[<>&]/);
     if (i === -1) {
       out += html;
       break;
