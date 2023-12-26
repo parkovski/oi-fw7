@@ -28,7 +28,7 @@
 
 <List style="margin-top: 0" strongIos outlineIos dividers>
   {#each messages as message (message.uid)}
-    <ListItem title={message.name} href={`/messages/${message.uid}/`}>
+    <ListItem title={message.name} href={`/messages/view/${message.uid}/`}>
       <Icon slot="media" ios={getIosIcon(message)} md={getMdIcon(message)} />
     </ListItem>
   {/each}

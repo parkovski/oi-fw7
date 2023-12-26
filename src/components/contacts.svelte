@@ -33,7 +33,7 @@
   {#each firstLetters as firstLetter (firstLetter)}
     <ListItem title={firstLetter} groupTitle />
     {#each contactsByFirstLetter[firstLetter] as contact, index (contact.id)}
-      <ListItem title={contact.name} href={`/contacts/${contact.id}/`}>
+      <ListItem title={contact.name} href={`/contacts/view/${contact.id}/`}>
         <Icon slot="media" ios="f7:person_fill" md="material:person" />
       </ListItem>
     {/each}

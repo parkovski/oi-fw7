@@ -3,6 +3,8 @@
     Page,
     Navbar,
     Block,
+    Icon,
+    Fab,
   } from 'framework7-svelte';
   import Calendar from '../components/calendar.svelte';
 
@@ -33,6 +35,9 @@
 
 <Page>
   <Navbar title="Events" />
+  <Fab position="right-bottom" href="/events/new/">
+    <Icon ios="f7:plus" md="material:add" />
+  </Fab>
   <Block strong class="no-padding no-margin">
     <div id="events-calendar"></div>
   </Block>
