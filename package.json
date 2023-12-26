@@ -12,7 +12,8 @@
     "build-capacitor-ios": "cross-env NODE_ENV=production vite build && npx cap copy ios",
     "build-capacitor-android": "cross-env NODE_ENV=production vite build && npx cap copy android",
     "postinstall": "cpy --flat ./node_modules/framework7-icons/fonts/*.* ./src/fonts/ && cpy --flat ./node_modules/material-icons/iconfont/*.* ./src/fonts/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "svelte-check"
   },
   "browserslist": [
     "IOS >= 15",
@@ -47,6 +48,7 @@
     "cpy-cli": "^5.0.0",
     "cross-env": "^7.0.3",
     "postcss-preset-env": "^9.3.0",
+    "svelte-check": "^3.6.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "workbox-cli": "^7.0.0"
