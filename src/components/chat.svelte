@@ -52,7 +52,7 @@
     display: inline-block;
     padding: 8px;
     border-radius: 8px;
-    margin: 2em 0 0 0;
+    margin: 1em 0 0 0;
   }
 
   p.chatbubble:first-child {
