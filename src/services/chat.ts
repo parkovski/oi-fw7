@@ -8,9 +8,19 @@ interface UserChatSummary {
   username: string;
 }
 
-interface ChatMessage {
+interface UserChatMessage {
   to: string;
   text: string;
+}
+
+interface OutgoingUserChatMessage extends UserChatMessage {
+  message: 'chat';
+  uuid: string;
+}
+
+interface IncomingUserChatMessage extends UserChatMessage {
+  message: 'chat';
+  from: string;
 }
 
 interface UserMessageSentMessage {
@@ -18,16 +28,6 @@ interface UserMessageSentMessage {
   uuid: string;
   id: string;
   time: string;
-}
-
-interface OutgoingUserChatMessage extends ChatMessage {
-  message: 'chat';
-  uuid: string;
-}
-
-interface IncomingUserChatMessage extends ChatMessage {
-  message: 'chat';
-  from: string;
 }
 
 class ChatService {
@@ -64,7 +64,7 @@ class ChatService {
     });
   }
 
-  send(msg: ChatMessage) {
+  send(msg: UserChatMessage) {
     const outgoingMsg: OutgoingUserChatMessage = {
       message: 'chat',
       uuid: crypto.randomUUID(),

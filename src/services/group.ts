@@ -1,5 +1,7 @@
+import { Observable } from 'rxjs';
 import Entity from './entity';
 import { fetchJson } from '../js/fetch';
+import webSocketService from './websocket';
 
 const enum Membership {
   Invited,
@@ -26,6 +28,28 @@ interface Group {
   members?: Member[];
 }
 
+interface GroupChatMessage {
+  to: string;
+  text: string;
+}
+
+interface OutgoingGroupChatMessage extends GroupChatMessage {
+  message: 'groupchat';
+  uuid: string;
+}
+
+interface IncomingGroupChatMessage extends GroupChatMessage {
+  message: 'groupchat';
+  from: string;
+}
+
+interface GroupMessageSentMessage {
+  message: 'group_message_sent';
+  uuid: string;
+  id: string;
+  time: string;
+}
+
 class GroupService {
   groups: Entity<ListGroup[]>;
   groupMap = new Map<string, Entity<Group>>;
@@ -45,6 +69,36 @@ class GroupService {
       this.groupMap.set(id, group);
     }
     return group;
+  }
+
+  observeMessageSent() {
+    return new Observable<GroupMessageSentMessage>(subscriber => {
+      const subscription =
+        webSocketService.subscribe<GroupMessageSentMessage>('group_message_sent', msg => {
+          subscriber.next(msg);
+        });
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  observeMesssageReceived() {
+    return new Observable<IncomingGroupChatMessage>(subscriber => {
+      const subscription =
+        webSocketService.subscribe<IncomingGroupChatMessage>('groupchat', msg => {
+          subscriber.next(msg);
+        });
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  send(msg: GroupChatMessage) {
+    const outgoingMsg: OutgoingGroupChatMessage = {
+      message: 'groupchat',
+      uuid: crypto.randomUUID(),
+      ...msg,
+    };
+    webSocketService.sendJson(outgoingMsg);
+    return outgoingMsg;
   }
 }
 
