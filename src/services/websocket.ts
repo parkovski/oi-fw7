@@ -66,10 +66,10 @@ class WebSocketService {
     if (typeof event.data === 'string') {
       try {
         const json = JSON.parse(event.data);
-        if (typeof json.message !== 'string') {
-          throw new Error('WebSocket message missing \'message\' field');
+        if (typeof json.m !== 'string') {
+          throw new Error('WebSocket message missing \'m\' field');
         }
-        const handler = this._handlers.get(json.message);
+        const handler = this._handlers.get(json.m);
         if (handler) {
           handler.subscribers.forEach(s => s.next(json));
         }

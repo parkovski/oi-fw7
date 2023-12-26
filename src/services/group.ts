@@ -34,17 +34,17 @@ interface GroupChatMessage {
 }
 
 interface OutgoingGroupChatMessage extends GroupChatMessage {
-  message: 'groupchat';
+  m: 'groupchat';
   uuid: string;
 }
 
 interface IncomingGroupChatMessage extends GroupChatMessage {
-  message: 'groupchat';
+  m: 'groupchat';
   from: string;
 }
 
 interface GroupMessageSentMessage {
-  message: 'group_message_sent';
+  m: 'group_message_sent';
   uuid: string;
   id: string;
   time: string;
@@ -93,7 +93,7 @@ class GroupService {
 
   send(msg: GroupChatMessage) {
     const outgoingMsg: OutgoingGroupChatMessage = {
-      message: 'groupchat',
+      m: 'groupchat',
       uuid: crypto.randomUUID(),
       ...msg,
     };

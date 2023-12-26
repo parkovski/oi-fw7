@@ -14,17 +14,17 @@ interface UserChatMessage {
 }
 
 interface OutgoingUserChatMessage extends UserChatMessage {
-  message: 'chat';
+  m: 'chat';
   uuid: string;
 }
 
 interface IncomingUserChatMessage extends UserChatMessage {
-  message: 'chat';
+  m: 'chat';
   from: string;
 }
 
 interface UserMessageSentMessage {
-  message: 'message_sent';
+  m: 'message_sent';
   uuid: string;
   id: string;
   time: string;
@@ -66,7 +66,7 @@ class ChatService {
 
   send(msg: UserChatMessage) {
     const outgoingMsg: OutgoingUserChatMessage = {
-      message: 'chat',
+      m: 'chat',
       uuid: crypto.randomUUID(),
       ...msg,
     };
