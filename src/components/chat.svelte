@@ -1,6 +1,7 @@
 <script>
   import { Block, TextEditor } from 'framework7-svelte';
   import { onMount, afterUpdate } from 'svelte';
+  import escapeHtml from '../js/escapehtml';
 
   export let chats;
   export let pendingChats;
@@ -18,10 +19,15 @@
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const instance = textEditor.instance();
-        if (instance.value === '') {
+        let text = instance.value;
+        if (text.endsWith('<br>')) {
+          // ^^ Firefox does this so delete the trailing <br>.
+          text = text.substring(0, text.length - 4);
+        }
+        if (text === '') {
           return;
         }
-        onSend(instance.value);
+        onSend(text);
         instance.value = '';
         instance.contentEl.innerHTML = '';
       }
@@ -99,13 +105,13 @@
   <div bind:this={chat} class="chat">
     {#each chats as chat (chat.id)}
       {#if chat.from}
-        <p class="chatbubble chat-left">{chat.text}</p>
+        <p class="chatbubble chat-left">{@html chat.text}</p>
       {:else}
-        <p class="chatbubble chat-right">{chat.text}</p>
+        <p class="chatbubble chat-right">{@html chat.text}</p>
       {/if}
     {/each}
     {#each pendingChats as chat (chat.uuid)}
-      <p class="chatbubble chat-right chat-pending">{chat.text}</p>
+      <p class="chatbubble chat-right chat-pending">{@html escapeHtml(chat.text)}</p>
     {/each}
     <div style="clear:both"></div>
   </div>
