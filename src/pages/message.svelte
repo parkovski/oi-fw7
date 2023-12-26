@@ -7,7 +7,7 @@
   import { onMount } from 'svelte';
   import cookie from 'cookie';
   import chatService from '../services/chat';
-  import ChatView from '../components/chat.svelte';
+  import Chat from '../components/chat.svelte';
 
   export let f7route;
 
@@ -66,6 +66,6 @@
 <Page>
   <Navbar title="Messages" backLink="Back" />
   <div style="height: 100%">
-    <ChatView {chats} {pendingChats} {onSend} />
+    <Chat {chats} {pendingChats} {onSend} />
   </div>
 </Page>
