@@ -88,6 +88,14 @@ class GroupService {
     });
   }
 
+  joinGroup(id: string) {
+    return fetchText(`/groups/${id}/join`, { method: 'POST' });
+  }
+
+  leaveGroup(id: string) {
+    return fetchText(`/groups/${id}/leave`, { method: 'POST' });
+  }
+
   observeMessageSent() {
     return new Observable<GroupMessageSentMessage>(subscriber => {
       const subscription =

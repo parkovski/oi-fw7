@@ -3,6 +3,7 @@ import AboutPage from '../pages/about.svelte';
 import GroupsPage from '../pages/groups.svelte';
 import GroupPage from '../pages/group.svelte';
 import NewGroupPage from '../pages/newgroup.svelte';
+import GroupInvitePage from '../pages/groupinvite.svelte';
 import EventsPage from '../pages/events.svelte';
 import NewEventPage from '../pages/newevent.svelte';
 import ContactsPage from '../pages/contacts.svelte';
@@ -30,6 +31,10 @@ var routes = [
   {
     path: '/groups/view/:id/',
     component: GroupPage,
+  },
+  {
+    path: '/groups/viewinvite/:id/',
+    component: GroupInvitePage,
   },
   {
     path: '/groups/new/',

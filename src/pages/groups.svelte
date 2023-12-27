@@ -24,6 +24,13 @@
   function addClick() {
     console.log('Add group clicked');
   }
+
+  function getGroupLink(group) {
+    if (group.kind === 0) {
+      return `/groups/viewinvite/${group.id}/`;
+    }
+    return `/groups/view/${group.id}/`;
+  }
 </script>
 
 <Page>
@@ -33,7 +40,8 @@
   </Fab>
   <List style="margin: 0" strongIos outlineIos dividers>
     {#each groups as group (group.id)}
-      <ListItem link={`/groups/view/${group.id}/`} title={group.name}>
+      <ListItem link={getGroupLink(group)} title={group.name}
+        footer={group.kind === 0 ? "Invited" : undefined}>
         <Icon slot="media" ios="f7:person_3_fill" md="material:groups" />
       </ListItem>
     {/each}
