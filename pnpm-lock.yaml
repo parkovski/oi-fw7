@@ -56,6 +56,9 @@ dependencies:
   svelte:
     specifier: 4.2.8
     version: 4.2.8
+  svelte-select:
+    specifier: ^5.8.1
+    version: 5.8.1
   swiper:
     specifier: ^11.0.5
     version: 11.0.5
@@ -1956,6 +1959,23 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@floating-ui/core@1.5.2:
+    resolution: {integrity: sha512-Ii3MrfY/GAIN3OhXNzpCKaLxHQfJF9qvwq/kEJYdqDxeIHa01K8sldugal6TmeeXl+WMvhv9cnVzUTaFFJF09A==}
+    dependencies:
+      '@floating-ui/utils': 0.1.6
+    dev: false
+
+  /@floating-ui/dom@1.5.3:
+    resolution: {integrity: sha512-ClAbQnEqJAKCJOEbbLo5IUlZHkNszqhuxS4fHAVxRPXPya6Ysf2G8KypnYcOTpx6I8xcgF9bbHb6g/2KpbV8qA==}
+    dependencies:
+      '@floating-ui/core': 1.5.2
+      '@floating-ui/utils': 0.1.6
+    dev: false
+
+  /@floating-ui/utils@0.1.6:
+    resolution: {integrity: sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==}
+    dev: false
 
   /@ionic/cli-framework-output@2.2.7:
     resolution: {integrity: sha512-/BXeclqu3y+bsBF7VFRS9xtNbrXf2JYCj/LeJoyLpWA9PeXNfvFrn91W2lwS2HVDjEDWKl4Ye6edJDdtn76EnA==}
@@ -5658,6 +5678,13 @@ packages:
       - sugarss
     dev: true
 
+  /svelte-floating-ui@1.2.8:
+    resolution: {integrity: sha512-8Ifi5CD2Ui7FX7NjJRmutFtXjrB8T/FMNoS2H8P81t5LHK4I9G4NIs007rLWG/nRl7y+zJUXa3tWuTjYXw/O5A==}
+    dependencies:
+      '@floating-ui/core': 1.5.2
+      '@floating-ui/dom': 1.5.3
+    dev: false
+
   /svelte-hmr@0.15.3(svelte@4.2.8):
     resolution: {integrity: sha512-41snaPswvSf8TJUhlkoJBekRrABDXDMdpNpT2tfHIv4JuhgvHqLMhEPGtaQn0BmbNSTkuz2Ed20DF2eHw0SmBQ==}
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
@@ -5715,6 +5742,13 @@ packages:
       svelte: 4.2.8
       typescript: 5.3.3
     dev: true
+
+  /svelte-select@5.8.1:
+    resolution: {integrity: sha512-DXODz7bsk1vej6Buxd+kEip+xKtlM1CQP51F4wyQgeaRvWLsRVqmktK+TIRgjOMJD7NoS7600adk3rzftK/s0g==}
+    dependencies:
+      '@floating-ui/dom': 1.5.3
+      svelte-floating-ui: 1.2.8
+    dev: false
 
   /svelte@4.2.8:
     resolution: {integrity: sha512-hU6dh1MPl8gh6klQZwK/n73GiAHiR95IkFsesLPbMeEZi36ydaXL/ZAb4g9sayT0MXzpxyZjR28yderJHxcmYA==}
