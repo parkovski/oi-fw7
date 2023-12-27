@@ -4,6 +4,8 @@
     Navbar,
     Block,
     Button,
+    Icon,
+    Fab,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import cookie from 'cookie';
@@ -18,6 +20,7 @@
   let currentButton = 'chat';
   let group = {};
   let chats = [];
+  let chatsAggregate = [];
   let pendingChats = [];
 
   const events = (function() {
@@ -43,6 +46,24 @@
       },
     ];
   })();
+
+  function getAggregateChats(chats) {
+    const aggregate = [];
+    let currentSet = null;
+    for (let i = 0; i < chats.length; ++i) {
+      if (currentSet === null || chats[i].from !== currentSet[0].from) {
+        currentSet = [chats[i]];
+        aggregate.push({
+          chats: currentSet,
+          id: chats[i].id,
+        });
+      } else {
+        currentSet.push(chats[i]);
+      }
+    }
+    return aggregate;
+  }
+  $: chatsAggregate = getAggregateChats(chats);
 
   function changeView(view) {
     return function() {
@@ -73,6 +94,7 @@
         id: c.id,
         to: f7route.params.id,
         from: c.uid_from === myUid ? undefined : c.uid_from,
+        fromName: c.name,
         text: c.message,
       }));
     });
@@ -96,6 +118,7 @@
         chats = [...chats, {
           id: msg.id,
           from: msg.from,
+          fromName: msg.fromName,
           text: msg.text,
         }];
       }
@@ -138,9 +161,12 @@
     </Block>
   {#if currentButton === 'chat'}
     <div class="chat-container">
-      <Chat {chats} {pendingChats} {onSend} />
+      <Chat aggregate={chatsAggregate} {pendingChats} {onSend} />
     </div>
   {:else if currentButton === 'calendar'}
+    <Fab position="right-bottom" href="/groups/newevent/">
+      <Icon ios="f7:plus" md="material:add" />
+    </Fab>
     <Block strong class="no-padding no-margin">
       <div id="group-calendar"></div>
     </Block>

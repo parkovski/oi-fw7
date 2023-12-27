@@ -30,6 +30,7 @@
         id: c.id,
         to: c.uid_from === myUid ? c.uid_from : undefined,
         from: c.uid_from === myUid ? undefined : c.uid_from,
+        fromName: c.name_from,
         text: c.message,
       }));
     });
@@ -51,6 +52,7 @@
         chats = [...chats, {
           id: msg.id,
           from: msg.from,
+          fromName: msg.fromName,
           text: msg.text,
         }];
       }

@@ -21,6 +21,7 @@ interface OutgoingUserChatMessage extends UserChatMessage {
 interface IncomingUserChatMessage extends UserChatMessage {
   m: 'chat';
   from: string;
+  fromName: string;
 }
 
 interface UserMessageSentMessage {

@@ -3,7 +3,8 @@
   import { onMount, afterUpdate } from 'svelte';
   import escapeHtml from '../js/escapehtml';
 
-  export let chats;
+  export let chats = [];
+  export let aggregate = [];
   export let pendingChats;
   export let onSend;
 
@@ -79,6 +80,12 @@
     margin-top: .25em;
   }
 
+  .chat-from {
+    clear: left;
+    margin: 0;
+    font-size: 85%;
+  }
+
   .container {
     display: flex;
     flex-flow: column;
@@ -98,6 +105,18 @@
 
 <div class="container">
   <div bind:this={chat} class="chat">
+    {#each aggregate as agg (agg.id)}
+      {#each agg.chats as chat (chat.id)}
+        {#if chat.from}
+          <p class="chatbubble chat-left">{@html chat.text}</p>
+        {:else}
+          <p class="chatbubble chat-right">{@html chat.text}</p>
+        {/if}
+      {/each}
+      {#if agg.chats[0].from}
+        <p class="float-left chat-from">{agg.chats[0].fromName}</p>
+      {/if}
+    {/each}
     {#each chats as chat (chat.id)}
       {#if chat.from}
         <p class="chatbubble chat-left">{@html chat.text}</p>
