@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import Entity from './entity';
-import { fetchJson } from '../js/fetch';
+import { fetchJson, fetchText } from '../js/fetch';
 import webSocketService from './websocket';
 
 const enum Membership {
@@ -75,6 +75,17 @@ class GroupService {
 
   getGroupChat(id: string) {
     return fetchJson(`/groups/${id}/chat`);
+  }
+
+  newGroup(name: string, invited: string[], isPublic: boolean) {
+    return fetchText(`/newgroup`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        name,
+        invited: JSON.stringify(invited),
+        public: ''+isPublic,
+      }),
+    });
   }
 
   observeMessageSent() {
