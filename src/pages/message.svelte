@@ -7,10 +7,12 @@
   import { onMount } from 'svelte';
   import cookie from 'cookie';
   import chatService from '../services/chat';
+  import userService from '../services/user';
   import Chat from '../components/chat.svelte';
 
   export let f7route;
 
+  let userName = null;
   let chats = [];
   let pendingChats = [];
 
@@ -24,6 +26,8 @@
 
   onMount(() => {
     const myUid = cookie.parse(document.cookie)?.uid || '0';
+
+    userService.getUser(f7route.params.id).ensureLoaded().then(u => userName = u.name);
 
     chatService.getChat(f7route.params.id).then(cs => {
       chats = cs.map(c => ({
@@ -66,7 +70,7 @@
 </script>
 
 <Page>
-  <Navbar title="Messages" backLink="Back" />
+  <Navbar title="{userName}" backLink="Back" />
   <div style="height: 100%">
     <Chat {chats} {pendingChats} {onSend} />
   </div>
