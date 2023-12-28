@@ -81,6 +81,7 @@
   }
 
   .chat-from {
+    float: left;
     clear: left;
     margin: 0;
     font-size: 85%;
@@ -114,7 +115,7 @@
         {/if}
       {/each}
       {#if agg.chats[0].from}
-        <p class="float-left chat-from">{agg.chats[0].fromName}</p>
+        <p class="chat-from">{agg.chats[0].fromName}</p>
       {/if}
     {/each}
     {#each chats as chat (chat.id)}

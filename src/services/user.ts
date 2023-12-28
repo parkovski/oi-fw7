@@ -1,11 +1,17 @@
 import Entity from './entity';
-import { fetchAny, fetchJson } from '../js/fetch';
+import { fetchAny, fetchText, fetchJson } from '../js/fetch';
 
 interface User {
   id: string;
   name: string;
   username: string;
-  has_contact?: boolean;
+  has_contact?: boolean | 'pending';
+  kind?: number | null;
+}
+
+interface ContactData {
+  contacts: User[];
+  pending: User[];
 }
 
 function fetchUser(id: string) {
@@ -14,35 +20,20 @@ function fetchUser(id: string) {
 
 class UserService {
   users = new Map<string, Entity<User>>;
-  contacts: Entity<User[]>;
+  contacts: Entity<ContactData>;
+  requests: Entity<User[]>;
 
   constructor() {
-    this.contacts = new Entity(async () => {
-      const contacts = await fetchJson(`/contacts`);
-      this._mapContacts(contacts);
-      return contacts;
-    });
+    this.contacts = new Entity(() => fetchJson(`/contacts`));
+    this.requests = new Entity(() => fetchJson(`/contactrequests`));
   }
 
-  _mapContacts(data: User[]) {
-    data.forEach(contact => {
-      let entity;
-      if (this.users.has(contact.id)) {
-        entity = this.users.get(contact.id)!;
-        entity.data = contact;
-        entity.data.has_contact = true;
-        entity.publish();
-      } else {
-        entity = new Entity(() => fetchUser(contact.id));
-        entity.data = contact;
-        entity.data.has_contact = true;
-        this.users.set(contact.id, entity);
-      }
-    });
-  }
-
-  getContacts(): Entity<User[]> {
+  getContacts(): Entity<ContactData> {
     return this.contacts;
+  }
+
+  getContactRequests(): Entity<User[]> {
+    return this.requests;
   }
 
   getUser(id: string): Entity<User> {
@@ -55,26 +46,39 @@ class UserService {
   }
 
   async addContact(id: string) {
-    const user = this.getUser(id);
-    if ((await fetchAny(`/contacts/${id}/add`, { method: 'POST' })).ok) {
+    try {
+      const user = this.getUser(id);
+      const status = await fetchText(`/contacts/${id}/add`, { method: 'POST' });
       const userData = await user.ensureLoaded();
       const contactsData = await this.contacts.ensureLoaded();
-      userData.has_contact = true;
-      contactsData.push(user.data!);
+      if (status === 'approved') {
+        userData.has_contact = true;
+        userData.kind = 1;
+        contactsData.contacts.push(userData);
+      } else if (status === 'requested') {
+        userData.has_contact = 'pending';
+        userData.kind = 0;
+        contactsData.pending.push(userData);
+      }
       user.publish();
       this.contacts.publish();
+    } catch {
     }
   }
 
   async removeContact(id: string) {
-    const user = this.getUser(id);
-    if ((await fetchAny(`/contacts/${id}/remove`, { method: 'POST' })).ok) {
-      const userData = await user.ensureLoaded();
-      const contactsData = await this.contacts.ensureLoaded();
-      userData.has_contact = false;
-      this.contacts.data = contactsData.filter(c => c.id !== id);
-      user.publish();
-      this.contacts.publish();
+    try {
+      const user = this.getUser(id);
+      if ((await fetchAny(`/contacts/${id}/remove`, { method: 'POST' })).ok) {
+        const userData = await user.ensureLoaded();
+        const contactsData = await this.contacts.ensureLoaded();
+        userData.kind = null;
+        this.contacts.data!.contacts = contactsData.contacts.filter(c => c.id !== id);
+        this.contacts.data!.pending = contactsData.pending.filter(c => c.id !== id);
+        user.publish();
+        this.contacts.publish();
+      }
+    } catch {
     }
   }
 }

@@ -23,8 +23,8 @@
   let isDarkMode = htmlElement.classList.contains('dark');
 
   onMount(() => {
-    userService.getContacts().subscribe(contacts =>
-      items = contacts.map(c => ({ value: c.id, label: c.name }))
+    userService.getContacts().subscribe(data =>
+      items = data.contacts.map(c => ({ value: c.id, label: c.name }))
     );
     const observer = new MutationObserver(list => {
       for (let mutation of list) {

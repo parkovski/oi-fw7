@@ -1,5 +1,6 @@
 <script>
   import {
+    f7,
     Page,
     Navbar,
     Card,
@@ -7,6 +8,9 @@
     CardContent,
     Icon,
     Button,
+    Popover,
+    List,
+    ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
@@ -19,6 +23,7 @@
     name: '',
     username: '',
   };
+  let popover;
 
   onMount(() => {
     const subscription = userService.getUser(contact.id).subscribe(user => contact = user);
@@ -31,6 +36,7 @@
 
   function removeContact() {
     userService.removeContact(contact.id);
+    popover.instance().close();
   }
 </script>
 
@@ -42,7 +48,11 @@
         <Icon ios="f7:person_fill" md="material:person"
           /><span style="margin-left: 8px">{contact.name}</span>
       </div>
-      {#if contact.has_contact}
+      {#if contact.kind === 0}
+        <Button popoverOpen="#contact-pending-popover">
+          <Icon ios="f7:ellipsis" md="material:more_horiz" />
+        </Button>
+      {:else if contact.kind === 1}
         <Button onClick={removeContact}>
           <Icon ios="f7:person_badge_minus" md="material:person_remove" />
         </Button>
@@ -56,4 +66,10 @@
       <p>Username: {contact.username}</p>
     </CardContent>
   </Card>
+  <Popover id="contact-pending-popover" verticalPosition="bottom" bind:this={popover}>
+    <List>
+      <ListItem title="Cancel request" onClick={removeContact}
+        popoverClose="#contact-pending-popover" />
+    </List>
+  </Popover>
 </Page>
