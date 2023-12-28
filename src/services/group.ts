@@ -4,9 +4,10 @@ import { fetchJson, fetchText } from '../js/fetch';
 import webSocketService from './websocket';
 
 const enum Membership {
-  Invited,
-  Member,
-  Admin
+  Requested = -1,
+  Invited = 0,
+  Member = 1,
+  Admin = 2,
 }
 
 interface ListGroup {
@@ -25,6 +26,8 @@ interface Member {
 interface Group {
   id: string;
   name: string;
+  public: boolean;
+  memberKind: number | null;
   members?: Member[];
 }
 

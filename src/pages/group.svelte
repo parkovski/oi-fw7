@@ -86,48 +86,64 @@
     pendingChats = [...pendingChats, pending];
   }
 
+  async function joinGroup() {
+    await groupService.joinGroup(f7route.params.id);
+    groupService.getGroup(f7route.params.id).refresh();
+  }
+
+  async function leaveGroup() {
+    await groupService.leaveGroup(f7route.params.id);
+    groupService.getGroup(f7route.params.id).refresh();
+ }
+
   onMount(() => {
     const myUid = cookie.parse(document.cookie)?.uid || '0';
 
-    groupService.getGroupChat(f7route.params.id).then(cs => {
-      chats = cs.map(c => ({
-        id: c.id,
-        to: f7route.params.id,
-        from: c.uid_from === myUid ? undefined : c.uid_from,
-        fromName: c.name,
-        text: c.message,
-      }));
-    });
-
-    const groupSubscription = groupService.getGroup(f7route.params.id).subscribe(value => group = value);
-
-    const messageSentSubscription = groupService.observeMessageSent().subscribe(msg => {
-      const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
-      if (chat) {
-        pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
-        chats = [...chats, {
-          id: msg.id,
-          to: msg.to,
-          text: msg.text,
-        }];
-      }
-    });
-
-    const messageReceivedSubscription = groupService.observeMessageReceived().subscribe(msg => {
-      if (msg.from !== myUid && msg.to === f7route.params.id) {
-        chats = [...chats, {
-          id: msg.id,
-          from: msg.from,
-          fromName: msg.fromName,
-          text: msg.text,
-        }];
+    const groupEntity = groupService.getGroup(f7route.params.id);
+    let groupSubscription;
+    let messageSentSubscription;
+    let messageReceivedSubscription;
+    groupEntity.ensureLoaded().then(value => {
+      group = value;
+      groupSubscription = groupService.getGroup(f7route.params.id).subscribe(value => group = value);
+      if (value.memberKind && value.memberKind > 0) {
+        groupService.getGroupChat(f7route.params.id).then(cs => {
+          chats = cs.map(c => ({
+            id: c.id,
+            to: f7route.params.id,
+            from: c.uid_from === myUid ? undefined : c.uid_from,
+            fromName: c.name,
+            text: c.message,
+          }));
+        });
+        messageSentSubscription = groupService.observeMessageSent().subscribe(msg => {
+          const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
+          if (chat) {
+            pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
+            chats = [...chats, {
+              id: msg.id,
+              to: msg.to,
+              text: msg.text,
+            }];
+          }
+        });
+        messageReceivedSubscription = groupService.observeMessageReceived().subscribe(msg => {
+          if (msg.from !== myUid && msg.to === f7route.params.id) {
+            chats = [...chats, {
+              id: msg.id,
+              from: msg.from,
+              fromName: msg.fromName,
+              text: msg.text,
+            }];
+          }
+        });
       }
     });
 
     return () => {
-      groupSubscription.unsubscribe();
-      messageSentSubscription.unsubscribe();
-      messageReceivedSubscription.unsubscribe();
+      groupSubscription && groupSubscription.unsubscribe();
+      messageSentSubscription && messageSentSubscription.unsubscribe();
+      messageReceivedSubscription && messageReceivedSubscription.unsubscribe();
     };
   });
 </script>
@@ -151,29 +167,46 @@
 
 <Page>
   <Navbar title={group.name} backLink="Back" />
-  <div class="group-container">
-    <Block style="margin: 10px 0">
-      <div class="grid grid-cols-3 grid-gap">
-        <Button fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
-        <Button id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
-        <Button id="membersButton" on:click={changeView('members')}>Members</Button>
+  {#if group.memberKind !== null && group.memberKind > 0}
+    <div class="group-container">
+      <Block style="margin: 10px 0">
+        <div class="grid grid-cols-3 grid-gap">
+          <Button fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
+          <Button id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
+          <Button id="membersButton" on:click={changeView('members')}>Members</Button>
+        </div>
+      </Block>
+    {#if currentButton === 'chat'}
+      <div class="chat-container">
+        <Chat aggregate={chatsAggregate} {pendingChats} {onSend} />
       </div>
+    {:else if currentButton === 'calendar'}
+      <Fab position="right-bottom" href="/groups/newevent/">
+        <Icon ios="f7:plus" md="material:add" />
+      </Fab>
+      <Block strong class="no-padding no-margin">
+        <div id="group-calendar"></div>
+      </Block>
+      <Calendar {events} elementName="#group-calendar" />
+    {:else if currentButton === 'members'}
+      <div class="contacts-container">
+        <Contacts contacts={group.members} />
+      </div>
+    {/if}
+  </div>
+  {:else if group.memberKind === -1}
+    <Block>
+      You have requested to join this group.
     </Block>
-  {#if currentButton === 'chat'}
-    <div class="chat-container">
-      <Chat aggregate={chatsAggregate} {pendingChats} {onSend} />
-    </div>
-  {:else if currentButton === 'calendar'}
-    <Fab position="right-bottom" href="/groups/newevent/">
-      <Icon ios="f7:plus" md="material:add" />
-    </Fab>
-    <Block strong class="no-padding no-margin">
-      <div id="group-calendar"></div>
+    <Block>
+      <Button fill color="red" on:click={leaveGroup}>Abandon request</Button>
     </Block>
-    <Calendar {events} elementName="#group-calendar" />
-  {:else if currentButton === 'members'}
-    <div class="contacts-container">
-      <Contacts contacts={group.members} />
-    </div>
+  {:else}
+    <Block>
+      You are not a member of this group.
+    </Block>
+    <Block>
+      <Button fill on:click={joinGroup}>Join group</Button>
+    </Block>
   {/if}
 </Page>

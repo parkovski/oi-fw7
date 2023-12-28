@@ -27,6 +27,7 @@
     </CardHeader>
     <CardContent>
       This is an event you've been invited to.
+      <Link href="/groups/view/4/">Friday hangouts</Link>
     </CardContent>
   </Card>
 
