@@ -6,6 +6,14 @@
     Button,
     Icon,
     Fab,
+    List,
+    ListItem,
+    Link,
+    Actions,
+    ActionsGroup,
+    ActionsLabel,
+    ActionsButton,
+    f7,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import cookie from 'cookie';
@@ -111,6 +119,31 @@
     groupService.getGroup(f7route.params.id).refresh();
   }
 
+  let confirmLeaveActions;
+  async function confirmLeaveGroup() {
+    if (!confirmLeaveActions) {
+      confirmLeaveActions = f7.actions.create({
+        buttons: [
+          {
+            text: 'Leave group?',
+            label: true,
+          },
+          {
+            text: 'Leave',
+            color: 'red',
+            onClick: leaveGroup,
+          },
+          {
+            text: 'Cancel',
+            onClick: () => confirmLeaveActions.close(),
+          },
+        ],
+        targetEl: document.querySelector('#confirm-leave-group'),
+      });
+    }
+    confirmLeaveActions.open();
+  }
+
   onMount(() => {
     const myUid = cookie.parse(document.cookie)?.uid || '0';
 
@@ -148,6 +181,9 @@
       groupSubscription.unsubscribe();
       messageSentSubscription.unsubscribe();
       messageReceivedSubscription.unsubscribe();
+      if (confirmLeaveActions) {
+        confirmLeaveActions.destroy();
+      }
     };
   });
 </script>
@@ -157,6 +193,7 @@
     height: 100%;
     /* There's a small amount of unnecessary scrolling without this. */
     overflow-y: hidden;
+    width: 100%;
   }
 
   .chat-container, .contacts-container {
@@ -174,10 +211,11 @@
   {#if group.memberKind !== null && group.memberKind > 0}
     <div class="group-container">
       <Block style="margin: 10px 0">
-        <div class="grid grid-cols-3 grid-gap">
+        <div class="grid grid-cols-4 grid-gap">
           <Button fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
           <Button id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
           <Button id="membersButton" on:click={changeView('members')}>Members</Button>
+          <Button id="settingsButton" on:click={changeView('settings')}>Settings</Button>
         </div>
       </Block>
     {#if currentButton === 'chat'}
@@ -196,6 +234,14 @@
       <div class="contacts-container">
         <Contacts contacts={group.members} />
       </div>
+    {:else if currentButton === 'settings'}
+      <Block>
+        <Button fill>View join requests</Button>
+      </Block>
+      <Block>
+        <Button fill color="red" id="confirm-leave-group"
+          on:click={confirmLeaveGroup}>Leave group</Button>
+      </Block>
     {/if}
   </div>
   {:else if group.memberKind === -1}

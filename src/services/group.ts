@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import Entity from './entity';
-import { fetchJson, fetchText } from '../js/fetch';
+import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 import webSocketService from './websocket';
 
 const enum Membership {
@@ -91,12 +91,27 @@ class GroupService {
     });
   }
 
-  joinGroup(id: string) {
-    return fetchText(`/groups/${id}/join`, { method: 'POST' });
+  async joinGroup(id: string) {
+    try {
+      await fetchText(`/groups/${id}/join`, { method: 'POST' });
+      const group = await this.getGroup(id).ensureLoaded();
+      this.groups.data!.push({
+        id: group.id,
+        name: group.name,
+        kind: Membership.Member,
+      });
+      this.groups.publish();
+    } catch {
+      // Probably the fetch failed - do nothing.
+    }
   }
 
-  leaveGroup(id: string) {
-    return fetchText(`/groups/${id}/leave`, { method: 'POST' });
+  async leaveGroup(id: string) {
+    const res = await fetchAny(`/groups/${id}/leave`, { method: 'POST' });
+    if (res.ok) {
+      this.groups.data = this.groups.data!.filter(g => g.id !== id);
+      this.groups.publish();
+    }
   }
 
   observeMessageSent() {

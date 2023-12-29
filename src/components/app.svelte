@@ -143,7 +143,7 @@
   <Panel right reveal id="right-panel">
     <View>
       <Page>
-        <Navbar title="Right Panel"/>
+        <Navbar title="Menu"/>
         <List style="margin-top: 0">
           <ListItem>
             <Link text="My Profile" onClick={() => panelNavigate('/profile/')}/>
