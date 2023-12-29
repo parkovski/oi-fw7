@@ -34,7 +34,7 @@
     <ListItem title={firstLetter} groupTitle />
     {#each contactsByFirstLetter[firstLetter] as contact, index (contact.id)}
       <ListItem title={contact.name} href={`/contacts/view/${contact.id}/`}
-        footer={contact.has_contact === 'pending' ? 'Pending' : undefined}>
+        footer={contact.has_contact === 'pending' ? 'Requested' : undefined}>
         <Icon slot="media" ios="f7:person_fill" md="material:person" />
       </ListItem>
     {/each}
