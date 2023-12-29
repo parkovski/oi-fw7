@@ -1,0 +1,89 @@
+<script>
+  import {
+    Page,
+    Navbar,
+    Block,
+    Button,
+  } from 'framework7-svelte';
+  import { onMount } from 'svelte';
+  import Select from 'svelte-select';
+  import groupService from '../services/group';
+  import userService from '../services/user';
+
+  export let f7route;
+  export let f7router;
+
+  let items = [];
+  let value;
+  let groupName;
+
+  const htmlElement = document.querySelector('html');
+  let isDarkMode = htmlElement.classList.contains('dark');
+
+  onMount(() => {
+    const observer = new MutationObserver(list => {
+      for (let mutation of list) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          isDarkMode = mutation.target.classList.contains('dark');
+        }
+      }
+    });
+    observer.observe(htmlElement, { attributes: true });
+
+    userService.getContacts().ensureLoaded().then(contacts => {
+      groupService.getGroup(f7route.params.id).ensureLoaded().then(group => {
+        groupName = group.name;
+        const groupUsers = new Set(group.members.map(m => m.id));
+        console.log(groupUsers);
+        console.log(contacts.contacts);
+        items = contacts.contacts.filter(c => !groupUsers.has(c.id)).map(c => ({
+          value: c.id,
+          label: c.name
+        }));
+      });
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  });
+
+  async function invite() {
+    if (!value || !value.length) {
+      return;
+    }
+    await groupService.inviteToGroup(f7route.params.id, value.map(v => v.value));
+    f7router.back();
+  }
+</script>
+
+<style>
+  :global(.select-contacts) {
+    background-color: var(--f7-text-editor-bg-color) !important;
+    color: var(--f7-text-color);
+  }
+  .title {
+    padding-bottom: .5em;
+  }
+</style>
+
+<Page>
+  <Navbar title="{groupName} - Invite" backLink="Back" />
+  <Block style="margin: 2em 0">
+    <div class="title">Invite contacts:</div>
+    <Select {items} class="select-contacts" searchable multiple
+      bind:value
+      placeholder="Select contacts"
+      --list-background="var(--f7-text-editor-bg-color)"
+      --item-color="var(--f7-text-color)"
+      --item-hover-bg="#888"
+      --multi-item-bg={isDarkMode ? "#111" : undefined}
+      --multi-item-clear-icon-color={isDarkMode ? "white" : undefined}
+      --multi-item-outline={isDarkMode ? "1px solid #444" : undefined}
+      --border={isDarkMode ? "1px solid #444" : undefined}
+    />
+  </Block>
+  <Block style="margin: 2em 0; z-index: 0">
+    <Button onClick={invite}>Invite</Button>
+  </Block>
+</Page>

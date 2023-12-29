@@ -113,6 +113,15 @@ class GroupService {
     });
   }
 
+  inviteToGroup(gid: string, uids: string[]) {
+    return fetchAny(`/groups/${gid}/invite`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        uids: JSON.stringify(uids),
+      }),
+    });
+  }
+
   async joinGroup(id: string) {
     try {
       await fetchText(`/groups/${id}/join`, { method: 'POST' });

@@ -242,6 +242,9 @@
           <Contacts contacts={group.members} />
         </div>
       {:else if currentButton === 'settings'}
+        <Block>
+          <Button fill href="/groups/invite/{f7route.params.id}/">Invite contacts</Button>
+        </Block>
         {#if group.memberKind === 2}
           <Block>
             <Button fill href="/groups/requests/{f7route.params.id}/">View join requests</Button>
