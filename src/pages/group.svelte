@@ -86,64 +86,68 @@
     pendingChats = [...pendingChats, pending];
   }
 
+  async function loadChat() {
+    const myUid = cookie.parse(document.cookie)?.uid || '0';
+    chats = (await groupService.getGroupChat(f7route.params.id)).map(c => ({
+      id: c.id,
+      to: f7route.params.id,
+      from: c.uid_from === myUid ? undefined : c.uid_from,
+      fromName: c.name,
+      text: c.message,
+    }));
+  }
+
   async function joinGroup() {
     await groupService.joinGroup(f7route.params.id);
-    groupService.getGroup(f7route.params.id).refresh();
+    const group = groupService.getGroup(f7route.params.id);
+    await group.refresh();
+    if ((await group.ensureLoaded()).memberKind > 0) {
+      loadChat();
+    }
   }
 
   async function leaveGroup() {
     await groupService.leaveGroup(f7route.params.id);
     groupService.getGroup(f7route.params.id).refresh();
- }
+  }
 
   onMount(() => {
     const myUid = cookie.parse(document.cookie)?.uid || '0';
 
     const groupEntity = groupService.getGroup(f7route.params.id);
-    let groupSubscription;
-    let messageSentSubscription;
-    let messageReceivedSubscription;
+    const groupSubscription = groupEntity.subscribe(value => group = value);
     groupEntity.ensureLoaded().then(value => {
-      group = value;
-      groupSubscription = groupService.getGroup(f7route.params.id).subscribe(value => group = value);
       if (value.memberKind && value.memberKind > 0) {
-        groupService.getGroupChat(f7route.params.id).then(cs => {
-          chats = cs.map(c => ({
-            id: c.id,
-            to: f7route.params.id,
-            from: c.uid_from === myUid ? undefined : c.uid_from,
-            fromName: c.name,
-            text: c.message,
-          }));
-        });
-        messageSentSubscription = groupService.observeMessageSent().subscribe(msg => {
-          const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
-          if (chat) {
-            pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
-            chats = [...chats, {
-              id: msg.id,
-              to: msg.to,
-              text: msg.text,
-            }];
-          }
-        });
-        messageReceivedSubscription = groupService.observeMessageReceived().subscribe(msg => {
-          if (msg.from !== myUid && msg.to === f7route.params.id) {
-            chats = [...chats, {
-              id: msg.id,
-              from: msg.from,
-              fromName: msg.fromName,
-              text: msg.text,
-            }];
-          }
-        });
+        loadChat();
+      }
+    });
+
+    const messageSentSubscription = groupService.observeMessageSent().subscribe(msg => {
+      const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
+      if (chat) {
+        pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
+        chats = [...chats, {
+          id: msg.id,
+          to: msg.to,
+          text: msg.text,
+        }];
+      }
+    });
+    const messageReceivedSubscription = groupService.observeMessageReceived().subscribe(msg => {
+      if (msg.from !== myUid && msg.to === f7route.params.id) {
+        chats = [...chats, {
+          id: msg.id,
+          from: msg.from,
+          fromName: msg.fromName,
+          text: msg.text,
+        }];
       }
     });
 
     return () => {
-      groupSubscription && groupSubscription.unsubscribe();
-      messageSentSubscription && messageSentSubscription.unsubscribe();
-      messageReceivedSubscription && messageReceivedSubscription.unsubscribe();
+      groupSubscription.unsubscribe();
+      messageSentSubscription.unsubscribe();
+      messageReceivedSubscription.unsubscribe();
     };
   });
 </script>
