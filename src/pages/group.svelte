@@ -26,7 +26,9 @@
   export let f7route;
 
   let currentButton = 'chat';
-  let group = {};
+  let group = {
+    loading: true,
+  };
   let chats = [];
   let chatsAggregate = [];
   let pendingChats = [];
@@ -208,55 +210,63 @@
 
 <Page>
   <Navbar title={group.name} backLink="Back" />
-  {#if group.memberKind !== null && group.memberKind > 0}
-    <div class="group-container">
-      <Block style="margin: 10px 0">
-        <div class="grid grid-cols-4 grid-gap">
-          <Button fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
-          <Button id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
-          <Button id="membersButton" on:click={changeView('members')}>Members</Button>
-          <Button id="settingsButton" on:click={changeView('settings')}>Settings</Button>
-        </div>
-      </Block>
-    {#if currentButton === 'chat'}
-      <div class="chat-container">
-        <Chat aggregate={chatsAggregate} {pendingChats} {onSend} />
-      </div>
-    {:else if currentButton === 'calendar'}
-      <Fab position="right-bottom" href="/groups/newevent/">
-        <Icon ios="f7:plus" md="material:add" />
-      </Fab>
-      <Block strong class="no-padding no-margin">
-        <div id="group-calendar"></div>
-      </Block>
-      <Calendar {events} elementName="#group-calendar" />
-    {:else if currentButton === 'members'}
-      <div class="contacts-container">
-        <Contacts contacts={group.members} />
-      </div>
-    {:else if currentButton === 'settings'}
-      <Block>
-        <Button fill>View join requests</Button>
-      </Block>
-      <Block>
-        <Button fill color="red" id="confirm-leave-group"
-          on:click={confirmLeaveGroup}>Leave group</Button>
-      </Block>
-    {/if}
-  </div>
-  {:else if group.memberKind === -1}
+  {#if group.loading}
     <Block>
-      You have requested to join this group.
-    </Block>
-    <Block>
-      <Button fill color="red" on:click={leaveGroup}>Abandon request</Button>
+      Loading...
     </Block>
   {:else}
-    <Block>
-      You are not a member of this group.
-    </Block>
-    <Block>
-      <Button fill on:click={joinGroup}>Join group</Button>
-    </Block>
+    {#if group.memberKind !== null && group.memberKind > 0}
+      <div class="group-container">
+        <Block style="margin: 10px 0">
+          <div class="grid grid-cols-4 grid-gap">
+            <Button fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
+            <Button id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
+            <Button id="membersButton" on:click={changeView('members')}>Members</Button>
+            <Button id="settingsButton" on:click={changeView('settings')}>Settings</Button>
+          </div>
+        </Block>
+      {#if currentButton === 'chat'}
+        <div class="chat-container">
+          <Chat aggregate={chatsAggregate} {pendingChats} {onSend} />
+        </div>
+      {:else if currentButton === 'calendar'}
+        <Fab position="right-bottom" href="/groups/newevent/">
+          <Icon ios="f7:plus" md="material:add" />
+        </Fab>
+        <Block strong class="no-padding no-margin">
+          <div id="group-calendar"></div>
+        </Block>
+        <Calendar {events} elementName="#group-calendar" />
+      {:else if currentButton === 'members'}
+        <div class="contacts-container">
+          <Contacts contacts={group.members} />
+        </div>
+      {:else if currentButton === 'settings'}
+        {#if group.memberKind === 2}
+          <Block>
+            <Button fill href="/groups/requests/{f7route.params.id}/">View join requests</Button>
+          </Block>
+        {/if}
+        <Block>
+          <Button fill color="red" id="confirm-leave-group"
+            on:click={confirmLeaveGroup}>Leave group</Button>
+        </Block>
+      {/if}
+    </div>
+    {:else if group.memberKind === -1}
+      <Block>
+        You have requested to join this group.
+      </Block>
+      <Block>
+        <Button fill color="red" on:click={leaveGroup}>Abandon request</Button>
+      </Block>
+    {:else}
+      <Block>
+        You are not a member of this group.
+      </Block>
+      <Block>
+        <Button fill on:click={joinGroup}>Join group</Button>
+      </Block>
+    {/if}
   {/if}
 </Page>

@@ -91,6 +91,28 @@ class GroupService {
     });
   }
 
+  getGroupRequests(id: string) {
+    return fetchJson(`/groups/${id}/requests`);
+  }
+
+  approveGroupRequest(gid: string, uid: string) {
+    return fetchAny(`/groups/${gid}/approve`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        uid,
+      }),
+    });
+  }
+
+  denyGroupRequest(gid: string, uid: string) {
+    return fetchAny(`/groups/${gid}/deny`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        uid,
+      }),
+    });
+  }
+
   async joinGroup(id: string) {
     try {
       await fetchText(`/groups/${id}/join`, { method: 'POST' });
