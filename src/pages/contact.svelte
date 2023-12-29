@@ -23,7 +23,9 @@
     name: '',
     username: '',
   };
-  let popover;
+
+  let cancelRequestPopover;
+  let removeContactPopover;
 
   onMount(() => {
     const subscription = userService.getUser(contact.id).subscribe(user => contact = user);
@@ -36,7 +38,8 @@
 
   function removeContact() {
     userService.removeContact(contact.id);
-    popover.instance().close();
+    cancelRequestPopover.instance().close();
+    removeContactPopover.instance().close();
   }
 </script>
 
@@ -53,7 +56,7 @@
           <Icon ios="f7:ellipsis" md="material:more_horiz" />
         </Button>
       {:else if contact.kind === 1}
-        <Button onClick={removeContact}>
+        <Button popoverOpen="#remove-contact-popover">
           <Icon ios="f7:person_badge_minus" md="material:person_remove" />
         </Button>
       {:else}
@@ -66,10 +69,18 @@
       <p>Username: {contact.username}</p>
     </CardContent>
   </Card>
-  <Popover id="contact-pending-popover" verticalPosition="bottom" bind:this={popover}>
+  <Popover id="contact-pending-popover" verticalPosition="bottom"
+    bind:this={cancelRequestPopover}
+  >
     <List>
-      <ListItem title="Cancel request" onClick={removeContact}
-        popoverClose="#contact-pending-popover" />
+      <ListItem title="Cancel request" onClick={removeContact} />
+    </List>
+  </Popover>
+  <Popover id="remove-contact-popover" verticalPosition="bottom"
+    bind:this={removeContactPopover}
+  >
+    <List>
+      <ListItem title="Remove contact" onClick={removeContact} />
     </List>
   </Popover>
 </Page>
