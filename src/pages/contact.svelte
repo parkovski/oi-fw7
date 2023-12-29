@@ -8,9 +8,6 @@
     CardContent,
     Icon,
     Button,
-    Popover,
-    List,
-    ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
@@ -22,14 +19,19 @@
     id: f7route.params.id,
     name: '',
     username: '',
+    loading: true,
   };
 
-  let cancelRequestPopover;
-  let removeContactPopover;
+  let cancelRequestActions;
+  let removeContactActions;
 
   onMount(() => {
     const subscription = userService.getUser(contact.id).subscribe(user => contact = user);
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      cancelRequestActions && cancelRequestActions.destroy();
+      removeContactActions && removeContactActions.destroy();
+    }
   });
 
   function addContact() {
@@ -38,8 +40,52 @@
 
   function removeContact() {
     userService.removeContact(contact.id);
-    cancelRequestPopover.instance().close();
-    removeContactPopover.instance().close();
+  }
+
+  function confirmCancelRequest() {
+    if (!cancelRequestActions) {
+      cancelRequestActions = f7.actions.create({
+        buttons: [
+          {
+            text: 'Cancel request?',
+            label: true,
+          },
+          {
+            text: 'Cancel request',
+            color: 'red',
+            onClick: removeContact,
+          },
+          {
+            text: 'Keep request',
+          },
+        ],
+        targetEl: document.getElementById('cancel-request-button'),
+      });
+    }
+    cancelRequestActions.open();
+  }
+
+  function confirmRemoveContact() {
+    if (!removeContactActions) {
+      removeContactActions = f7.actions.create({
+        buttons: [
+          {
+            text: 'Remove contact?',
+            label: true,
+          },
+          {
+            text: 'Remove',
+            color: 'red',
+            onClick: removeContact,
+          },
+          {
+            text: 'Cancel',
+          }
+        ],
+        targetEl: document.getElementById('remove-contact-button'),
+      });
+    }
+    removeContactActions.open();
   }
 </script>
 
@@ -52,14 +98,14 @@
           /><span style="margin-left: 8px">{contact.name}</span>
       </div>
       {#if contact.kind === 0}
-        <Button popoverOpen="#contact-pending-popover">
+        <Button id="cancel-request-button" on:click={confirmCancelRequest}>
           <Icon ios="f7:ellipsis" md="material:more_horiz" />
         </Button>
       {:else if contact.kind === 1}
-        <Button popoverOpen="#remove-contact-popover">
+        <Button id="remove-contact-button" on:click={confirmRemoveContact}>
           <Icon ios="f7:person_badge_minus" md="material:person_remove" />
         </Button>
-      {:else}
+      {:else if !contact.loading}
         <Button onClick={addContact}>
           <Icon ios="f7:person_badge_plus" md="material:person_add" />
         </Button>
@@ -69,18 +115,4 @@
       <p>Username: {contact.username}</p>
     </CardContent>
   </Card>
-  <Popover id="contact-pending-popover" verticalPosition="bottom"
-    bind:this={cancelRequestPopover}
-  >
-    <List>
-      <ListItem title="Cancel request" onClick={removeContact} />
-    </List>
-  </Popover>
-  <Popover id="remove-contact-popover" verticalPosition="bottom"
-    bind:this={removeContactPopover}
-  >
-    <List>
-      <ListItem title="Remove contact" onClick={removeContact} />
-    </List>
-  </Popover>
 </Page>
