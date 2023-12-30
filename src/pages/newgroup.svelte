@@ -52,7 +52,7 @@
 
 <style>
   :global(.select-contacts) {
-    background-color: var(--f7-text-editor-bg-color) !important;
+    background-color: var(--f7-input-item-bg-color) !important;
     color: var(--f7-text-color);
   }
   .title {

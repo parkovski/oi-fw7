@@ -57,7 +57,7 @@
 
 <style>
   :global(.select-contacts) {
-    background-color: var(--f7-text-editor-bg-color) !important;
+    background-color: var(--f7-input-item-bg-color) !important;
     color: var(--f7-text-color);
   }
   .title {
@@ -75,7 +75,7 @@
       --list-background="var(--f7-text-editor-bg-color)"
       --item-color="var(--f7-text-color)"
       --item-hover-bg="#888"
-      --multi-item-bg={isDarkMode ? "#111" : undefined}
+      --multi-item-bg={isDarkMode ? "#282828" : undefined}
       --multi-item-clear-icon-color={isDarkMode ? "white" : undefined}
       --multi-item-outline={isDarkMode ? "1px solid #444" : undefined}
       --border={isDarkMode ? "1px solid #444" : undefined}
