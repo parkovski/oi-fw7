@@ -38,8 +38,5 @@
   <Fab position="right-bottom" href="/events/new/">
     <Icon ios="f7:plus" md="material:add" />
   </Fab>
-  <Block strong class="no-padding no-margin">
-    <div id="events-calendar"></div>
-  </Block>
-  <Calendar {events} elementName="#events-calendar" />
+  <Calendar {events} elementId="events-calendar" />
 </Page>

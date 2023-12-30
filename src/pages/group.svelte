@@ -206,10 +206,7 @@
         <Fab position="right-bottom" href="/groups/newevent/">
           <Icon ios="f7:plus" md="material:add" />
         </Fab>
-        <Block strong class="no-padding no-margin">
-          <div id="group-calendar"></div>
-        </Block>
-        <Calendar {events} elementName="#group-calendar" />
+        <Calendar {events} elementId="group-calendar" />
       {:else if currentButton === 'members'}
         <div class="contacts-container">
           <Contacts contacts={group.members} />

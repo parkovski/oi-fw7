@@ -11,7 +11,7 @@
   import { onMount } from 'svelte';
 
   export let events = [];
-  export let elementName = '#calendar';
+  export let elementId = '#calendar';
 
   let calendar;
   let eventItems = [];
@@ -37,60 +37,11 @@
   }
 
   onMount(() => {
-    const $ = f7.$;
-
-    // Inline with custom toolbar
-    const monthNames = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-
     calendar = f7.calendar.create({
-      containerEl: elementName,
+      containerEl: '#' + elementId,
       value: [new Date()],
       events,
-      renderToolbar() {
-        return `
-          <div class="toolbar calendar-custom-toolbar">
-            <div class="toolbar-inner">
-              <div class="left">
-                <a class="link icon-only"><i class="icon icon-back"></i></a>
-              </div>
-              <div class="center"></div>
-              <div class="right">
-                <a class="link icon-only"><i class="icon icon-forward"></i></a>
-              </div>
-            </div>
-          </div>
-        `.trim();
-      },
       on: {
-        init(c) {
-          $(elementName + ' .calendar-custom-toolbar .center').text(
-            `${monthNames[c.currentMonth]}, ${c.currentYear}`,
-          );
-          $(elementName + ' .calendar-custom-toolbar .left .link').on('click', () => {
-            c.prevMonth();
-          });
-          $(elementName + ' .calendar-custom-toolbar .right .link').on('click', () => {
-            c.nextMonth();
-          });
-        },
-        monthYearChangeStart(c) {
-          $(elementName + ' .calendar-custom-toolbar .center').text(
-            `${monthNames[c.currentMonth]}, ${c.currentYear}`,
-          );
-        },
         change(c) {
           renderEvents(c);
         }
@@ -112,8 +63,12 @@
   .item-inner {
     padding-left: 16px;
   }
+  :global(.toolbar.toolbar-top) {
+    top: 0 !important;
+  }
 </style>
 
+<div id={elementId}></div>
 <List class="no-margin no-hairlines no-safe-area-left">
   {#each eventItems as evt}
     <ListItem class="no-padding">
