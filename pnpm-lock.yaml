@@ -62,6 +62,9 @@ dependencies:
   swiper:
     specifier: ^11.0.5
     version: 11.0.5
+  zxing-wasm:
+    specifier: ^1.2.0
+    version: 1.2.0
 
 devDependencies:
   '@capacitor/cli':
@@ -2361,6 +2364,10 @@ packages:
     dependencies:
       defer-to-connect: 1.1.3
     dev: true
+
+  /@types/emscripten@1.39.10:
+    resolution: {integrity: sha512-TB/6hBkYQJxsZHSqyeuO1Jt0AB/bW6G7rHt9g7lML7SOF6lbgcHvw/Lr+69iqN0qxgXLhWKScAon73JNnptuDw==}
+    dev: false
 
   /@types/estree@0.0.39:
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
@@ -6444,3 +6451,9 @@ packages:
       buffer-crc32: 0.2.13
       fd-slicer: 1.1.0
     dev: true
+
+  /zxing-wasm@1.2.0:
+    resolution: {integrity: sha512-t3qlokBJCDv635yyUFrNdGcpbKay9oN8Unb/FbKpSkKwB8+0ghT7+loK2xQlAwzAqZ/PF+vTM7XhEbBbdfQAZg==}
+    dependencies:
+      '@types/emscripten': 1.39.10
+    dev: false

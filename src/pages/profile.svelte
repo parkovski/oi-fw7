@@ -8,13 +8,30 @@
     Icon,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
+  import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
 
   import profileService from '../services/profile';
 
   let profile = {};
+
   onMount(() => {
-    const subscription = profileService.getProfile().subscribe(p => profile = p);
-    return () => subscription.unsubscribe();
+    const profileSubscription = profileService.getProfile().subscribe(p => profile = p);
+    profileService.getProfile().ensureLoaded().then(async profile => {
+      const qrcode = await writeBarcodeToImageFile(
+        `openinvite-profile:${profile.id}`,
+        {
+          format: 'QRCode',
+          width: 160,
+          height: 160,
+          margin: 4,
+          eccLevel: 2,
+        }
+      );
+      const img = document.getElementById('qr-code');
+      const url = URL.createObjectURL(qrcode.image);
+      img.src = url;
+    });
+    return () => profileSubscription.unsubscribe();
   });
 </script>
 
@@ -38,6 +55,7 @@
       {#if profile.email}
         <p>Email: {profile.email}</p>
       {/if}
+      <img id="qr-code" alt="Profile QR code">
     </CardContent>
   </Card>
 </Page>
