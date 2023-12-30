@@ -14,6 +14,7 @@ import ProfilePage from '../pages/profile.svelte';
 import MessagesPage from '../pages/messages.svelte';
 import MessagePage from '../pages/message.svelte';
 import NewMessagePage from '../pages/newmessage.svelte';
+import QRCodePage from '../pages/qrcode.svelte';
 import SettingsPage from '../pages/settings.svelte';
 import NotFoundPage from '../pages/404.svelte';
 
@@ -81,6 +82,10 @@ var routes = [
   {
     path: '/messages/view/:id/',
     component: MessagePage,
+  },
+  {
+    path: '/qrcode/',
+    component: QRCodePage,
   },
   {
     path: '/settings/',

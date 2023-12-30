@@ -13,6 +13,7 @@
   import profileService from '../services/profile';
 
   let profile = {};
+  let qrcodeUrl;
 
   onMount(() => {
     const profileSubscription = profileService.getProfile().subscribe(p => profile = p);
@@ -28,12 +29,22 @@
         }
       );
       const img = document.getElementById('qr-code');
-      const url = URL.createObjectURL(qrcode.image);
-      img.src = url;
+      qrcodeUrl = URL.createObjectURL(qrcode.image);
+      img.src = qrcodeUrl;
     });
-    return () => profileSubscription.unsubscribe();
+    return () => {
+      profileSubscription.unsubscribe();
+      qrcodeUrl && URL.revokeObjectURL(qrcodeUrl);
+    };
   });
 </script>
+
+<style>
+  #qr-container {
+    width: 100%;
+    text-align: center;
+  }
+</style>
 
 <Page>
   <Navbar title="My Profile" backLink="Back" />
@@ -55,7 +66,9 @@
       {#if profile.email}
         <p>Email: {profile.email}</p>
       {/if}
-      <img id="qr-code" alt="Profile QR code">
+      <div id="qr-container">
+        <img id="qr-code" alt="Profile QR code">
+      </div>
     </CardContent>
   </Card>
 </Page>

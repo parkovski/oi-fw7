@@ -71,7 +71,8 @@
       <Block>
         You have no contact requests.
       </Block>
+    {:else}
+      <ContactRequests contacts={requests} onApprove={approveContact} onDeny={denyContact}/>
     {/if}
-    <ContactRequests contacts={requests} onApprove={approveContact} onDeny={denyContact}/>
   {/if}
 </Page>
