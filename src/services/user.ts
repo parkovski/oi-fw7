@@ -81,6 +81,26 @@ class UserService {
     } catch {
     }
   }
+
+  async approveContact(id: string) {
+    try {
+      await fetchAny(`/contacts/${id}/approve`, { method: 'POST' });
+      const requestsData = await this.requests.ensureLoaded();
+      this.requests.data = requestsData.filter(c => c.id !== id);
+      this.requests.publish();
+    } catch {
+    }
+  }
+
+  async denyContact(id: string) {
+    try {
+      await fetchAny(`/contacts/${id}/deny`, { method: 'POST' });
+      const requestsData = await this.requests.ensureLoaded();
+      this.requests.data = requestsData.filter(c => c.id !== id);
+      this.requests.publish();
+    } catch {
+    }
+  }
 }
 
 const service = new UserService;

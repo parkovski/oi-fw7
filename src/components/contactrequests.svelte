@@ -3,11 +3,13 @@
     List,
     ListItem,
     Icon,
+    Button,
   } from 'framework7-svelte';
-
   import { beforeUpdate } from 'svelte';
 
   export let contacts = [];
+  export let onApprove;
+  export let onDeny;
 
   let firstLetters = [];
   let contactsByFirstLetter = {};
@@ -36,6 +38,8 @@
       <ListItem title={contact.name} href={`/contacts/view/${contact.id}/`}
         footer={contact.has_contact === 'pending' ? 'Requested' : undefined}>
         <Icon slot="media" ios="f7:person_fill" md="material:person" />
+        <Button fill color="red" on:click={() => onDeny(contact.id)}>Deny</Button>
+        <Button fill on:click={() => onApprove(contact.id)}>Approve</Button>
       </ListItem>
     {/each}
   {/each}
