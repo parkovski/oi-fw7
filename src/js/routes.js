@@ -1,4 +1,6 @@
 import HomePage from '../pages/home.svelte';
+import HomePanelPage from '../pages/homepanel.svelte';
+import GroupPanelPage from '../pages/grouppanel.svelte';
 import AboutPage from '../pages/about.svelte';
 import GroupsPage from '../pages/groups.svelte';
 import GroupPage from '../pages/group.svelte';
@@ -22,6 +24,14 @@ var routes = [
   {
     path: '/',
     component: HomePage,
+  },
+  {
+    path: '/panels/home/',
+    component: HomePanelPage,
+  },
+  {
+    path: '/panels/group/:id/',
+    component: GroupPanelPage,
   },
   {
     path: '/about/',

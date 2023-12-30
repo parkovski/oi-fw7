@@ -1,6 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
-  import { getDevice }  from 'framework7/lite-bundle';
   import {
     f7,
     f7ready,
@@ -8,27 +6,23 @@
     Panel,
     Views,
     View,
-    Popup,
     Page,
-    Navbar,
     Toolbar,
-    NavRight,
     Link,
-    Block,
-    BlockTitle,
     LoginScreen,
     LoginScreenTitle,
     List,
-    ListItem,
     ListInput,
     ListButton,
     BlockFooter
   } from 'framework7-svelte';
+  import { getDevice }  from 'framework7/lite-bundle';
+  import { onMount } from 'svelte';
 
   import capacitorApp from '../js/capacitor-app';
   import routes from '../js/routes';
   import store from '../js/store';
-  import { postLoginEvent, postLogoutEvent } from '../js/onlogin';
+  import { postLoginEvent } from '../js/onlogin';
 
   const device = getDevice();
 
@@ -56,6 +50,14 @@
     },
   };
 
+  function onRouteChanged(newRoute, _prevRoute, _router) {
+    if (newRoute.url === '/') {
+      f7.views.rpanel.router.navigate('/panels/home/', { animate: false });
+    } else if (newRoute.url.startsWith('/groups/view/')) {
+      f7.views.rpanel.router.navigate(`/panels/group/${newRoute.params.id}/`, { animate: false });
+    }
+  }
+
   onMount(() => {
     f7ready(() => {
       // Init capacitor APIs (see capacitor-app.js)
@@ -79,6 +81,10 @@
           console.log(e);
           f7.loginScreen.open(document.getElementById('login-screen'));
         });
+
+      ['home', 'groups', 'events', 'contacts', 'messages'].forEach(tab =>
+        f7.views[tab].router.on('routeChanged', onRouteChanged)
+      );
     });
   })
 
@@ -104,25 +110,6 @@
     }
   }
 
-  async function logout() {
-    try {
-      const response = await fetch('http://localhost:3000/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      f7.panel.close('#right-panel');
-      f7.loginScreen.open(document.getElementById('login-screen'));
-      postLogoutEvent();
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  function panelNavigate(to) {
-    f7.panel.close('#right-panel');
-    f7.views.main.router.navigate(to);
-  }
-
   let currentTab = 'home';
   function tabClick(name) {
     // Go back to the initial page only if this tab is already active and is
@@ -141,28 +128,7 @@
 
 <App { ...f7params }>
   <Panel right reveal id="right-panel">
-    <View>
-      <Page>
-        <Navbar title="Menu"/>
-        <List style="margin-top: 0">
-          <ListItem>
-            <Link text="My Profile" onClick={() => panelNavigate('/profile/')}/>
-          </ListItem>
-          <ListItem>
-            <Link text="Scan QR code" onClick={() => panelNavigate('/qrcode/')}/>
-          </ListItem>
-          <ListItem>
-            <Link text="Settings" onClick={() => panelNavigate('/settings/')}/>
-          </ListItem>
-          <ListItem>
-            <Link text="About" onClick={() => panelNavigate('/about/')}/>
-          </ListItem>
-          <ListItem>
-            <Link text="Sign out" onClick={() => logout()}/>
-          </ListItem>
-        </List>
-      </Page>
-    </View>
+    <View id="view-rpanel" name="rpanel" url="/panels/home/" />
   </Panel>
 
   <!-- Views/Tabs container -->

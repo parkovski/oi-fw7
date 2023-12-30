@@ -2,11 +2,13 @@
   import {
     Page,
     Navbar,
+    NavTitle,
+    NavRight,
     Block,
     Button,
     Icon,
     Fab,
-    f7,
+    Link,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import cookie from 'cookie';
@@ -17,6 +19,7 @@
   import groupService from '../services/group';
 
   export let f7route;
+  export let f7router;
 
   let currentButton = 'chat';
   let group = {
@@ -112,31 +115,7 @@
   async function leaveGroup() {
     await groupService.leaveGroup(f7route.params.id);
     groupService.getGroup(f7route.params.id).refresh();
-  }
-
-  let confirmLeaveActions;
-  async function confirmLeaveGroup() {
-    if (!confirmLeaveActions) {
-      confirmLeaveActions = f7.actions.create({
-        buttons: [
-          {
-            text: 'Leave group?',
-            label: true,
-          },
-          {
-            text: 'Leave',
-            color: 'red',
-            onClick: leaveGroup,
-          },
-          {
-            text: 'Cancel',
-            onClick: () => confirmLeaveActions.close(),
-          },
-        ],
-        targetEl: document.querySelector('#confirm-leave-group'),
-      });
-    }
-    confirmLeaveActions.open();
+    f7router.navigate('/groups/');
   }
 
   onMount(() => {
@@ -176,9 +155,6 @@
       groupSubscription.unsubscribe();
       messageSentSubscription.unsubscribe();
       messageReceivedSubscription.unsubscribe();
-      if (confirmLeaveActions) {
-        confirmLeaveActions.destroy();
-      }
     };
   });
 </script>
@@ -202,7 +178,12 @@
 </style>
 
 <Page>
-  <Navbar title={group.name} backLink="Back" />
+  <Navbar backLink="Back">
+    <NavTitle>{group.name}</NavTitle>
+    <NavRight>
+      <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="right" />
+    </NavRight>
+  </Navbar>
   {#if group.loading}
     <Block>
       Loading...
@@ -211,11 +192,10 @@
     {#if group.memberKind !== null && group.memberKind > 0}
       <div class="group-container">
         <Block style="margin: 10px 0">
-          <div class="grid grid-cols-4 grid-gap">
+          <div class="grid grid-cols-3 grid-gap">
             <Button fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
             <Button id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
             <Button id="membersButton" on:click={changeView('members')}>Members</Button>
-            <Button id="settingsButton" on:click={changeView('settings')}>Settings</Button>
           </div>
         </Block>
       {#if currentButton === 'chat'}
@@ -234,19 +214,6 @@
         <div class="contacts-container">
           <Contacts contacts={group.members} />
         </div>
-      {:else if currentButton === 'settings'}
-        <Block>
-          <Button fill href="/groups/invite/{f7route.params.id}/">Invite contacts</Button>
-        </Block>
-        {#if group.memberKind === 2}
-          <Block>
-            <Button fill href="/groups/requests/{f7route.params.id}/">View join requests</Button>
-          </Block>
-        {/if}
-        <Block>
-          <Button fill color="red" id="confirm-leave-group"
-            on:click={confirmLeaveGroup}>Leave group</Button>
-        </Block>
       {/if}
     </div>
     {:else if group.memberKind === -1}
