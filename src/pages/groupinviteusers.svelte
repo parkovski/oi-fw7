@@ -34,8 +34,6 @@
       groupService.getGroup(f7route.params.id).ensureLoaded().then(group => {
         groupName = group.name;
         const groupUsers = new Set(group.members.map(m => m.id));
-        console.log(groupUsers);
-        console.log(contacts.contacts);
         items = contacts.contacts.filter(c => !groupUsers.has(c.id)).map(c => ({
           value: c.id,
           label: c.name
