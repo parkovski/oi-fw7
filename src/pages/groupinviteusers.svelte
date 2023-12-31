@@ -6,7 +6,7 @@
     Button,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import Select from 'svelte-select';
+  import Select from '../components/select.svelte';
   import groupService from '../services/group';
   import userService from '../services/user';
 
@@ -17,19 +17,7 @@
   let value;
   let groupName;
 
-  const htmlElement = document.querySelector('html');
-  let isDarkMode = htmlElement.classList.contains('dark');
-
   onMount(() => {
-    const observer = new MutationObserver(list => {
-      for (let mutation of list) {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          isDarkMode = mutation.target.classList.contains('dark');
-        }
-      }
-    });
-    observer.observe(htmlElement, { attributes: true });
-
     userService.getContacts().ensureLoaded().then(contacts => {
       groupService.getGroup(f7route.params.id).ensureLoaded().then(group => {
         groupName = group.name;
@@ -40,10 +28,6 @@
         }));
       });
     });
-
-    return () => {
-      observer.disconnect();
-    };
   });
 
   async function invite() {
@@ -56,10 +40,6 @@
 </script>
 
 <style>
-  :global(.select-contacts) {
-    background-color: var(--f7-input-item-bg-color) !important;
-    color: var(--f7-text-color);
-  }
   .title {
     padding-bottom: .5em;
   }
@@ -69,17 +49,7 @@
   <Navbar title="{groupName} - Invite" backLink="Back" />
   <Block style="margin: 2em 0">
     <div class="title">Invite contacts:</div>
-    <Select {items} class="select-contacts" searchable multiple
-      bind:value
-      placeholder="Select contacts"
-      --list-background="var(--f7-text-editor-bg-color)"
-      --item-color="var(--f7-text-color)"
-      --item-hover-bg="#888"
-      --multi-item-bg={isDarkMode ? "#282828" : undefined}
-      --multi-item-clear-icon-color={isDarkMode ? "white" : undefined}
-      --multi-item-outline={isDarkMode ? "1px solid #444" : undefined}
-      --border={isDarkMode ? "1px solid #444" : undefined}
-    />
+    <Select {items} searchable multiple bind:value placeholder="Select contacts" />
   </Block>
   <Block style="margin: 2em 0; z-index: 0">
     <Button onClick={invite}>Invite</Button>
