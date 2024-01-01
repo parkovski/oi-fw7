@@ -74,8 +74,8 @@ class GroupService {
     return fetchJson(`/groups/${id}/chat`);
   }
 
-  newGroup(name: string, invited: string[], isPublic: boolean) {
-    return fetchText(`/newgroup`, {
+  async newGroup(name: string, invited: string[], isPublic: boolean) {
+    const gid = await fetchText(`/newgroup`, {
       method: 'POST',
       body: new URLSearchParams({
         name,
@@ -83,6 +83,15 @@ class GroupService {
         public: ''+isPublic,
       }),
     });
+    const groups = await this.groups.ensureLoaded();
+    groups.push({
+      id: gid,
+      name,
+      public: isPublic,
+      memberKind: Membership.Admin,
+    });
+    this.groups.publish();
+    return gid;
   }
 
   getGroupRequests(id: string) {
@@ -120,11 +129,18 @@ class GroupService {
     try {
       await fetchText(`/groups/${id}/join`, { method: 'POST' });
       const group = await this.getGroup(id).ensureLoaded();
-      this.groups.data!.push({
-        id: group.id,
-        name: group.name,
-        kind: Membership.Member,
-      });
+      const groups = await this.getGroups().ensureLoaded();
+      const index = groups.findIndex(g => g.id === id);
+      if (index !== -1) {
+        groups[index].memberKind = Membership.Member;
+      } else {
+        groups.push({
+          id: group.id,
+          name: group.name,
+          public: group.public,
+          memberKind: Membership.Member,
+        });
+      }
       this.groups.publish();
     } catch {
       // Probably the fetch failed - do nothing.
