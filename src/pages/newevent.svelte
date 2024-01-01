@@ -70,15 +70,17 @@
       validationErrorLocation = null;
     }
 
-    const now = new Date().valueOf();
-    if (dates[0].valueOf() < now) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (dates[0].valueOf() < today.valueOf()) {
       validationErrorDate = 'Event starts in the past';
       validationErrorTime = null;
       ok = false;
     } else {
       validationErrorDate = null;
       const datesWithTime = getDates();
-      if (datesWithTime[0].valueOf() < now) {
+      const now = new Date();
+      if (datesWithTime[0].valueOf() < now.valueOf()) {
         validationErrorTime = 'Event starts in the past';
         ok = false;
       } else {
