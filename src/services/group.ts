@@ -10,12 +10,6 @@ const enum Membership {
   Admin = 2,
 }
 
-interface ListGroup {
-  id: string;
-  name: string;
-  kind: Membership;
-}
-
 interface Member {
   id: string;
   name: string;
@@ -56,11 +50,11 @@ interface GroupMessageSentMessage {
 }
 
 class GroupService {
-  groups: Entity<ListGroup[]>;
+  groups: Entity<Group[]>;
   groupMap = new Map<string, Entity<Group>>;
 
   constructor() {
-    this.groups = new Entity<ListGroup[]>(() => fetchJson(`/groups`));
+    this.groups = new Entity<Group[]>(() => fetchJson(`/groups`));
   }
 
   getGroups() {

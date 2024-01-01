@@ -22,14 +22,14 @@
   });
 
   function getGroupLink(group) {
-    if (group.kind === 0) {
+    if (group.memberKind === 0) {
       return `/groups/viewinvite/${group.id}/`;
     }
     return `/groups/view/${group.id}/`;
   }
 
   function getFooterText(group) {
-    switch (group.kind) {
+    switch (group.memberKind) {
     case -1:
       return 'Requested';
     case 0:
