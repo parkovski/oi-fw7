@@ -2,10 +2,10 @@
   import {
     Page,
     Navbar,
-    Block,
-    Input,
-    Button,
-    Checkbox,
+    List,
+    ListInput,
+    ListItem,
+    ListButton,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import Select from '../components/select.svelte';
@@ -19,6 +19,8 @@
   let name;
   let isPublic;
 
+  let validationErrorName = null;
+
   onMount(() => {
     const contactSubscription = userService.getContacts().subscribe(data =>
       items = data.contacts.map(c => ({ value: c.id, label: c.name }))
@@ -28,8 +30,21 @@
     };
   });
 
+  function validateInputs() {
+    if (!name || !name.length) {
+      validationErrorName = 'Name cannot be empty';
+      return false;
+    } else if (name.length > 255) {
+      validationErrorName = 'Name is too long';
+      return false;
+    } else {
+      validationErrorName = null;
+      return true;
+    }
+  }
+
   async function onCreate() {
-    if (!name || !name.trim().length) {
+    if (!validateInputs()) {
       return;
     }
     const invited = value && value.map(v => v.value);
@@ -38,28 +53,21 @@
   }
 </script>
 
-<style>
-  .title {
-    padding-bottom: .5em;
-  }
-</style>
-
 <Page>
   <Navbar title="New Group" backLink="Back" />
-  <Block style="margin: 2em 0">
-    <div class="title">Group name:</div>
-    <Input type="text" bind:value={name} placeholder="Group name" />
-  </Block>
-  <Block style="margin: 2em 0">
-    <div class="title">Invite contacts:</div>
-    <Select {items} searchable multiple bind:value placeholder="Select contacts" />
-  </Block>
-  <Block style="margin: 2em 0; z-index: 0">
-    <label>
-      <Checkbox bind:checked={isPublic} /> Public group
-    </label>
-  </Block>
-  <Block style="margin: 2em 0; z-index: 0">
-    <Button onClick={onCreate}>Create</Button>
-  </Block>
+  <List form style="margin-top: .5em">
+    <ListInput type="text" name="group-name" placeholder="Group name" bind:value={name} />
+    {#if validationErrorName}
+      <ListItem style="color: var(--f7-color-red)">
+        {validationErrorName}
+      </ListItem>
+    {/if}
+    <ListItem>
+      <Select {items} searchable multiple bind:value placeholder="Select contacts" />
+    </ListItem>
+    <ListItem checkbox bind:checked={isPublic}>
+      Public group?
+    </ListItem>
+    <ListButton onClick={onCreate}>Create</ListButton>
+  </List>
 </Page>
