@@ -50,22 +50,22 @@ interface GroupMessageSentMessage {
 }
 
 class GroupService {
-  groups: Entity<Group[]>;
-  groupMap = new Map<string, Entity<Group>>;
+  _groups: Entity<Group[]>;
+  _groupMap = new Map<string, Entity<Group>>;
 
   constructor() {
-    this.groups = new Entity<Group[]>(() => fetchJson(`/groups`));
+    this._groups = new Entity<Group[]>(() => fetchJson(`/groups`));
   }
 
   getGroups() {
-    return this.groups;
+    return this._groups;
   }
 
   getGroup(id: string) {
-    let group = this.groupMap.get(id);
+    let group = this._groupMap.get(id);
     if (!group) {
       group = new Entity<Group>(() => fetchJson(`/groups/${id}`));
-      this.groupMap.set(id, group);
+      this._groupMap.set(id, group);
     }
     return group;
   }
@@ -83,14 +83,14 @@ class GroupService {
         public: ''+isPublic,
       }),
     });
-    const groups = await this.groups.ensureLoaded();
+    const groups = await this._groups.ensureLoaded();
     groups.push({
       id: gid,
       name,
       public: isPublic,
       memberKind: Membership.Admin,
     });
-    this.groups.publish();
+    this._groups.publish();
     return gid;
   }
 
@@ -141,7 +141,7 @@ class GroupService {
           memberKind: Membership.Member,
         });
       }
-      this.groups.publish();
+      this._groups.publish();
     } catch {
       // Probably the fetch failed - do nothing.
     }
@@ -150,8 +150,8 @@ class GroupService {
   async leaveGroup(id: string) {
     const res = await fetchAny(`/groups/${id}/leave`, { method: 'POST' });
     if (res.ok) {
-      this.groups.data = this.groups.data!.filter(g => g.id !== id);
-      this.groups.publish();
+      this._groups.data = this._groups.data!.filter(g => g.id !== id);
+      this._groups.publish();
     }
   }
 

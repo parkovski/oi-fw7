@@ -19,28 +19,28 @@ function fetchUser(id: string) {
 }
 
 class UserService {
-  users = new Map<string, Entity<User>>;
-  contacts: Entity<ContactData>;
-  requests: Entity<User[]>;
+  _users = new Map<string, Entity<User>>;
+  _contacts: Entity<ContactData>;
+  _requests: Entity<User[]>;
 
   constructor() {
-    this.contacts = new Entity(() => fetchJson(`/contacts`));
-    this.requests = new Entity(() => fetchJson(`/contactrequests`));
+    this._contacts = new Entity(() => fetchJson(`/contacts`));
+    this._requests = new Entity(() => fetchJson(`/contactrequests`));
   }
 
   getContacts(): Entity<ContactData> {
-    return this.contacts;
+    return this._contacts;
   }
 
   getContactRequests(): Entity<User[]> {
-    return this.requests;
+    return this._requests;
   }
 
   getUser(id: string): Entity<User> {
-    let user = this.users.get(id);
+    let user = this._users.get(id);
     if (!user) {
       user = new Entity(() => fetchUser(id));
-      this.users.set(id, user);
+      this._users.set(id, user);
     }
     return user;
   }
@@ -50,7 +50,7 @@ class UserService {
       const user = this.getUser(id);
       const status = await fetchText(`/contacts/${id}/add`, { method: 'POST' });
       const userData = await user.ensureLoaded();
-      const contactsData = await this.contacts.ensureLoaded();
+      const contactsData = await this._contacts.ensureLoaded();
       if (status === 'approved') {
         userData.has_contact = true;
         userData.kind = 1;
@@ -61,7 +61,7 @@ class UserService {
         contactsData.pending.push(userData);
       }
       user.publish();
-      this.contacts.publish();
+      this._contacts.publish();
     } catch {
     }
   }
@@ -71,12 +71,12 @@ class UserService {
       const user = this.getUser(id);
       if ((await fetchAny(`/contacts/${id}/remove`, { method: 'POST' })).ok) {
         const userData = await user.ensureLoaded();
-        const contactsData = await this.contacts.ensureLoaded();
+        const contactsData = await this._contacts.ensureLoaded();
         userData.kind = null;
-        this.contacts.data!.contacts = contactsData.contacts.filter(c => c.id !== id);
-        this.contacts.data!.pending = contactsData.pending.filter(c => c.id !== id);
+        this._contacts.data!.contacts = contactsData.contacts.filter(c => c.id !== id);
+        this._contacts.data!.pending = contactsData.pending.filter(c => c.id !== id);
         user.publish();
-        this.contacts.publish();
+        this._contacts.publish();
       }
     } catch {
     }
@@ -85,9 +85,9 @@ class UserService {
   async approveContact(id: string) {
     try {
       await fetchAny(`/contacts/${id}/approve`, { method: 'POST' });
-      const requestsData = await this.requests.ensureLoaded();
-      this.requests.data = requestsData.filter(c => c.id !== id);
-      this.requests.publish();
+      const requestsData = await this._requests.ensureLoaded();
+      this._requests.data = requestsData.filter(c => c.id !== id);
+      this._requests.publish();
     } catch {
     }
   }
@@ -95,9 +95,9 @@ class UserService {
   async denyContact(id: string) {
     try {
       await fetchAny(`/contacts/${id}/deny`, { method: 'POST' });
-      const requestsData = await this.requests.ensureLoaded();
-      this.requests.data = requestsData.filter(c => c.id !== id);
-      this.requests.publish();
+      const requestsData = await this._requests.ensureLoaded();
+      this._requests.data = requestsData.filter(c => c.id !== id);
+      this._requests.publish();
     } catch {
     }
   }

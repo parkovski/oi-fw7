@@ -11,14 +11,14 @@ interface Profile {
 }
 
 class ProfileService {
-  profile: Entity<Profile>;
+  _profile: Entity<Profile>;
 
   constructor() {
-    this.profile = new Entity(() => fetchJson(`/profile`));
+    this._profile = new Entity(() => fetchJson(`/profile`));
   }
 
   getProfile() {
-    return this.profile;
+    return this._profile;
   }
 }
 
