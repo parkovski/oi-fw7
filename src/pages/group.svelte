@@ -180,9 +180,11 @@
 <Page>
   <Navbar backLink="Back">
     <NavTitle>{group.name}</NavTitle>
-    <NavRight>
-      <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="right" />
-    </NavRight>
+    {#if group.memberKind !== null && group.memberKind > 0}
+      <NavRight>
+        <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="right" />
+      </NavRight>
+    {/if}
   </Navbar>
   {#if group.loading}
     <Block>
