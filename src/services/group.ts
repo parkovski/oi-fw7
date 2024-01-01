@@ -84,12 +84,14 @@ class GroupService {
       }),
     });
     const groups = await this._groups.ensureLoaded();
-    groups.push({
-      id: gid,
-      name,
-      public: isPublic,
-      memberKind: Membership.Admin,
-    });
+    if (groups.findIndex(g => g.id === gid) === -1) {
+      groups.push({
+        id: gid,
+        name,
+        public: isPublic,
+        memberKind: Membership.Admin,
+      });
+    }
     this._groups.publish();
     return gid;
   }
