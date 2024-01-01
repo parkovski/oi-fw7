@@ -10,7 +10,7 @@
   import { onMount } from 'svelte';
   import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
 
-  import profileService from '../services/profile';
+  import profileService from '../../services/profile';
 
   let profile = {};
   let qrcodeUrl;

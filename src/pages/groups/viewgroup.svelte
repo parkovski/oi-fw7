@@ -13,10 +13,10 @@
   import { onMount } from 'svelte';
   import cookie from 'cookie';
 
-  import Contacts from '../components/contacts.svelte';
-  import Chat from '../components/chat.svelte';
-  import Calendar from '../components/calendar.svelte';
-  import groupService from '../services/group';
+  import Contacts from '../../components/contacts.svelte';
+  import Chat from '../../components/chat.svelte';
+  import Calendar from '../../components/calendar.svelte';
+  import groupService from '../../services/group';
 
   export let f7route;
   export let f7router;

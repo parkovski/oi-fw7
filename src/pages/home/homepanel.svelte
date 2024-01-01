@@ -7,7 +7,7 @@
     Link,
     f7,
   } from 'framework7-svelte';
-  import { postLogoutEvent } from '../js/onlogin';
+  import { postLogoutEvent } from '../../js/onlogin';
 
   function panelNavigate(to) {
     f7.panel.close('#right-panel');

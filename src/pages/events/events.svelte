@@ -5,7 +5,7 @@
     Icon,
     Fab,
   } from 'framework7-svelte';
-  import Calendar from '../components/calendar.svelte';
+  import Calendar from '../../components/calendar.svelte';
 
   export let f7router;
 

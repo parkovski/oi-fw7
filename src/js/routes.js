@@ -1,23 +1,23 @@
-import HomePage from '../pages/home.svelte';
-import HomePanelPage from '../pages/homepanel.svelte';
-import GroupPanelPage from '../pages/grouppanel.svelte';
-import AboutPage from '../pages/about.svelte';
-import GroupsPage from '../pages/groups.svelte';
-import GroupPage from '../pages/group.svelte';
-import NewGroupPage from '../pages/newgroup.svelte';
-import GroupInvitePage from '../pages/groupinvite.svelte';
-import GroupRequestsPage from '../pages/grouprequests.svelte';
-import GroupInviteUsersPage from '../pages/groupinviteusers.svelte';
-import EventsPage from '../pages/events.svelte';
-import NewEventPage from '../pages/newevent.svelte';
-import ContactsPage from '../pages/contacts.svelte';
-import ContactPage from '../pages/contact.svelte';
-import ProfilePage from '../pages/profile.svelte';
-import MessagesPage from '../pages/messages.svelte';
-import MessagePage from '../pages/message.svelte';
-import NewMessagePage from '../pages/newmessage.svelte';
-import QRCodePage from '../pages/qrcode.svelte';
-import SettingsPage from '../pages/settings.svelte';
+import HomePage from '../pages/home/home.svelte';
+import HomePanelPage from '../pages/home/homepanel.svelte';
+import ProfilePage from '../pages/home/profile.svelte';
+import AboutPage from '../pages/home/about.svelte';
+import QRCodePage from '../pages/home/scanqrcode.svelte';
+import SettingsPage from '../pages/home/settings.svelte';
+import GroupPanelPage from '../pages/groups/grouppanel.svelte';
+import GroupsPage from '../pages/groups/groups.svelte';
+import ViewGroupPage from '../pages/groups/viewgroup.svelte';
+import NewGroupPage from '../pages/groups/newgroup.svelte';
+import GroupInvitePage from '../pages/groups/groupinvite.svelte';
+import GroupRequestsPage from '../pages/groups/grouprequests.svelte';
+import GroupInviteUsersPage from '../pages/groups/groupinviteusers.svelte';
+import EventsPage from '../pages/events/events.svelte';
+import NewEventPage from '../pages/events/newevent.svelte';
+import ContactsPage from '../pages/contacts/contacts.svelte';
+import ViewContactPage from '../pages/contacts/viewcontact.svelte';
+import MessagesPage from '../pages/messages/messages.svelte';
+import ViewMessagePage from '../pages/messages/viewmessage.svelte';
+import NewMessagePage from '../pages/messages/newmessage.svelte';
 import NotFoundPage from '../pages/404.svelte';
 
 var routes = [
@@ -30,12 +30,24 @@ var routes = [
     component: HomePanelPage,
   },
   {
-    path: '/panels/group/:id/',
-    component: GroupPanelPage,
+    path: '/profile/',
+    component: ProfilePage,
   },
   {
     path: '/about/',
     component: AboutPage,
+  },
+  {
+    path: '/qrcode/',
+    component: QRCodePage,
+  },
+  {
+    path: '/settings/',
+    component: SettingsPage,
+  },
+  {
+    path: '/panels/group/:id/',
+    component: GroupPanelPage,
   },
   {
     path: '/groups/',
@@ -43,7 +55,11 @@ var routes = [
   },
   {
     path: '/groups/view/:id/',
-    component: GroupPage,
+    component: ViewGroupPage,
+  },
+  {
+    path: '/groups/new/',
+    component: NewGroupPage,
   },
   {
     path: '/groups/viewinvite/:id/',
@@ -56,10 +72,6 @@ var routes = [
   {
     path: '/groups/invite/:id/',
     component: GroupInviteUsersPage,
-  },
-  {
-    path: '/groups/new/',
-    component: NewGroupPage,
   },
   {
     path: '/events/',
@@ -75,31 +87,19 @@ var routes = [
   },
   {
     path: '/contacts/view/:id/',
-    component: ContactPage,
-  },
-  {
-    path: '/profile/',
-    component: ProfilePage,
+    component: ViewContactPage,
   },
   {
     path: '/messages/',
     component: MessagesPage,
   },
   {
+    path: '/messages/view/:id/',
+    component: ViewMessagePage,
+  },
+  {
     path: '/messages/new/',
     component: NewMessagePage,
-  },
-  {
-    path: '/messages/view/:id/',
-    component: MessagePage,
-  },
-  {
-    path: '/qrcode/',
-    component: QRCodePage,
-  },
-  {
-    path: '/settings/',
-    component: SettingsPage,
   },
   {
     path: '(.*)',

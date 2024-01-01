@@ -25,13 +25,6 @@
   });
 </script>
 
-<style>
-  :global(.select-f7-colors) {
-    background-color: var(--f7-input-item-bg-color) !important;
-    color: var(--f7-text-color);
-  }
-</style>
-
 <Select {items} {searchable} {multiple} {placeholder}
   class="select-f7-colors" bind:value
   --list-background="var(--f7-text-editor-bg-color)"

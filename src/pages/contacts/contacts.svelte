@@ -6,10 +6,10 @@
     Button,
   } from 'framework7-svelte';
 
-  import Contacts from '../components/contacts.svelte';
-  import ContactRequests from '../components/contactrequests.svelte';
-  import userService from '../services/user';
-  import { onLogin } from '../js/onlogin';
+  import Contacts from '../../components/contacts.svelte';
+  import ContactRequests from '../../components/contactrequests.svelte';
+  import userService from '../../services/user';
+  import { onLogin } from '../../js/onlogin';
   import { onMount } from 'svelte';
 
   let contacts = [];

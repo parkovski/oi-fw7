@@ -6,9 +6,9 @@
     Icon,
     useStore,
   } from 'framework7-svelte';
-  import MessagesView from '../components/messages.svelte';
+  import MessagesView from '../../components/messages.svelte';
   import { onMount } from 'svelte';
-  import chatService from '../services/chat';
+  import chatService from '../../services/chat';
 
   let messages = [];
 

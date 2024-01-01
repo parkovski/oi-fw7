@@ -1,1 +1,4 @@
-/* Your app custom styles here */
+.select-f7-colors {
+  background-color: var(--f7-input-item-bg-color) !important;
+  color: var(--f7-text-color);
+}

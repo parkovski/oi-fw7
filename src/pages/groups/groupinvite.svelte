@@ -6,7 +6,7 @@
     Button,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import groupService from '../services/group';
+  import groupService from '../../services/group';
 
   export let f7route;
   export let f7router;

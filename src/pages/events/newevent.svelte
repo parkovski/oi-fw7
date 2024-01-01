@@ -8,11 +8,13 @@
     ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import Select from '../components/select.svelte';
-  import TimePicker from '../components/timepicker.svelte';
-  import userService from '../services/user';
+  import Select from '../../components/select.svelte';
+  import TimePicker from '../../components/timepicker.svelte';
+  import userService from '../../services/user';
+  import eventService from '../../services/event';
 
   export let initialDate;
+  export let f7router;
 
   let contacts = [];
   let contactsSelected;
@@ -95,10 +97,21 @@
     return ok;
   }
 
-  function createClicked() {
+  async function createClicked() {
     if (!validateInputs()) {
       return;
     }
+    const dates = getDates();
+    const eid = await eventService.newEvent(
+      title,
+      description.length === 0 ? null : description,
+      location,
+      dates[0],
+      dates[1],
+      isPublic,
+      contactsSelected.map(c => c.value)
+    );
+    f7router.navigate(`/events/view/${eid}/`);
   }
 </script>
 

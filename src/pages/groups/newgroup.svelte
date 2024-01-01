@@ -8,9 +8,9 @@
     ListButton,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import Select from '../components/select.svelte';
-  import userService from '../services/user';
-  import groupService from '../services/group';
+  import Select from '../../components/select.svelte';
+  import userService from '../../services/user';
+  import groupService from '../../services/group';
 
   export let f7router;
 

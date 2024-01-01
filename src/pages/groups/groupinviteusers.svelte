@@ -6,9 +6,9 @@
     Button,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import Select from '../components/select.svelte';
-  import groupService from '../services/group';
-  import userService from '../services/user';
+  import Select from '../../components/select.svelte';
+  import groupService from '../../services/group';
+  import userService from '../../services/user';
 
   export let f7route;
   export let f7router;

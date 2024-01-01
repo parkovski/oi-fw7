@@ -9,8 +9,8 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
-  import groupService from '../services/group';
-  import { onLogin } from '../js/onlogin';
+  import groupService from '../../services/group';
+  import { onLogin } from '../../js/onlogin';
 
   let groups = [];
 

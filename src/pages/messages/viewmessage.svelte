@@ -6,9 +6,9 @@
 
   import { onMount } from 'svelte';
   import cookie from 'cookie';
-  import chatService from '../services/chat';
-  import userService from '../services/user';
-  import Chat from '../components/chat.svelte';
+  import chatService from '../../services/chat';
+  import userService from '../../services/user';
+  import Chat from '../../components/chat.svelte';
 
   export let f7route;
 

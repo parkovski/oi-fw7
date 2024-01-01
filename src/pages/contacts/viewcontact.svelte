@@ -11,7 +11,7 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
-  import userService from '../services/user';
+  import userService from '../../services/user';
 
   export let f7route;
 

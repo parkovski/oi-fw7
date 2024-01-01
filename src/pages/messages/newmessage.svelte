@@ -6,9 +6,9 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import Select from 'svelte-select';
-  import userService from '../services/user';
-  import chatService from '../services/chat';
-  import Chat from '../components/chat.svelte';
+  import userService from '../../services/user';
+  import chatService from '../../services/chat';
+  import Chat from '../../components/chat.svelte';
 
   export let f7router;
 
