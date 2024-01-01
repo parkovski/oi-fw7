@@ -45,7 +45,7 @@
       <Link text="About" onClick={() => panelNavigate('/about/')}/>
     </ListItem>
     <ListItem>
-      <Link text="Sign out" onClick={() => logout()}/>
+      <Link class="color-red" text="Sign out" onClick={() => logout()}/>
     </ListItem>
   </List>
 </Page>
