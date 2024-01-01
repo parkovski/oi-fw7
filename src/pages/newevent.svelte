@@ -12,6 +12,8 @@
   import TimePicker from '../components/timepicker.svelte';
   import userService from '../services/user';
 
+  export let initialDate;
+
   let contacts = [];
   let contactsSelected;
   let title = '';
@@ -33,6 +35,9 @@
         label: c.name,
       }))
     );
+    if (initialDate) {
+      dates = [initialDate];
+    }
   });
 
   function getDates() {

@@ -2,11 +2,14 @@
   import {
     Page,
     Navbar,
-    Block,
     Icon,
     Fab,
   } from 'framework7-svelte';
   import Calendar from '../components/calendar.svelte';
+
+  export let f7router;
+
+  let value;
 
   const events = (function() {
     const today = new Date();
@@ -31,12 +34,16 @@
       },
     ];
   })();
+
+  function newEventClicked() {
+    f7router.navigate('/events/new/', { props: { initialDate: value } });
+  }
 </script>
 
 <Page>
   <Navbar title="Events" />
-  <Fab position="right-bottom" href="/events/new/">
+  <Fab position="right-bottom" onClick={newEventClicked}>
     <Icon ios="f7:plus" md="material:add" />
   </Fab>
-  <Calendar {events} elementId="events-calendar" />
+  <Calendar {events} elementId="events-calendar" bind:value />
 </Page>

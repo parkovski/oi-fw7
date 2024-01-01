@@ -1,10 +1,6 @@
 <script>
   import {
     f7,
-    Page,
-    Navbar,
-    Block,
-    BlockTitle,
     List,
     ListItem,
   } from 'framework7-svelte';
@@ -12,6 +8,7 @@
 
   export let events = [];
   export let elementId = '#calendar';
+  export let value;
 
   let calendar;
   let eventItems = [];
@@ -43,6 +40,7 @@
       events,
       on: {
         change(c) {
+          value = c.value[0];
           renderEvents(c);
         }
       },
