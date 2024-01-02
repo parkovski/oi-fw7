@@ -13,6 +13,7 @@ import GroupRequestsPage from '../pages/groups/grouprequests.svelte';
 import GroupInviteUsersPage from '../pages/groups/groupinviteusers.svelte';
 import EventsPage from '../pages/events/events.svelte';
 import NewEventPage from '../pages/events/newevent.svelte';
+import ViewEventPage from '../pages/events/viewevent.svelte';
 import ContactsPage from '../pages/contacts/contacts.svelte';
 import ViewContactPage from '../pages/contacts/viewcontact.svelte';
 import MessagesPage from '../pages/messages/messages.svelte';
@@ -80,6 +81,10 @@ var routes = [
   {
     path: '/events/new/',
     component: NewEventPage,
+  },
+  {
+    path: '/events/view/:id/',
+    component: ViewEventPage,
   },
   {
     path: '/contacts/',

@@ -22,9 +22,7 @@
   export let f7router;
 
   let currentButton = 'chat';
-  let group = {
-    loading: true,
-  };
+  let group = { loading: true };
   let chats = [];
   let chatsAggregate = [];
   let pendingChats = [];

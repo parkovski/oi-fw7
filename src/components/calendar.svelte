@@ -9,9 +9,36 @@
   export let events = [];
   export let elementId = '#calendar';
   export let value;
+  export let calendar;
 
-  let calendar;
   let eventItems = [];
+
+  $: calendar && (calendar.params.events = events) && calendar.update();
+
+  function getTime(date) {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    let timeStr, ampm;
+    if (hours === 0) {
+      timeStr = '12';
+      ampm = 'am';
+    } else if (hours < 12) {
+      timeStr = hours;
+      ampm = 'am';
+    } else if (hours === 12) {
+      timeStr = '12';
+      ampm = 'pm';
+    } else {
+      timeStr = '' + (hours - 12);
+      ampm = 'pm';
+    }
+    if (minutes < 10) {
+      timeStr += ':0' + minutes;
+    } else {
+      timeStr += ':' + minutes;
+    }
+    return timeStr + ampm;
+  }
 
   function renderEvents(calendar) {
     const currentDate = calendar.value[0];
@@ -22,15 +49,40 @@
 
     const eventItemsTmp = [];
     currentEvents.forEach(e => {
-      const hours = e.hours;
-      const minutes = e.minutes < 10 ? `0${e.minutes}` : e.minutes;
+      const startTime = getTime(e.startTime);
+      const endTime = getTime(e.endTime);
+      let time;
+      if (startTime === endTime) {
+        time = startTime;
+      } else {
+        time = `${startTime} - ${endTime}`;
+      }
       eventItemsTmp.push({
+        id: e.id,
         title: e.title,
-        time: minutes === '00' ? `${hours}h` : `${hours}h ${minutes}m`,
+        time,
+        startTime,
         color: e.color,
+        kind: e.kind,
       });
     });
+    eventItemsTmp.sort((a, b) => a.startTime < b.startTime);
     eventItems = eventItemsTmp;
+  }
+
+  function getFooterText(event) {
+    switch (event.kind) {
+    case -1:
+      return 'Not attending';
+    case 0:
+      return 'Invited';
+    case 1:
+      return 'Maybe attending';
+    case 2:
+      return 'Attending';
+    case 3:
+      return 'Hosting';
+    }
   }
 
   onMount(() => {
@@ -58,7 +110,7 @@
     width: 8px;
     height: 100%;
   }
-  .item-inner {
+  .item-title {
     padding-left: 16px;
   }
   :global(.toolbar.toolbar-top) {
@@ -69,12 +121,13 @@
 <div id={elementId}></div>
 <List class="no-margin no-hairlines no-safe-area-left">
   {#each eventItems as evt}
-    <ListItem class="no-padding">
+    <ListItem class="no-padding" href="/events/view/{evt.id}/">
       <div class="event-color" style={`background-color: ${evt.color}`}></div>
-      <div class="item-inner">
-        <div class="item-title">{evt.title}</div>
-        <div class="item-after">{evt.time}</div>
+      <div class="item-title">
+        {evt.title}
+        <div class="item-footer">{getFooterText(evt)}</div>
       </div>
+      <div class="item-after">{evt.time}</div>
     </ListItem>
   {/each}
 </List>

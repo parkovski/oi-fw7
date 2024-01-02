@@ -109,7 +109,7 @@
       dates[0],
       dates[1],
       isPublic,
-      contactsSelected.map(c => c.value)
+      contactsSelected?.map(c => c.value)
     );
     f7router.navigate(`/events/view/${eid}/`);
   }
