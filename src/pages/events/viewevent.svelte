@@ -3,6 +3,9 @@
     Page,
     Navbar,
     Block,
+    Button,
+    List,
+    ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import eventService from '../../services/event';
@@ -10,10 +13,110 @@
   export let f7route;
 
   let event = { loading: true };
+  let attendance = {
+    hosts: [],
+    attending: [],
+    maybeAttending: [],
+    notAttending: [],
+    invited: [],
+  };
+
+  function sortAttendance(members) {
+    attendance = {
+      hosts: [],
+      attending: [],
+      maybeAttending: [],
+      notAttending: [],
+      invited: [],
+    };
+    for (let member of members) {
+      switch (member.kind) {
+        case -1:
+          attendance.notAttending.push(member);
+          break;
+        case 0:
+          attendance.invited.push(member);
+          break;
+        case 1:
+          attendance.maybeAttending.push(member);
+          break;
+        case 2:
+          attendance.attending.push(member);
+          break;
+        case 3:
+          attendance.hosts.push(member);
+          break;
+      }
+    }
+  }
+
+  let currentButton = 'event';
+  function changeView(view) {
+    return function() {
+      const oldButton = document.getElementById(`${currentButton}Button`);
+      const newButton = document.getElementById(`${view}Button`);
+      if (oldButton === newButton) {
+        return;
+      }
+      oldButton.classList.remove('button-fill');
+      newButton.classList.add('button-fill');
+      currentButton = view;
+    };
+  }
+
+  function getEventDate(event) {
+    const year = event.startTime.getFullYear();
+    const month = event.startTime.getMonth() + 1;
+    const day = event.startTime.getDate();
+    return `${month}/${day}/${year}`;
+  }
+
+  function getTime(date) {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    let timeStr, ampm;
+    if (hours === 0) {
+      timeStr = '12';
+      ampm = 'am';
+    } else if (hours < 12) {
+      timeStr = hours;
+      ampm = 'am';
+    } else if (hours === 12) {
+      timeStr = '12';
+      ampm = 'pm';
+    } else {
+      timeStr = '' + (hours - 12);
+      ampm = 'pm';
+    }
+    if (minutes < 10) {
+      timeStr += ':0' + minutes;
+    } else {
+      timeStr += ':' + minutes;
+    }
+    return timeStr + ampm;
+  }
+
+  function getEventTime(event) {
+    if (event.startTime.valueOf() === event.endTime.valueOf()) {
+      return getTime(event.startTime);
+    } else {
+      return `${getTime(event.startTime)} - ${getTime(event.endTime)}`;
+    }
+  }
+
+  function setAttendance(kind) {
+    return function() {
+      eventService.setAttendance(event.id, kind);
+    }
+  }
 
   onMount(() => {
     const eventSubscription =
-      eventService.getEvent(f7route.params.id).subscribe(e => event = e);
+      eventService.getEvent(f7route.params.id).subscribe(e => {
+        event = e;
+        console.log(e)
+        sortAttendance(e.members);
+      });
 
     return () => {
       eventSubscription.unsubscribe();
@@ -28,6 +131,68 @@
       Loading...
     </Block>
   {:else}
-    <Block>{event.description}</Block>
+    <Block class="no-margin"
+      style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
+      <div class="grid grid-cols-2 grid-gap">
+        <Button small fill id="eventButton" on:click={changeView('event')}>Event</Button>
+        <Button small id="attendanceButton" on:click={changeView('attendance')}>Attendance</Button>
+      </div>
+    </Block>
+    {#if currentButton === 'event'}
+      <List style="margin-top: 0">
+        <ListItem groupTitle>Attending?</ListItem>
+        <ListItem>
+          {#if event.kind === 3}
+            <span style="color: var(--f7-color-green)">You are hosting this event.</span>
+          {:else}
+            <div class="grid grid-cols-3 grid-gap" style="width: 100%">
+              <Button small color="red" on:click={setAttendance(-1)}
+                fill={event.kind === -1}>No</Button>
+              <Button small color="yellow" on:click={setAttendance(1)}
+                fill={event.kind === 1}>Maybe</Button>
+              <Button small color="green" on:click={setAttendance(2)}
+                fill={event.kind === 2}>Yes</Button>
+            </div>
+          {/if}
+        </ListItem>
+        <ListItem groupTitle>Location</ListItem>
+        <ListItem>{event.place}</ListItem>
+        <ListItem groupTitle>Date and Time</ListItem>
+        <ListItem>{getEventDate(event)} {getEventTime(event)}</ListItem>
+        <ListItem groupTitle>Description</ListItem>
+        <ListItem>{event.description}</ListItem>
+      </List>
+    {:else if currentButton === 'attendance'}
+      <List style="margin-top: 0">
+        <ListItem groupTitle>Hosts</ListItem>
+        {#each attendance.hosts as user (user.id)}
+          <ListItem>{user.name}</ListItem>
+        {/each}
+        {#if attendance.attending.length}
+          <ListItem groupTitle>Attending</ListItem>
+          {#each attendance.attending as user (user.id)}
+            <ListItem>{user.name}</ListItem>
+          {/each}
+        {/if}
+        {#if attendance.maybeAttending.length}
+          <ListItem groupTitle>Maybe Attending</ListItem>
+          {#each attendance.maybeAttending as user (user.id)}
+            <ListItem>{user.name}</ListItem>
+          {/each}
+        {/if}
+        {#if attendance.invited.length}
+          <ListItem groupTitle>Invited</ListItem>
+          {#each attendance.invited as user (user.id)}
+            <ListItem>{user.name}</ListItem>
+          {/each}
+        {/if}
+        {#if attendance.notAttending.length}
+          <ListItem groupTitle>Not Attending</ListItem>
+          {#each attendance.notAttending as user (user.id)}
+            <ListItem>{user.name}</ListItem>
+          {/each}
+        {/if}
+      </List>
+    {/if}
   {/if}
 </Page>

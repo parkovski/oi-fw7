@@ -1,6 +1,8 @@
+import { StatusError } from './error.js';
+
 declare var process: any;
 
-export function fetchAny(resource: string, options?: RequestInit): Promise<Response> {
+export async function fetchAny(resource: string, options?: RequestInit): Promise<Response> {
   if (!options) {
     options = { credentials: 'include' };
   } else if (!options.credentials) {
@@ -12,7 +14,12 @@ export function fetchAny(resource: string, options?: RequestInit): Promise<Respo
   } else {
     url = `http://localhost:3000${resource}`;
   }
-  return fetch(url, options);
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new StatusError(response.status, text);
+  }
+  return response;
 }
 
 export function fetchText(resource: string, options?: RequestInit): Promise<string> {

@@ -33,6 +33,7 @@ interface Event {
   startTime: Date;
   endTime: Date;
   public: boolean;
+  kind: AttendanceKind;
   members: EventMember[] | undefined;
 }
 
@@ -59,10 +60,27 @@ class EventService {
   getEvent(id: string) {
     let event = this._eventMap.get(id);
     if (!event) {
-      event = new Entity<Event>(() => fetchJson(`/events/${id}`));
+      event = new Entity<Event>(async () => {
+        const event = await fetchJson(`/events/${id}`);
+        event.startTime = new Date(event.startTime);
+        event.endTime = new Date(event.endTime);
+        return event;
+      });
       this._eventMap.set(id, event);
     }
     return event;
+  }
+
+  async setAttendance(id: string, kind: AttendanceKind) {
+    await fetchText(`/events/${id}/setattendance`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        kind: '' + kind,
+      })
+    });
+    const event = this.getEvent(id);
+    (await event.ensureLoaded()).kind = kind;
+    event.publish();
   }
 
   async newEvent(title: string, description: string | null, place: string,
