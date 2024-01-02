@@ -5,6 +5,7 @@
     ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
+  import { getTimeRange } from '../js/timeutils';
 
   export let events = [];
   export let elementId = '#calendar';
@@ -15,31 +16,6 @@
 
   $: calendar && (calendar.params.events = events) && calendar.update();
 
-  function getTime(date) {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    let timeStr, ampm;
-    if (hours === 0) {
-      timeStr = '12';
-      ampm = 'am';
-    } else if (hours < 12) {
-      timeStr = hours;
-      ampm = 'am';
-    } else if (hours === 12) {
-      timeStr = '12';
-      ampm = 'pm';
-    } else {
-      timeStr = '' + (hours - 12);
-      ampm = 'pm';
-    }
-    if (minutes < 10) {
-      timeStr += ':0' + minutes;
-    } else {
-      timeStr += ':' + minutes;
-    }
-    return timeStr + ampm;
-  }
-
   function renderEvents(calendar) {
     const currentDate = calendar.value[0];
     const currentEvents = events.filter(event => {
@@ -49,19 +25,10 @@
 
     const eventItemsTmp = [];
     currentEvents.forEach(e => {
-      const startTime = getTime(e.startTime);
-      const endTime = getTime(e.endTime);
-      let time;
-      if (startTime === endTime) {
-        time = startTime;
-      } else {
-        time = `${startTime} - ${endTime}`;
-      }
       eventItemsTmp.push({
         id: e.id,
         title: e.title,
-        time,
-        startTime,
+        time: getTimeRange(e.startTime, e.endTime),
         color: e.color,
         kind: e.kind,
       });
@@ -120,14 +87,14 @@
 
 <div id={elementId}></div>
 <List class="no-margin no-hairlines no-safe-area-left">
-  {#each eventItems as evt}
-    <ListItem class="no-padding" href="/events/view/{evt.id}/">
-      <div class="event-color" style={`background-color: ${evt.color}`}></div>
+  {#each eventItems as event}
+    <ListItem class="no-padding" href="/events/view/{event.id}/">
+      <div class="event-color" style={`background-color: ${event.color}`}></div>
       <div class="item-title">
-        {evt.title}
-        <div class="item-footer">{getFooterText(evt)}</div>
+        {event.title}
+        <div class="item-footer">{getFooterText(event)}</div>
       </div>
-      <div class="item-after">{evt.time}</div>
+      <div class="item-after">{event.time}</div>
     </ListItem>
   {/each}
 </List>
