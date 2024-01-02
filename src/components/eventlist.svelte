@@ -3,7 +3,7 @@
     List,
     ListItem,
   } from 'framework7-svelte';
-  import { getTime } from '../js/timeutils';
+  import { formatTime, formatDate } from '../js/timeutils';
 
   export let events = [];
   $: events = events.sort((a, b) => a.startTime > b.startTime);
@@ -24,8 +24,7 @@
   }
 
   function formatDateTime(time) {
-    return getTime(time) +
-      ` ${time.getMonth() + 1}/${time.getDate()}/${time.getFullYear()}`;
+    return formatTime(time) + ' ' + formatDate(time);
   }
 </script>
 
@@ -45,7 +44,7 @@
 <List style="margin-top: 0">
   {#each events as event (event.id)}
     <ListItem class="no-padding" href="/events/view/{event.id}/">
-      <div class="event-color" style='background-color: #fea'></div>
+      <div class="event-color" style='background-color: {event.color}'></div>
       <div class="item-title">
         {event.title}
         <div class="item-footer">{getFooterText(event)}</div>

@@ -12,6 +12,7 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import eventService from '../../services/event';
+  import { formatTimeRange, formatDate } from '../../js/timeutils';
 
   export let f7route;
 
@@ -67,46 +68,6 @@
     };
   }
 
-  function getEventDate(event) {
-    const year = event.startTime.getFullYear();
-    const month = event.startTime.getMonth() + 1;
-    const day = event.startTime.getDate();
-    return `${month}/${day}/${year}`;
-  }
-
-  function getTime(date) {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    let timeStr, ampm;
-    if (hours === 0) {
-      timeStr = '12';
-      ampm = 'am';
-    } else if (hours < 12) {
-      timeStr = hours;
-      ampm = 'am';
-    } else if (hours === 12) {
-      timeStr = '12';
-      ampm = 'pm';
-    } else {
-      timeStr = '' + (hours - 12);
-      ampm = 'pm';
-    }
-    if (minutes < 10) {
-      timeStr += ':0' + minutes;
-    } else {
-      timeStr += ':' + minutes;
-    }
-    return timeStr + ampm;
-  }
-
-  function getEventTime(event) {
-    if (event.startTime.valueOf() === event.endTime.valueOf()) {
-      return getTime(event.startTime);
-    } else {
-      return `${getTime(event.startTime)} - ${getTime(event.endTime)}`;
-    }
-  }
-
   function setAttendance(kind) {
     return function() {
       eventService.setAttendance(event.id, kind);
@@ -147,6 +108,7 @@
     </Block>
     {#if currentButton === 'event'}
       <List style="margin-top: 0">
+        <ListItem>{event.description}</ListItem>
         <ListItem groupTitle>Attending?</ListItem>
         <ListItem>
           {#if event.kind === 3}
@@ -165,9 +127,9 @@
         <ListItem groupTitle>Location</ListItem>
         <ListItem>{event.place}</ListItem>
         <ListItem groupTitle>Date and Time</ListItem>
-        <ListItem>{getEventDate(event)} {getEventTime(event)}</ListItem>
-        <ListItem groupTitle>Description</ListItem>
-        <ListItem>{event.description}</ListItem>
+        <ListItem>
+          {formatDate(event.startTime)} {formatTimeRange(event.startTime, event.endTime)}
+        </ListItem>
       </List>
     {:else if currentButton === 'attendance'}
       <List style="margin-top: 0">

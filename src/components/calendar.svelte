@@ -5,7 +5,7 @@
     ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import { getTimeRange } from '../js/timeutils';
+  import { formatTimeRange } from '../js/timeutils';
 
   export let events = [];
   export let elementId = '#calendar';
@@ -28,7 +28,7 @@
       eventItemsTmp.push({
         id: e.id,
         title: e.title,
-        time: getTimeRange(e.startTime, e.endTime),
+        time: formatTimeRange(e.startTime, e.endTime),
         color: e.color,
         kind: e.kind,
       });

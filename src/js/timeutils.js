@@ -1,4 +1,4 @@
-export function getTime(date) {
+export function formatTime(date) {
   const hours = date.getHours();
   const minutes = date.getMinutes();
   let timeStr, ampm;
@@ -23,9 +23,13 @@ export function getTime(date) {
   return timeStr + ampm;
 }
 
-export function getTimeRange(start, end) {
+export function formatTimeRange(start, end) {
   if (start.valueOf() === end.valueOf()) {
-    return getTime(start);
+    return formatTime(start);
   }
-  return `${getTime(start)} - ${getTime(end)}`;
+  return `${formatTime(start)} - ${formatTime(end)}`;
+}
+
+export function formatDate(date) {
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 }
