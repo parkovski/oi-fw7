@@ -23,7 +23,7 @@
   let dates = [new Date];
   let times;
   let description;
-  let isPublic;
+  let isPublic = false;
 
   let validationErrorTitle = null;
   let validationErrorLocation = null;
@@ -45,7 +45,7 @@
   function getDates() {
     let startDate = new Date(dates[0]), endDate = new Date(dates[0]);
     let startTime = times[0].split(':').map(x => +x);
-    let endTime = times[0].split(':').map(x => +x);
+    let endTime = times[1].split(':').map(x => +x);
     startDate.setHours(startTime[0]);
     startDate.setMinutes(startTime[1]);
     startDate.setSeconds(0);

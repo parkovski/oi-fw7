@@ -13,7 +13,6 @@
 
   let value;
   let events = [];
-  let calendar;
 
   onMount(() => {
     const eventsSubscription =
@@ -28,8 +27,6 @@
             startTime: e.startTime,
             endTime: e.endTime,
             kind: e.kind,
-            hours: 1,
-            minutes: 0,
             color: '#2196f3',
             // color: '#4caf50',
           };
@@ -51,5 +48,5 @@
   <Fab position="right-bottom" onClick={newEventClicked}>
     <Icon ios="f7:plus" md="material:add" />
   </Fab>
-  <Calendar {events} elementId="events-calendar" bind:value bind:calendar />
+  <Calendar {events} elementId="events-calendar" bind:value />
 </Page>

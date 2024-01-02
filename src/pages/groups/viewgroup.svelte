@@ -35,17 +35,21 @@
 
     return [
       {
-        date: new Date(todayYear, todayMonth, todayDay),
-        hours: 1,
-        minutes: 0,
+        id: '0',
         title: 'Test Event',
+        date: new Date(todayYear, todayMonth, todayDay),
+        startTime: new Date,
+        endTime: new Date,
+        kind: 0,
         color: '#2196f3',
       },
       {
-        date: new Date(todayYear, todayMonth, todayDay + 1),
-        hours: 2,
-        minutes: 30,
+        id: '1',
         title: 'Test Event 2',
+        date: new Date(todayYear, todayMonth, todayDay + 1),
+        startTime: new Date,
+        endTime: new Date,
+        kind: 0,
         color: '#4caf50',
       },
     ];
