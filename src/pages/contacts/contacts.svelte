@@ -58,10 +58,11 @@
 
 <Page>
   <Navbar title="Contacts" />
-  <Block style="margin: 10px 0">
+  <Block class="no-margin"
+    style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
     <div class="grid grid-cols-2 grid-gap">
-      <Button fill id="contactsButton" on:click={changeView('contacts')}>Contacts</Button>
-      <Button id="requestsButton" on:click={changeView('requests')}>Requests</Button>
+      <Button small fill id="contactsButton" on:click={changeView('contacts')}>Contacts</Button>
+      <Button small id="requestsButton" on:click={changeView('requests')}>Requests</Button>
     </div>
   </Block>
   {#if currentButton === 'contacts'}

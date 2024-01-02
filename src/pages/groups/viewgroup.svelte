@@ -195,11 +195,12 @@
   {:else}
     {#if group.memberKind !== null && group.memberKind > 0}
       <div class="group-container">
-        <Block style="margin: 10px 0">
+        <Block class="no-margin"
+          style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
           <div class="grid grid-cols-3 grid-gap">
-            <Button fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
-            <Button id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
-            <Button id="membersButton" on:click={changeView('members')}>Members</Button>
+            <Button small fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
+            <Button small id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
+            <Button small id="membersButton" on:click={changeView('members')}>Members</Button>
           </div>
         </Block>
       {#if currentButton === 'chat'}
