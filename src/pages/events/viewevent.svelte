@@ -2,6 +2,9 @@
   import {
     Page,
     Navbar,
+    NavTitle,
+    NavRight,
+    Link,
     Block,
     Button,
     List,
@@ -114,7 +117,6 @@
     const eventSubscription =
       eventService.getEvent(f7route.params.id).subscribe(e => {
         event = e;
-        console.log(e)
         sortAttendance(e.members);
       });
 
@@ -125,7 +127,12 @@
 </script>
 
 <Page>
-  <Navbar title={event.title} backLink="Back" />
+  <Navbar backLink="Back">
+    <NavTitle>{event.title}</NavTitle>
+    <NavRight>
+      <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="right" />
+    </NavRight>
+  </Navbar>
   {#if event.loading}
     <Block>
       Loading...

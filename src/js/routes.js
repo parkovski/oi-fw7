@@ -8,12 +8,14 @@ import GroupPanelPage from '../pages/groups/grouppanel.svelte';
 import GroupsPage from '../pages/groups/groups.svelte';
 import ViewGroupPage from '../pages/groups/viewgroup.svelte';
 import NewGroupPage from '../pages/groups/newgroup.svelte';
-import GroupInvitePage from '../pages/groups/groupinvite.svelte';
-import GroupRequestsPage from '../pages/groups/grouprequests.svelte';
-import GroupInviteUsersPage from '../pages/groups/groupinviteusers.svelte';
+import GroupInvitePage from '../pages/groups/viewinvite.svelte';
+import GroupRequestsPage from '../pages/groups/viewrequests.svelte';
+import GroupInviteUsersPage from '../pages/groups/inviteusers.svelte';
+import EventPanelPage from '../pages/events/eventpanel.svelte';
 import EventsPage from '../pages/events/events.svelte';
 import NewEventPage from '../pages/events/newevent.svelte';
 import ViewEventPage from '../pages/events/viewevent.svelte';
+import EventInviteUsersPage from '../pages/events/inviteusers.svelte';
 import ContactsPage from '../pages/contacts/contacts.svelte';
 import ViewContactPage from '../pages/contacts/viewcontact.svelte';
 import MessagesPage from '../pages/messages/messages.svelte';
@@ -75,6 +77,10 @@ var routes = [
     component: GroupInviteUsersPage,
   },
   {
+    path: '/panels/event/:id/',
+    component: EventPanelPage,
+  },
+  {
     path: '/events/',
     component: EventsPage,
   },
@@ -85,6 +91,10 @@ var routes = [
   {
     path: '/events/view/:id/',
     component: ViewEventPage,
+  },
+  {
+    path: '/events/invite/:id/',
+    component: EventInviteUsersPage,
   },
   {
     path: '/contacts/',

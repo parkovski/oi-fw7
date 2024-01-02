@@ -18,15 +18,16 @@
   let groupName;
 
   onMount(() => {
-    userService.getContacts().ensureLoaded().then(contacts => {
-      groupService.getGroup(f7route.params.id).ensureLoaded().then(group => {
-        groupName = group.name;
-        const groupUsers = new Set(group.members.map(m => m.id));
-        items = contacts.contacts.filter(c => !groupUsers.has(c.id)).map(c => ({
-          value: c.id,
-          label: c.name
-        }));
-      });
+    Promise.all([
+      userService.getContacts().ensureLoaded(),
+      groupService.getGroup(f7route.params.id).ensureLoaded(),
+    ]).then(([contacts, group]) => {
+      groupName = group.name;
+      const groupUsers = new Set(group.members.map(m => m.id));
+      items = contacts.contacts.filter(c => !groupUsers.has(c.id)).map(c => ({
+        value: c.id,
+        label: c.name,
+      }));
     });
   });
 

@@ -55,6 +55,8 @@
       f7.views.rpanel.router.navigate('/panels/home/', { animate: false });
     } else if (newRoute.url.startsWith('/groups/view/')) {
       f7.views.rpanel.router.navigate(`/panels/group/${newRoute.params.id}/`, { animate: false });
+    } else if (newRoute.url.startsWith('/events/view/')) {
+      f7.views.rpanel.router.navigate(`/panels/event/${newRoute.params.id}/`, { animate: false });
     }
   }
 

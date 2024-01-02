@@ -1,5 +1,5 @@
 import Entity from './entity';
-import { fetchJson, fetchText } from '../js/fetch';
+import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 
 const enum AttendanceKind {
   NotAttending = -1,
@@ -81,6 +81,15 @@ class EventService {
     const event = this.getEvent(id);
     (await event.ensureLoaded()).kind = kind;
     event.publish();
+  }
+
+  invite(id: string, uids: string[]) {
+    return fetchAny(`/events/${id}/invite`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        uids: JSON.stringify(uids),
+      }),
+    });
   }
 
   async newEvent(title: string, description: string | null, place: string,
