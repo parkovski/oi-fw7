@@ -53,8 +53,8 @@
   }
 
   onMount(() => {
-    const groupSubscription
-      = groupService.getGroup(f7route.params.id).subscribe(value => group = value);
+    const groupSubscription =
+      groupService.getGroup(f7route.params.id).subscribe(value => group = value);
 
     return () => {
       groupSubscription.unsubscribe();

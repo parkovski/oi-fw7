@@ -92,6 +92,15 @@ class EventService {
     });
   }
 
+  addHosts(id: string, uids: string[]) {
+    return fetchAny(`/events/${id}/makehost`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        uids: JSON.stringify(uids),
+      }),
+    })
+  }
+
   async newEvent(title: string, description: string | null, place: string,
                  startTime: Date, endTime: Date, isPublic: boolean,
                  invited: string[] | undefined) {

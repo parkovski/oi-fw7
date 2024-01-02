@@ -16,6 +16,7 @@ import EventsPage from '../pages/events/events.svelte';
 import NewEventPage from '../pages/events/newevent.svelte';
 import ViewEventPage from '../pages/events/viewevent.svelte';
 import EventInviteUsersPage from '../pages/events/inviteusers.svelte';
+import EventAddHostsPage from '../pages/events/addhosts.svelte';
 import ContactsPage from '../pages/contacts/contacts.svelte';
 import ViewContactPage from '../pages/contacts/viewcontact.svelte';
 import MessagesPage from '../pages/messages/messages.svelte';
@@ -95,6 +96,10 @@ var routes = [
   {
     path: '/events/invite/:id/',
     component: EventInviteUsersPage,
+  },
+  {
+    path: '/events/addhosts/:id/',
+    component: EventAddHostsPage,
   },
   {
     path: '/contacts/',
