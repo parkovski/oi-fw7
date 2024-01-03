@@ -10,6 +10,12 @@ const enum Membership {
   Admin = 2,
 }
 
+interface GroupMembershipChangedMessage {
+  m: 'group_membership_changed';
+  id: string;
+  kind: Membership | null;
+}
+
 interface Member {
   id: string;
   name: string;
@@ -22,7 +28,7 @@ interface Group {
   name: string;
   public: boolean;
   memberKind: number | null;
-  members?: Member[];
+  members: Member[];
 }
 
 interface GroupChatMessage {
@@ -55,6 +61,41 @@ class GroupService {
 
   constructor() {
     this._groups = new Entity<Group[]>(() => fetchJson(`/groups`));
+
+    this.membershipChanged(membership => {
+      if (!this._groups.data) {
+        return;
+      }
+
+      let mappedGroup = this._groupMap.get(membership.id)?.data;
+      if (mappedGroup) {
+        mappedGroup.memberKind = membership.kind;
+      }
+
+      if (membership.kind === null) {
+        this._removeGroup(membership.id);
+      } else {
+        const index = this._groups.data.findIndex(g => g.id === membership.id);
+        if (index === -1) {
+          this.getGroup(membership.id).then(group => {
+            this._addGroup(group);
+          });
+        } else {
+          this._groups.data[index].memberKind = membership.kind;
+          this._groups.publish();
+        }
+      }
+    });
+  }
+
+  _addGroup(group: Group) {
+    this._groups.data!.push(group);
+    this._groups.publish();
+  }
+
+  _removeGroup(id: string) {
+    this._groups.data = this._groups.data!.filter(g => g.id !== id);
+    this._groups.publish();
   }
 
   getGroups() {
@@ -75,25 +116,20 @@ class GroupService {
   }
 
   async newGroup(name: string, invited: string[], isPublic: boolean) {
-    const gid = await fetchText(`/newgroup`, {
+    const group: Group = JSON.parse(await fetchText(`/newgroup`, {
       method: 'POST',
       body: new URLSearchParams({
         name,
         invited: JSON.stringify(invited),
         public: ''+isPublic,
       }),
-    });
-    const groups = await this._groups.ensureLoaded();
-    if (groups.findIndex(g => g.id === gid) === -1) {
-      groups.push({
-        id: gid,
-        name,
-        public: isPublic,
-        memberKind: Membership.Admin,
-      });
+    }));
+    const groups = await this._groups.get();
+    if (groups.findIndex(g => g.id === group.id) === -1) {
+      groups.push(group);
+      this._groups.publish();
     }
-    this._groups.publish();
-    return gid;
+    return group.id;
   }
 
   getGroupRequests(id: string) {
@@ -130,30 +166,36 @@ class GroupService {
   async joinGroup(id: string) {
     try {
       await fetchText(`/groups/${id}/join`, { method: 'POST' });
-      const group = await this.getGroup(id).ensureLoaded();
-      const groups = await this.getGroups().ensureLoaded();
+      const groupEntity = this.getGroup(id);
+      const group = await groupEntity.refresh();
+      group.memberKind = Membership.Member;
+      const groups = await this.getGroups().get();
       const index = groups.findIndex(g => g.id === id);
       if (index !== -1) {
-        groups[index].memberKind = Membership.Member;
+        groups[index] = group;
       } else {
-        groups.push({
-          id: group.id,
-          name: group.name,
-          public: group.public,
-          memberKind: Membership.Member,
-        });
+        groups.push(group);
       }
       this._groups.publish();
+      groupEntity.publish();
     } catch {
       // Probably the fetch failed - do nothing.
     }
   }
 
   async leaveGroup(id: string) {
-    const res = await fetchAny(`/groups/${id}/leave`, { method: 'POST' });
-    if (res.ok) {
+    try {
+      await fetchAny(`/groups/${id}/leave`, { method: 'POST' });
+      const group = this._groupMap.get(id);
+      if (group && group.data) {
+        const myUid = localStorage.getItem('uid');
+        group.data.members = group.data.members.filter(m => m.id !== myUid);
+        group.data.memberKind = null;
+        group.publish();
+      }
       this._groups.data = this._groups.data!.filter(g => g.id !== id);
       this._groups.publish();
+    } catch {
     }
   }
 
@@ -163,6 +205,11 @@ class GroupService {
 
   messageReceived(subscriber: SubscriberLike<IncomingGroupChatMessage>) {
     return webSocketService.subscribe<IncomingGroupChatMessage>('groupchat', subscriber);
+  }
+
+  membershipChanged(subscriber: SubscriberLike<GroupMembershipChangedMessage>) {
+    return webSocketService.subscribe<GroupMembershipChangedMessage>(
+      'group_membership_changed', subscriber);
   }
 
   send(msg: GroupChatMessage) {

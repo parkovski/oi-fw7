@@ -2,20 +2,17 @@ import { Observable } from 'rxjs';
 import type { Subscriber, TeardownLogic } from 'rxjs';
 
 type LoadFn<T> = () => Promise<T>;
-type ErrorFn = (e: any) => void;
 type SubscriberLike<T> = Subscriber<T> | ((msg: T) => TeardownLogic);
 
 export default class Entity<T> {
   data: T | null = null;
-  loading: boolean = false;
+  loading: Promise<T> | null = null;
   subscribers: Subscriber<T>[] = [];
   load: LoadFn<T>;
-  error?: ErrorFn;
   observable: Observable<T>;
 
-  constructor(load: LoadFn<T>, error?: ErrorFn) {
+  constructor(load: LoadFn<T>) {
     this.load = load;
-    this.error = error;
     this.observable = new Observable(subscriber => {
       this.subscribers.push(subscriber);
       if (this.data !== null) {
@@ -26,20 +23,24 @@ export default class Entity<T> {
     });
   }
 
-  async ensureLoaded(): Promise<T> {
+  async get(): Promise<T> {
     if (!this.data) {
-      this.loading = true;
       try {
-        this.data = await this.load();
-      } catch (e) {
-        if (this.error) {
-          this.error(e);
-        }
+        this.loading = this.load();
+        this.data = await this.loading;
       } finally {
-        this.loading = false;
+        this.loading = null;
       }
     }
     return this.data!;
+  }
+
+  ensureLoaded(): Promise<T> {
+    return this.get();
+  }
+
+  then(fn: (data: T) => void) {
+    this.ensureLoaded().then(fn);
   }
 
   publish() {
@@ -52,18 +53,16 @@ export default class Entity<T> {
 
   async refresh() {
     if (this.loading) {
-      return;
+      await this.loading;
+      return this.data!;
     }
-    this.loading = true;
     try {
-      this.data = await this.load();
+      this.loading = this.load();
+      this.data = await this.loading;
       this.publish();
-    } catch (e) {
-      if (this.error) {
-        this.error(e);
-      }
+      return this.data;
     } finally {
-      this.loading = false;
+      this.loading = null;
     }
   }
 
