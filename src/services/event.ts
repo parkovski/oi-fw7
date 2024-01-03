@@ -1,7 +1,7 @@
 import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 
-const enum AttendanceKind {
+export const enum AttendanceKind {
   NotAttending = -1,
   Invited = 0,
   MaybeAttending = 1,
@@ -9,7 +9,7 @@ const enum AttendanceKind {
   Hosting = 3,
 }
 
-interface EventSummary {
+export interface EventSummary {
   id: string;
   title: string;
   startTime: Date;
@@ -18,14 +18,14 @@ interface EventSummary {
   kind: AttendanceKind;
 }
 
-interface EventMember {
+export interface EventMember {
   id: string;
   name: string;
   username: string;
   kind: AttendanceKind;
 }
 
-interface Event {
+export interface Event {
   id: string;
   title: string;
   description: string | null;

@@ -1,15 +1,17 @@
-const loginListeners = [];
-const logoutListeners = [];
+type Listener = () => void;
+
+const loginListeners: Listener[] = [];
+const logoutListeners: Listener[] = [];
 let didLogin = false;
 
-export function onLogin(listener) {
+export function onLogin(listener: Listener) {
   loginListeners.push(listener);
   if (didLogin) {
     listener();
   }
 }
 
-export function onLogout(listener) {
+export function onLogout(listener: Listener) {
   logoutListeners.push(listener);
 }
 

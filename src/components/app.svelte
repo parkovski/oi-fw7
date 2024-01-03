@@ -18,10 +18,10 @@
   } from 'framework7-svelte';
   import { getDevice }  from 'framework7/lite-bundle';
   import { onMount } from 'svelte';
+  import { fetchText, fetchAny } from '../js/fetch';
 
   import capacitorApp from '../js/capacitor-app';
   import routes from '../js/routes';
-  import store from '../js/store';
   import { postLoginEvent } from '../js/onlogin';
 
   const device = getDevice();
@@ -30,8 +30,6 @@
   let f7params = {
     name: 'OpenInvite', // App name
     theme: 'auto', // Automatic theme detection
-    // App store
-    store: store,
     // App routes
     routes: routes,
     // Register service worker (only on production build)
@@ -69,15 +67,10 @@
       // Call F7 APIs here
       f7.enableAutoDarkMode();
 
-      fetch('http://localhost:3000/hello', { credentials: 'include' })
-        .then(res => {
-          if (!res.ok) {
-            console.log(res);
-            f7.loginScreen.open(document.getElementById('login-screen'));
-          } else {
-            res.text().then(text => console.log(text));
-            postLoginEvent();
-          }
+      fetchText('/hello')
+        .then(text => {
+          console.log(text);
+          postLoginEvent();
         })
         .catch(e => {
           console.log(e);
@@ -95,15 +88,13 @@
 
   async function login() {
     try {
-      const response = await fetch('http://localhost:3000/authorize', {
+      await fetchAny('/authorize', {
         method: 'POST',
-        credentials: 'include',
-        body: new URLSearchParams([
-          ['u', username],
-          ['p', password],
-        ])
+        body: new URLSearchParams({
+          u: username,
+          p: password,
+        }),
       });
-      console.log(response);
       f7.loginScreen.close();
       postLoginEvent();
     }
