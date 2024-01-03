@@ -25,7 +25,7 @@
   }
 
   onMount(() => {
-    eventService.getEvent(f7route.params.id).ensureLoaded().then(event => {
+    eventService.getEvent(f7route.params.id).get().then(event => {
       title = event.title;
       items = event.members.filter(m => m.kind === 2).map(m => ({
         value: m.id,

@@ -19,8 +19,8 @@
 
   onMount(() => {
     Promise.all([
-      userService.getContacts().ensureLoaded(),
-      groupService.getGroup(f7route.params.id).ensureLoaded(),
+      userService.getContacts().get(),
+      groupService.getGroup(f7route.params.id).get(),
     ]).then(([contacts, group]) => {
       groupName = group.name;
       const groupUsers = new Set(group.members.map(m => m.id));

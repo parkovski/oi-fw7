@@ -109,7 +109,7 @@
     await groupService.joinGroup(f7route.params.id);
     const group = groupService.getGroup(f7route.params.id);
     await group.refresh();
-    if ((await group.ensureLoaded()).memberKind > 0) {
+    if ((await group.get()).memberKind > 0) {
       loadChat();
     }
   }
@@ -125,7 +125,7 @@
 
     const groupEntity = groupService.getGroup(f7route.params.id);
     const groupSubscription = groupEntity.subscribe(value => group = value);
-    groupEntity.ensureLoaded().then(value => {
+    groupEntity.get().then(value => {
       if (value.memberKind && value.memberKind > 0) {
         loadChat();
       }

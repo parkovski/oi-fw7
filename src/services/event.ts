@@ -79,7 +79,7 @@ class EventService {
       })
     });
     const event = this.getEvent(id);
-    (await event.ensureLoaded()).kind = kind;
+    (await event.get()).kind = kind;
     event.publish();
   }
 
@@ -116,7 +116,7 @@ class EventService {
         invited: invited && JSON.stringify(invited) || '[]',
       }),
     });
-    const events = await this._events.ensureLoaded();
+    const events = await this._events.get();
     if (events.findIndex(e => e.id === eid) === -1) {
       events.push({
         id: eid,

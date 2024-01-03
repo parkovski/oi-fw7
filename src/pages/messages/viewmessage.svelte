@@ -26,7 +26,7 @@
   onMount(() => {
     const myUid = localStorage.getItem('uid');
 
-    userService.getUser(f7route.params.id).ensureLoaded().then(u => userName = u.name);
+    userService.getUser(f7route.params.id).get().then(u => userName = u.name);
 
     chatService.getChat(f7route.params.id).then(cs => {
       chats = cs.map(c => ({

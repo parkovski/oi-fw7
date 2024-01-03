@@ -31,7 +31,7 @@
   let validationErrorTime = null;
 
   onMount(() => {
-    userService.getContacts().ensureLoaded().then(
+    userService.getContacts().get().then(
       contactData => contacts = contactData.contacts.map(c => ({
         value: c.id,
         label: c.name,

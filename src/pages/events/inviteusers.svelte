@@ -27,8 +27,8 @@
 
   onMount(() => {
     Promise.all([
-      userService.getContacts().ensureLoaded(),
-      eventService.getEvent(f7route.params.id).ensureLoaded(),
+      userService.getContacts().get(),
+      eventService.getEvent(f7route.params.id).get(),
     ]).then(([contacts, event]) => {
       title = event.title;
       const eventUsers = new Set(event.members.map(m => m.id));

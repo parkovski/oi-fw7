@@ -17,7 +17,7 @@
 
   onMount(() => {
     const profileSubscription = profileService.getProfile().subscribe(p => profile = p);
-    profileService.getProfile().ensureLoaded().then(async profile => {
+    profileService.getProfile().get().then(async profile => {
       const qrcode = await writeBarcodeToImageFile(
         `openinvite:profile/${profile.id}`,
         {

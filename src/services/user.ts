@@ -49,8 +49,8 @@ class UserService {
     try {
       const user = this.getUser(id);
       const status = await fetchText(`/contacts/${id}/add`, { method: 'POST' });
-      const userData = await user.ensureLoaded();
-      const contactsData = await this._contacts.ensureLoaded();
+      const userData = await user.get();
+      const contactsData = await this._contacts.get();
       if (status === 'approved') {
         userData.has_contact = true;
         userData.kind = 1;
@@ -70,8 +70,8 @@ class UserService {
     try {
       const user = this.getUser(id);
       if ((await fetchAny(`/contacts/${id}/remove`, { method: 'POST' })).ok) {
-        const userData = await user.ensureLoaded();
-        const contactsData = await this._contacts.ensureLoaded();
+        const userData = await user.get();
+        const contactsData = await this._contacts.get();
         userData.kind = null;
         this._contacts.data!.contacts = contactsData.contacts.filter(c => c.id !== id);
         this._contacts.data!.pending = contactsData.pending.filter(c => c.id !== id);
@@ -85,7 +85,7 @@ class UserService {
   async approveContact(id: string) {
     try {
       await fetchAny(`/contacts/${id}/approve`, { method: 'POST' });
-      const requestsData = await this._requests.ensureLoaded();
+      const requestsData = await this._requests.get();
       this._requests.data = requestsData.filter(c => c.id !== id);
       this._requests.publish();
     } catch {
@@ -95,7 +95,7 @@ class UserService {
   async denyContact(id: string) {
     try {
       await fetchAny(`/contacts/${id}/deny`, { method: 'POST' });
-      const requestsData = await this._requests.ensureLoaded();
+      const requestsData = await this._requests.get();
       this._requests.data = requestsData.filter(c => c.id !== id);
       this._requests.publish();
     } catch {

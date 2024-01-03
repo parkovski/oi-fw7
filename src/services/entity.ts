@@ -35,12 +35,8 @@ export default class Entity<T> {
     return this.data!;
   }
 
-  ensureLoaded(): Promise<T> {
-    return this.get();
-  }
-
   then(fn: (data: T) => void) {
-    this.ensureLoaded().then(fn);
+    return this.get().then(fn);
   }
 
   publish() {
