@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import webSocketService from './websocket';
+import webSocketService, { type SubscriberLike } from './websocket';
 import { fetchJson } from '../js/fetch';
 
 interface UserChatSummary {
@@ -45,24 +45,12 @@ class ChatService {
     });
   }
 
-  observeMessageSent() {
-    return new Observable<UserMessageSentMessage>(subscriber => {
-      const subscription =
-        webSocketService.subscribe<UserMessageSentMessage>('message_sent', msg => {
-          subscriber.next(msg);
-        });
-      return () => subscription.unsubscribe();
-    });
+  messageSent(subscriber: SubscriberLike<UserMessageSentMessage>) {
+    return webSocketService.subscribe<UserMessageSentMessage>('message_sent', subscriber);
   }
 
-  observeMessageReceived() {
-    return new Observable<IncomingUserChatMessage>(subscriber => {
-      const subscription =
-        webSocketService.subscribe<IncomingUserChatMessage>('chat', msg => {
-          subscriber.next(msg);
-        });
-      return () => subscription.unsubscribe();
-    });
+  messageReceived(subscriber: SubscriberLike<IncomingUserChatMessage>) {
+    return webSocketService.subscribe<IncomingUserChatMessage>('chat', subscriber);
   }
 
   send(msg: UserChatMessage) {

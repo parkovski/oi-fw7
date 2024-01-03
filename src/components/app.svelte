@@ -18,7 +18,7 @@
   } from 'framework7-svelte';
   import { getDevice }  from 'framework7/lite-bundle';
   import { onMount } from 'svelte';
-  import { fetchText, fetchAny } from '../js/fetch';
+  import { fetchText } from '../js/fetch';
 
   import capacitorApp from '../js/capacitor-app';
   import routes from '../js/routes';
@@ -69,7 +69,9 @@
 
       fetchText('/hello')
         .then(text => {
-          console.log(text);
+          let [uid, message] = text.split('\n');
+          localStorage.setItem('uid', uid);
+          console.log(message);
           postLoginEvent();
         })
         .catch(e => {
@@ -88,7 +90,7 @@
 
   async function login() {
     try {
-      await fetchAny('/authorize', {
+      const uid = await fetchText('/authorize', {
         method: 'POST',
         body: new URLSearchParams({
           u: username,
@@ -96,6 +98,7 @@
         }),
       });
       f7.loginScreen.close();
+      localStorage.setItem('uid', uid);
       postLoginEvent();
     }
     catch (e) {

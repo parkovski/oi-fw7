@@ -8,6 +8,7 @@
     f7,
   } from 'framework7-svelte';
   import { postLogoutEvent } from '../../js/onlogin';
+  import { fetchAny } from '../../js/fetch';
 
   function panelNavigate(to) {
     f7.panel.close('#right-panel');
@@ -16,10 +17,8 @@
 
   async function logout() {
     try {
-      await fetch('http://localhost:3000/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await fetchAny('/logout', { method: 'POST' });
+      localStorage.removeItem('uid');
       f7.panel.close('#right-panel');
       f7.loginScreen.open(document.getElementById('login-screen'));
       postLogoutEvent();

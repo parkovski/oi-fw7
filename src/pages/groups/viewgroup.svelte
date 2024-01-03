@@ -11,7 +11,6 @@
     Link,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import cookie from 'cookie';
 
   import Contacts from '../../components/contacts.svelte';
   import Chat from '../../components/chat.svelte';
@@ -95,7 +94,8 @@
   }
 
   async function loadChat() {
-    const myUid = cookie.parse(document.cookie)?.uid || '0';
+    const myUid = localStorage.getItem('uid');
+    console.log('myUid', myUid);
     chats = (await groupService.getGroupChat(f7route.params.id)).map(c => ({
       id: c.id,
       to: f7route.params.id,
@@ -121,7 +121,7 @@
   }
 
   onMount(() => {
-    const myUid = cookie.parse(document.cookie)?.uid || '0';
+    const myUid = localStorage.getItem('uid');
 
     const groupEntity = groupService.getGroup(f7route.params.id);
     const groupSubscription = groupEntity.subscribe(value => group = value);
@@ -131,7 +131,7 @@
       }
     });
 
-    const messageSentSubscription = groupService.observeMessageSent().subscribe(msg => {
+    const messageSentSubscription = groupService.messageSent(msg => {
       const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
       if (chat) {
         pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
@@ -142,7 +142,7 @@
         }];
       }
     });
-    const messageReceivedSubscription = groupService.observeMessageReceived().subscribe(msg => {
+    const messageReceivedSubscription = groupService.messageReceived(msg => {
       if (msg.from !== myUid && msg.to === f7route.params.id) {
         chats = [...chats, {
           id: msg.id,

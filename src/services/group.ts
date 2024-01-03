@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
-import webSocketService from './websocket';
+import webSocketService, { type SubscriberLike } from './websocket';
 
 const enum Membership {
   Requested = -1,
@@ -157,24 +157,12 @@ class GroupService {
     }
   }
 
-  observeMessageSent() {
-    return new Observable<GroupMessageSentMessage>(subscriber => {
-      const subscription =
-        webSocketService.subscribe<GroupMessageSentMessage>('group_message_sent', msg => {
-          subscriber.next(msg);
-        });
-      return () => subscription.unsubscribe();
-    });
+  messageSent(subscriber: SubscriberLike<GroupMessageSentMessage>) {
+    return webSocketService.subscribe<GroupMessageSentMessage>('group_message_sent', subscriber);
   }
 
-  observeMessageReceived() {
-    return new Observable<IncomingGroupChatMessage>(subscriber => {
-      const subscription =
-        webSocketService.subscribe<IncomingGroupChatMessage>('groupchat', msg => {
-          subscriber.next(msg);
-        });
-      return () => subscription.unsubscribe();
-    });
+  messageReceived(subscriber: SubscriberLike<IncomingGroupChatMessage>) {
+    return webSocketService.subscribe<IncomingGroupChatMessage>('groupchat', subscriber);
   }
 
   send(msg: GroupChatMessage) {

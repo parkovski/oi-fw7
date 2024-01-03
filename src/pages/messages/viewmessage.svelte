@@ -5,7 +5,6 @@
   } from 'framework7-svelte';
 
   import { onMount } from 'svelte';
-  import cookie from 'cookie';
   import chatService from '../../services/chat';
   import userService from '../../services/user';
   import Chat from '../../components/chat.svelte';
@@ -25,7 +24,7 @@
   }
 
   onMount(() => {
-    const myUid = cookie.parse(document.cookie)?.uid || '0';
+    const myUid = localStorage.getItem('uid');
 
     userService.getUser(f7route.params.id).ensureLoaded().then(u => userName = u.name);
 
@@ -39,7 +38,7 @@
       }));
     });
 
-    const messageSentSubscription = chatService.observeMessageSent().subscribe(msg => {
+    const messageSentSubscription = chatService.messageSent(msg => {
       const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
       if (chat) {
         pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
@@ -51,7 +50,7 @@
       }
     });
 
-    const messageReceivedSubscription = chatService.observeMessageReceived().subscribe(msg => {
+    const messageReceivedSubscription = chatService.messageReceived(msg => {
       if (msg.from === f7route.params.id) {
         chats = [...chats, {
           id: msg.id,

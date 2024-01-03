@@ -1,22 +1,22 @@
 import { Observable } from 'rxjs';
-import type { Subscriber, TeardownLogic } from 'rxjs';
+import type { Subscriber, TeardownLogic, Subscription } from 'rxjs';
 
-declare var process: any;
+export type SubscriberLike<T> = Subscriber<T> | ((msg: T) => TeardownLogic);
 
-type SubscriberLike<T> = Subscriber<T> | ((msg: T) => TeardownLogic);
+export interface Message {
+  m: string;
+}
 
-interface MessageHandler<T> {
+interface MessageHandler<T extends Message | Blob | ArrayBuffer> {
   observable: Observable<T>;
   subscribers: Subscriber<T>[];
 }
 
-const webSocketUrl = process.env.NODE_ENV === 'production'
-  ? 'wss://api.oi.parkovski.com'
-  : 'ws://localhost:3000';
+const webSocketUrl = 'wss://api.oi.parkovski.com';
 
 class WebSocketService {
   _webSocket: WebSocket;
-  _handlers: Map<string, MessageHandler<unknown>> = new Map;
+  _handlers: Map<string, MessageHandler<any>> = new Map;
   _retries: number = 0;
 
   constructor() {
@@ -96,7 +96,9 @@ class WebSocketService {
     this._webSocket.send(JSON.stringify(data));
   }
 
-  subscribe<T>(message: string, subscriber: SubscriberLike<T>) {
+  subscribe<T extends Message>(message: string, subscriber: SubscriberLike<T>): Subscription;
+  subscribe(message: 'binary', subscriber: SubscriberLike<Blob>): Subscription;
+  subscribe<T extends Message>(message: string, subscriber: SubscriberLike<T>) {
     let handler = this._handlers.get(message);
     if (!handler) {
       const subscribers: Subscriber<unknown>[] = [];

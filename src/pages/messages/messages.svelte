@@ -4,9 +4,8 @@
     Navbar,
     Fab,
     Icon,
-    useStore,
   } from 'framework7-svelte';
-  import MessagesView from '../../components/messages.svelte';
+  import Messages from '../../components/messages.svelte';
   import { onMount } from 'svelte';
   import chatService from '../../services/chat';
 
@@ -23,5 +22,5 @@
   <Fab position="right-bottom" href="/messages/new/">
     <Icon ios="f7:plus" md="material:add" />
   </Fab>
-  <MessagesView messages={messages} />
+  <Messages messages={messages} />
 </Page>
