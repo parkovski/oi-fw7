@@ -95,7 +95,7 @@
 
   async function loadChat() {
     const myUid = localStorage.getItem('uid');
-    console.log('myUid', myUid);
+
     chats = (await groupService.getGroupChat(f7route.params.id)).map(c => ({
       id: c.id,
       to: f7route.params.id,

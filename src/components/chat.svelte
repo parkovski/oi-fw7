@@ -53,11 +53,15 @@
     display: inline-block;
     padding: 8px;
     border-radius: 8px;
-    margin: 1em 0 0 0;
+    margin: 0 0 1em 0;
   }
 
-  p.chatbubble:first-child {
+  p.chatbubble:first-child, .chat-from:first-child {
     margin-top: 1em;
+  }
+
+  p.chatbubble:has(+ div.clear-both) {
+    margin-bottom: 0;
   }
 
   .chat-left {
@@ -76,15 +80,19 @@
     color: var(--f7-button-fill-text-color, #fff);
   }
 
-  .chat-left + .chat-left, .chat-right + .chat-right {
-    margin-top: .25em;
+  .chat-left:has(+ .chat-left), .chat-right:has(+ .chat-right) {
+    margin-bottom: .25em;
   }
 
   .chat-from {
     float: left;
-    clear: left;
+    clear: both;
     margin: 0;
     font-size: 85%;
+  }
+
+  .clear-both {
+    clear: both;
   }
 
   .container {
@@ -107,6 +115,9 @@
 <div class="container">
   <div bind:this={chat} class="chat">
     {#each aggregate as agg (agg.id)}
+      {#if agg.chats[0].from}
+        <p class="chat-from">{agg.chats[0].fromName}</p>
+      {/if}
       {#each agg.chats as chat (chat.id)}
         {#if chat.from}
           <p class="chatbubble chat-left">{@html chat.text}</p>
@@ -114,9 +125,6 @@
           <p class="chatbubble chat-right">{@html chat.text}</p>
         {/if}
       {/each}
-      {#if agg.chats[0].from}
-        <p class="chat-from">{agg.chats[0].fromName}</p>
-      {/if}
     {/each}
     {#each chats as chat (chat.id)}
       {#if chat.from}
@@ -128,7 +136,7 @@
     {#each pendingChats as chat (chat.uuid)}
       <p class="chatbubble chat-right chat-pending">{@html escapeHtml(chat.text)}</p>
     {/each}
-    <div style="clear:both"></div>
+    <div class="clear-both"></div>
   </div>
   <div class="editor">
     <TextEditor
