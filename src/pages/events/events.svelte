@@ -18,7 +18,7 @@
   let value;
   let events = [];
   let viewActions;
-  let viewKind = 'calendar';
+  let viewKind = localStorage.getItem('event-preferred-view') || 'calendar';
 
   onMount(() => {
     const eventsSubscription =
@@ -63,11 +63,17 @@
           },
           {
             text: 'Calendar View',
-            onClick: () => viewKind = 'calendar',
+            onClick: () => {
+              viewKind = 'calendar';
+              localStorage.setItem('event-preferred-view', 'calendar');
+            },
           },
           {
             text: 'List View',
-            onClick: () => viewKind = 'list',
+            onClick: () => {
+              viewKind = 'list';
+              localStorage.setItem('event-preferred-view', 'list');
+            },
           },
         ],
         targetEl: document.getElementById('events-ellipsis'),
