@@ -28,7 +28,7 @@ interface Group {
   name: string;
   public: boolean;
   memberKind: number | null;
-  members: Member[];
+  members?: Member[];
 }
 
 interface GroupChatMessage {
@@ -189,13 +189,18 @@ class GroupService {
       const group = this._groupMap.get(id);
       if (group && group.data) {
         const myUid = localStorage.getItem('uid');
-        group.data.members = group.data.members.filter(m => m.id !== myUid);
+        if (group.data.members) {
+          group.data.members = group.data.members.filter(m => m.id !== myUid);
+        }
         group.data.memberKind = null;
         group.publish();
       }
-      this._groups.data = this._groups.data!.filter(g => g.id !== id);
-      this._groups.publish();
-    } catch {
+      if (this._groups.data) {
+        this._groups.data = this._groups.data.filter(g => g.id !== id);
+        this._groups.publish();
+      }
+    } catch (e) {
+      console.error(e);
     }
   }
 
