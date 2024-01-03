@@ -12,7 +12,14 @@ interface MessageHandler<T extends Message | Blob | ArrayBuffer> {
   subscribers: Subscriber<T>[];
 }
 
-const webSocketUrl = 'wss://api.oi.parkovski.com';
+declare var process: any;
+
+const webSocketUrl = 
+  process.env.NODE_ENV === 'production'
+    ? 'wss://api.oi.parkovski.com'
+    : (window.location.hostname === 'localhost'
+      ? 'ws://localhost:3000'
+      : 'wss://api.oi.parkovski.com');
 
 class WebSocketService {
   _webSocket: WebSocket;
