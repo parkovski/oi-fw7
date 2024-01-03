@@ -15,10 +15,14 @@
   let groups = [];
 
   onMount(() => {
-    const subscription = groupService.getGroups().subscribe(value => groups = value);
-    onLogin(() => groupService.getGroups().refresh());
+    let groupsSubscription;
+    onLogin(() => {
+      groupsSubscription = groupService.getGroups().subscribe(value => groups = value);
+    })
 
-    return () => subscription.unsubscribe();
+    return () => {
+      groupsSubscription && groupsSubscription.unsubscribe();
+    }
   });
 
   function getGroupLink(group) {

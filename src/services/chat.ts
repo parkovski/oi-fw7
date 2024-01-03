@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs';
+import Entity from './entity';
 import webSocketService, { type SubscriberLike } from './websocket';
 import { fetchJson } from '../js/fetch';
 
@@ -32,17 +33,33 @@ interface UserMessageSentMessage {
 }
 
 class ChatService {
+  _chatSummary: Entity<UserChatSummary[]>;
+
+  constructor() {
+    this._chatSummary = new Entity(() => fetchJson('/chat'));
+
+    this.messageReceived(msg => {
+      if (!this._chatSummary.data) {
+        return;
+      }
+      const index = this._chatSummary.data.findIndex(c => c.uid === msg.from);
+      if (index === -1) {
+        this._chatSummary.data.push({
+          uid: msg.from,
+          name: msg.fromName,
+          username: 'undefined',
+        });
+        this._chatSummary.publish();
+      }
+    });
+  }
+
   getChat(id: string) {
     return fetchJson(`/chat/${id}`);
   }
 
-  observeChatSummary() {
-    return new Observable<UserChatSummary>(subscriber => {
-      (async () => {
-        const chats: UserChatSummary[] = await fetchJson('/chat');
-        chats.forEach(chat => subscriber.next(chat));
-      })();
-    });
+  getChatSummary() {
+    return this._chatSummary;
   }
 
   messageSent(subscriber: SubscriberLike<UserMessageSentMessage>) {

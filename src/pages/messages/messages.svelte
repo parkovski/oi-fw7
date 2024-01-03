@@ -7,14 +7,22 @@
   } from 'framework7-svelte';
   import Messages from '../../components/messages.svelte';
   import { onMount } from 'svelte';
+  import { onLogin } from '../../js/onlogin';
   import chatService from '../../services/chat';
 
   let messages = [];
 
   onMount(() => {
-    chatService.observeChatSummary().subscribe(chat => {
-      messages = [chat, ...messages];
+    let chatSubscription;
+    onLogin(() => {
+      chatSubscription = chatService.getChatSummary().subscribe(chat => {
+        messages = chat;
+      });
     });
+
+    return () => {
+      chatSubscription && chatSubscription.unsubscribe();
+    };
   });
 </script>
 <Page>
