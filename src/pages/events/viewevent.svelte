@@ -7,6 +7,7 @@
     Link,
     Block,
     Button,
+    Segmented,
     List,
     ListItem,
   } from 'framework7-svelte';
@@ -101,10 +102,10 @@
   {:else}
     <Block class="no-margin"
       style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
-      <div class="grid grid-cols-2 grid-gap">
+      <Segmented>
         <Button small fill id="eventButton" on:click={changeView('event')}>Event</Button>
         <Button small id="attendanceButton" on:click={changeView('attendance')}>Attendance</Button>
-      </div>
+      </Segmented>
     </Block>
     {#if currentButton === 'event'}
       <List style="margin-top: 0">

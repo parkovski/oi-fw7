@@ -98,7 +98,6 @@
     const myUid = localStorage.getItem('uid');
 
     const cs = await groupService.getGroupChat(f7route.params.id);
-    console.log(cs);
     chats = cs.map(c => ({
       id: c.id,
       to: f7route.params.id,
@@ -107,7 +106,6 @@
       text: c.message,
     }));
     const unread = cs.filter(c => c.uid_from !== myUid && !c.received).map(c => c.id);
-    console.log(unread.length, unread);
     groupService.acknowledge(unread, f7route.params.id);
   }
 
