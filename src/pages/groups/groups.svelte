@@ -6,7 +6,6 @@
     ListItem,
     Icon,
     Fab,
-    Badge,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
@@ -43,12 +42,6 @@
       return;
     }
   }
-
-  function getBadge() {
-    if (Math.random() > .5) {
-      return Math.ceil(Math.random() * 10);
-    }
-  }
 </script>
 
 <Page>
@@ -58,7 +51,6 @@
       <ListItem link={getGroupLink(group)} title={group.name}
         footer={getFooterText(group)}>
         <Icon slot="media" ios="f7:person_3_fill" md="material:groups" />
-        <Badge color="red">{getBadge()}</Badge>
       </ListItem>
     {/each}
   </List>
