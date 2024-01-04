@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs';
 import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 import webSocketService, { type SubscriberLike } from './websocket';

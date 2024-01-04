@@ -1,5 +1,6 @@
 import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
+import webSocketService, { type SubscriberLike } from './websocket';
 
 export const enum AttendanceKind {
   NotAttending = -1,
@@ -37,6 +38,11 @@ export interface Event {
   members: EventMember[] | undefined;
 }
 
+interface EventAddedMessage {
+  m: 'event_added';
+  id: string;
+}
+
 class EventService {
   _events: Entity<EventSummary[]>;
   _eventMap: Map<string, Entity<Event>>;
@@ -51,6 +57,10 @@ class EventService {
       return events;
     });
     this._eventMap = new Map;
+
+    this.eventAdded(() => {
+      this._events.refresh();
+    });
   }
 
   getEvents() {
@@ -129,6 +139,10 @@ class EventService {
     }
     this._events.publish();
     return eid;
+  }
+
+  eventAdded(subscriber: SubscriberLike<EventAddedMessage>) {
+    return webSocketService.subscribe<EventAddedMessage>('event_added', subscriber);
   }
 }
 

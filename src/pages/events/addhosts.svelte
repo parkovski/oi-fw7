@@ -38,7 +38,7 @@
 <Page>
   <Navbar title="{title} - Add hosts" backLink="Back" />
   <Block style="margin: 2em 0">
-    <div class="title">Invite attendees:</div>
+    <div class="title">Add hosts:</div>
     <Select {items} searchable multiple bind:value placeholder="Select users" />
   </Block>
   <Block style="margin: 2em 0; z-index: 0">
