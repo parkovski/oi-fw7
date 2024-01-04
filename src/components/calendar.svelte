@@ -34,7 +34,7 @@
         kind: e.kind,
       });
     });
-    eventItemsTmp.sort((a, b) => a.startTime > b.startTime);
+    eventItemsTmp.sort((a, b) => a.startTime.valueOf() - b.startTime.valueOf());
     eventItems = eventItemsTmp;
   }
 

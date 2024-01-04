@@ -6,7 +6,7 @@
   import { formatTime, formatDate } from '../js/timeutils';
 
   export let events = [];
-  $: events = events.sort((a, b) => a.startTime > b.startTime);
+  $: events = events.sort((a, b) => a.startTime - b.startTime);
 
   function getFooterText(event) {
     switch (event.kind) {
