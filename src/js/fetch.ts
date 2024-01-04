@@ -25,10 +25,10 @@ export async function fetchAny(resource: string, options?: RequestInit): Promise
   return response;
 }
 
-export function fetchText(resource: string, options?: RequestInit): Promise<string> {
-  return fetchAny(resource, options).then(x => x.text()).catch(e => { throw e; });
+export async function fetchText(resource: string, options?: RequestInit): Promise<string> {
+  return (await fetchAny(resource, options)).text();
 }
 
-export function fetchJson(resource: string, options?: RequestInit): Promise<any> {
-  return fetchAny(resource, options).then(x => x.json()).catch(e => { throw e; });
+export async function fetchJson(resource: string, options?: RequestInit): Promise<any> {
+  return (await fetchAny(resource, options)).json();
 }
