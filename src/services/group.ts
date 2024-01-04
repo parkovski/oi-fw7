@@ -106,6 +106,9 @@ class GroupService {
   }
 
   _newMessage(msg: IncomingGroupChatMessage) {
+    if (msg.from === localStorage.getItem('uid')) {
+      return;
+    }
     if (!this._groups.data) {
       this._groups.refresh();
       return;
