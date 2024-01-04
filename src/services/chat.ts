@@ -104,6 +104,10 @@ class ChatService {
   }
 
   acknowledge(id: string | string[], uidFrom: string) {
+    if (Array.isArray(id) && id.length === 0) {
+      return;
+    }
+
     const msg: MessageReceivedMessage = {
       m: 'message_received',
       id,

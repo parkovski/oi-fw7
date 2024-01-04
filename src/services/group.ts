@@ -265,6 +265,10 @@ class GroupService {
   }
 
   acknowledge(id: string | string[], gid: string) {
+    if (Array.isArray(id) && id.length === 0) {
+      return;
+    }
+
     const msg: GroupMessageReceivedMessage = {
       m: 'group_message_received',
       id,
