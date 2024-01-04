@@ -4,6 +4,7 @@
     Navbar,
     NavTitle,
     NavRight,
+    Segmented,
     Block,
     Button,
     Icon,
@@ -197,11 +198,11 @@
       <div class="group-container">
         <Block class="no-margin"
           style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
-          <div class="grid grid-cols-3 grid-gap">
+          <Segmented>
             <Button small fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
             <Button small id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
             <Button small id="membersButton" on:click={changeView('members')}>Members</Button>
-          </div>
+          </Segmented>
         </Block>
       {#if currentButton === 'chat'}
         <div class="chat-container">

@@ -4,6 +4,7 @@
     Navbar,
     Block,
     Button,
+    Segmented,
   } from 'framework7-svelte';
 
   import Contacts from '../../components/contacts.svelte';
@@ -60,10 +61,10 @@
   <Navbar title="Contacts" />
   <Block class="no-margin"
     style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
-    <div class="grid grid-cols-2 grid-gap">
+    <Segmented>
       <Button small fill id="contactsButton" on:click={changeView('contacts')}>Contacts</Button>
       <Button small id="requestsButton" on:click={changeView('requests')}>Requests</Button>
-    </div>
+    </Segmented>
   </Block>
   {#if currentButton === 'contacts'}
     <Contacts contacts={contacts} />
