@@ -1,47 +1,9 @@
 import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 import webSocketService, { type SubscriberLike } from './websocket';
-
-export const enum AttendanceKind {
-  NotAttending = -1,
-  Invited = 0,
-  MaybeAttending = 1,
-  Attending = 2,
-  Hosting = 3,
-}
-
-export interface EventSummary {
-  id: string;
-  title: string;
-  startTime: Date;
-  endTime: Date;
-  public: boolean;
-  kind: AttendanceKind;
-}
-
-export interface EventMember {
-  id: string;
-  name: string;
-  username: string;
-  kind: AttendanceKind;
-}
-
-export interface Event {
-  id: string;
-  title: string;
-  description: string | null;
-  place: string;
-  startTime: Date;
-  endTime: Date;
-  public: boolean;
-  kind: AttendanceKind;
-  members: EventMember[] | undefined;
-}
-
-interface EventAddedMessage {
-  m: 'event_added';
-  id: string;
-}
+import {
+  AttendanceKind, Event, EventSummary, EventAddedMessage
+} from 'oi-types/event';
 
 class EventService {
   _events: Entity<EventSummary[]>;

@@ -1,14 +1,6 @@
 import Entity from './entity';
 import { fetchJson } from '../js/fetch';
-
-interface Profile {
-  id: string;
-  name: string;
-  username: string;
-  email?: string;
-  phone?: string;
-  verified: boolean;
-}
+import { Profile } from 'oi-types/user';
 
 class ProfileService {
   _profile: Entity<Profile>;

@@ -1,63 +1,16 @@
 import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 import webSocketService, { type SubscriberLike } from './websocket';
+import { Membership, Group } from 'oi-types/group';
+import {
+  ClientGroupMessage, ServerGroupMessage, GroupMessageSentMessage, GroupMessageReceivedMessage,
+  GroupMembershipChangedMessage,
+} from 'oi-types/groupchat';
 
-const enum Membership {
-  Requested = -1,
-  Invited = 0,
-  Member = 1,
-  Admin = 2,
-}
-
-interface GroupMembershipChangedMessage {
-  m: 'group_membership_changed';
-  id: string;
-  kind: Membership | null;
-}
-
-interface Member {
-  id: string;
-  name: string;
-  username: string;
-  kind: Membership;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  public: boolean;
-  memberKind: number | null;
-  members?: Member[];
-  unreadMessages?: number;
-}
-
-interface GroupChatMessage {
+// Type used by `GroupService.send`.
+export interface GroupMessage {
   to: string;
   text: string;
-}
-
-interface OutgoingGroupChatMessage extends GroupChatMessage {
-  m: 'groupchat';
-  uuid: string;
-}
-
-interface IncomingGroupChatMessage extends GroupChatMessage {
-  m: 'groupchat';
-  from: string;
-  time: string;
-}
-
-interface GroupMessageSentMessage {
-  m: 'group_message_sent';
-  uuid: string;
-  id: string;
-  time: string;
-  text: string;
-}
-
-interface GroupMessageReceivedMessage {
-  m: 'group_message_received';
-  id: string | string[];
 }
 
 class GroupService {
@@ -105,7 +58,7 @@ class GroupService {
     this._groups.publish();
   }
 
-  _newMessage(msg: IncomingGroupChatMessage) {
+  _newMessage(msg: ServerGroupMessage) {
     if (msg.from === localStorage.getItem('uid')) {
       return;
     }
@@ -255,8 +208,8 @@ class GroupService {
     return webSocketService.subscribe<GroupMessageSentMessage>('group_message_sent', subscriber);
   }
 
-  messageReceived(subscriber: SubscriberLike<IncomingGroupChatMessage>) {
-    return webSocketService.subscribe<IncomingGroupChatMessage>('groupchat', subscriber);
+  messageReceived(subscriber: SubscriberLike<ServerGroupMessage>) {
+    return webSocketService.subscribe<ServerGroupMessage>('groupchat', subscriber);
   }
 
   membershipChanged(subscriber: SubscriberLike<GroupMembershipChangedMessage>) {
@@ -278,8 +231,8 @@ class GroupService {
     this._markMessageRead(gid, Array.isArray(id) ? id.length : 1);
   }
 
-  send(msg: GroupChatMessage) {
-    const outgoingMsg: OutgoingGroupChatMessage = {
+  send(msg: GroupMessage) {
+    const outgoingMsg: ClientGroupMessage = {
       m: 'groupchat',
       uuid: crypto.randomUUID(),
       ...msg,

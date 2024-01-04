@@ -1,22 +1,6 @@
 import Entity from './entity';
 import { fetchAny, fetchText, fetchJson } from '../js/fetch';
-
-interface User {
-  id: string;
-  name: string;
-  username: string;
-  has_contact?: boolean | 'pending';
-  kind?: number | null;
-}
-
-interface ContactData {
-  contacts: User[];
-  pending: User[];
-}
-
-function fetchUser(id: string) {
-  return fetchJson(`/user/${id}`);
-}
+import { User, ContactData } from 'oi-types/user';
 
 class UserService {
   _users = new Map<string, Entity<User>>;
@@ -39,7 +23,7 @@ class UserService {
   getUser(id: string): Entity<User> {
     let user = this._users.get(id);
     if (!user) {
-      user = new Entity(() => fetchUser(id));
+      user = new Entity(() => fetchJson(`/user/${id}`));
       this._users.set(id, user);
     }
     return user;

@@ -1,44 +1,19 @@
 import Entity from './entity';
 import webSocketService, { type SubscriberLike } from './websocket';
 import { fetchJson } from '../js/fetch';
+import {
+  ChatSummary, ClientChatMessage, ServerChatMessage, MessageSentMessage,
+  MessageReceivedMessage
+} from 'oi-types/chat';
 
-interface UserChatSummary {
-  uid: string;
-  name: string;
-  username: string;
-  unread?: number;
-}
-
-interface UserChatMessage {
+// Used by `ChatService.send`.
+interface ChatMessage {
   to: string;
   text: string;
 }
 
-interface OutgoingUserChatMessage extends UserChatMessage {
-  m: 'chat';
-  uuid: string;
-}
-
-interface IncomingUserChatMessage extends UserChatMessage {
-  m: 'chat';
-  from: string;
-  fromName: string;
-}
-
-interface UserMessageSentMessage {
-  m: 'message_sent';
-  uuid: string;
-  id: string;
-  time: string;
-}
-
-interface MessageReceivedMessage {
-  m: 'message_received';
-  id: string | string[];
-}
-
 class ChatService {
-  _chatSummary: Entity<UserChatSummary[]>;
+  _chatSummary: Entity<ChatSummary[]>;
 
   constructor() {
     this._chatSummary = new Entity(() => fetchJson('/chat'));
@@ -46,7 +21,7 @@ class ChatService {
     this.messageReceived(msg => this._newMessage(msg));
   }
 
-  _newMessage(msg: IncomingUserChatMessage) {
+  _newMessage(msg: ServerChatMessage) {
     if (!this._chatSummary.data) {
       this._chatSummary.refresh();
       return;
@@ -95,12 +70,12 @@ class ChatService {
     return this._chatSummary;
   }
 
-  messageSent(subscriber: SubscriberLike<UserMessageSentMessage>) {
-    return webSocketService.subscribe<UserMessageSentMessage>('message_sent', subscriber);
+  messageSent(subscriber: SubscriberLike<MessageSentMessage>) {
+    return webSocketService.subscribe<MessageSentMessage>('message_sent', subscriber);
   }
 
-  messageReceived(subscriber: SubscriberLike<IncomingUserChatMessage>) {
-    return webSocketService.subscribe<IncomingUserChatMessage>('chat', subscriber);
+  messageReceived(subscriber: SubscriberLike<ServerChatMessage>) {
+    return webSocketService.subscribe<ServerChatMessage>('chat', subscriber);
   }
 
   acknowledge(id: string | string[], uidFrom: string) {
@@ -117,8 +92,8 @@ class ChatService {
     this._markMessageRead(uidFrom, Array.isArray(id) ? id.length : 1);
   }
 
-  send(msg: UserChatMessage) {
-    const outgoingMsg: OutgoingUserChatMessage = {
+  send(msg: ChatMessage) {
+    const outgoingMsg: ClientChatMessage = {
       m: 'chat',
       uuid: crypto.randomUUID(),
       ...msg,
