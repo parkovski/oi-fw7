@@ -91,6 +91,15 @@ class EventService {
     const event = this.getEvent(id);
     (await event.get()).kind = kind;
     event.publish();
+    if (this._events.data) {
+      const summaryEvent = this._events.data.find(e => e.id === id);
+      if (summaryEvent) {
+        summaryEvent.kind = kind;
+        this._events.publish();
+      } else {
+        this._events.refresh();
+      }
+    }
   }
 
   invite(id: string, uids: string[]) {

@@ -14,7 +14,16 @@
 
   let eventItems = [];
 
-  $: calendar && (calendar.params.events = events) && calendar.update();
+  function updateCalendar(events) {
+    if (!calendar) {
+      return;
+    }
+    calendar.params.events = events;
+    calendar.update();
+    renderEvents(calendar);
+  }
+
+  $: updateCalendar(events);
 
   function renderEvents(calendar) {
     const currentDate = calendar.value[0];
