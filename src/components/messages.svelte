@@ -3,6 +3,7 @@
     List,
     ListItem,
     Icon,
+    Badge,
   } from 'framework7-svelte';
 
   export let messages = [];
@@ -30,6 +31,9 @@
   {#each messages as message (message.uid)}
     <ListItem title={message.name} href={`/messages/view/${message.uid}/`}>
       <Icon slot="media" ios={getIosIcon(message)} md={getMdIcon(message)} />
+      {#if message.unread}
+        <Badge color="red">{message.unread}</Badge>
+      {/if}
     </ListItem>
   {/each}
 </List>

@@ -7,6 +7,7 @@ interface UserChatSummary {
   uid: string;
   name: string;
   username: string;
+  unread?: number;
 }
 
 interface UserChatMessage {
@@ -32,6 +33,11 @@ interface UserMessageSentMessage {
   time: string;
 }
 
+interface MessageReceivedMessage {
+  m: 'message_received',
+  id: string | string[];
+}
+
 class ChatService {
   _chatSummary: Entity<UserChatSummary[]>;
 
@@ -48,9 +54,14 @@ class ChatService {
           uid: msg.from,
           name: msg.fromName,
           username: 'undefined',
+          unread: 1,
         });
-        this._chatSummary.publish();
+      } else if (this._chatSummary.data[index].unread) {
+        ++this._chatSummary.data[index].unread!;
+      } else {
+        this._chatSummary.data[index].unread = 1;
       }
+      this._chatSummary.publish();
     });
   }
 
@@ -68,6 +79,31 @@ class ChatService {
 
   messageReceived(subscriber: SubscriberLike<IncomingUserChatMessage>) {
     return webSocketService.subscribe<IncomingUserChatMessage>('chat', subscriber);
+  }
+
+  async acknowledge(id: string | string[], uidFrom: string) {
+    const msg: MessageReceivedMessage = {
+      m: 'message_received',
+      id,
+    }
+    webSocketService.sendJson(msg);
+
+    if (this._chatSummary.data) {
+      const summaries = this._chatSummary.data;
+      const index = summaries.findIndex(c => c.uid === uidFrom);
+      if (index !== -1) {
+        const count = Array.isArray(id) ? id.length : 1;
+        if (summaries[index].unread !== undefined) {
+          summaries[index].unread! -= count;
+          if (summaries[index].unread! < 0) {
+            summaries[index].unread = 0;
+          }
+        }
+        this._chatSummary.publish();
+      }
+    } else {
+      this._chatSummary.refresh();
+    }
   }
 
   send(msg: UserChatMessage) {

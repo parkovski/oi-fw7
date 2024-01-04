@@ -36,6 +36,8 @@
         fromName: c.name_from,
         text: c.message,
       }));
+      const unread = cs.filter(c => c.uid_from !== myUid && !c.received).map(c => c.id);
+      chatService.acknowledge(unread, f7route.params.id);
     });
 
     const messageSentSubscription = chatService.messageSent(msg => {
@@ -58,6 +60,7 @@
           fromName: msg.fromName,
           text: msg.text,
         }];
+        chatService.acknowledge(msg.id);
       }
     });
 

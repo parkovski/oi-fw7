@@ -2,3 +2,7 @@
   background-color: var(--f7-input-item-bg-color) !important;
   color: var(--f7-text-color);
 }
+
+html.dark.md .badge {
+  color: black;
+}
