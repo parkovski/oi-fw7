@@ -29,11 +29,12 @@
         id: e.id,
         title: e.title,
         time: formatTimeRange(e.startTime, e.endTime),
+        startTime: e.startTime,
         color: e.color,
         kind: e.kind,
       });
     });
-    eventItemsTmp.sort((a, b) => a.startTime < b.startTime);
+    eventItemsTmp.sort((a, b) => a.startTime > b.startTime);
     eventItems = eventItemsTmp;
   }
 
