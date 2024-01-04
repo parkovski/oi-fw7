@@ -60,7 +60,7 @@
           fromName: msg.fromName,
           text: msg.text,
         }];
-        chatService.acknowledge(msg.id);
+        chatService.acknowledge(msg.id, msg.from);
       }
     });
 

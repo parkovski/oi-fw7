@@ -6,6 +6,7 @@
     ListItem,
     Icon,
     Fab,
+    Badge,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
@@ -51,6 +52,9 @@
       <ListItem link={getGroupLink(group)} title={group.name}
         footer={getFooterText(group)}>
         <Icon slot="media" ios="f7:person_3_fill" md="material:groups" />
+        {#if group.unreadMessages}
+          <Badge color="red">{group.unreadMessages}</Badge>
+        {/if}
       </ListItem>
     {/each}
   </List>

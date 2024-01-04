@@ -97,13 +97,18 @@
   async function loadChat() {
     const myUid = localStorage.getItem('uid');
 
-    chats = (await groupService.getGroupChat(f7route.params.id)).map(c => ({
+    const cs = await groupService.getGroupChat(f7route.params.id);
+    console.log(cs);
+    chats = cs.map(c => ({
       id: c.id,
       to: f7route.params.id,
       from: c.uid_from === myUid ? undefined : c.uid_from,
       fromName: c.name,
       text: c.message,
     }));
+    const unread = cs.filter(c => c.uid_from !== myUid && !c.received).map(c => c.id);
+    console.log(unread.length, unread);
+    groupService.acknowledge(unread, f7route.params.id);
   }
 
   async function joinGroup() {
@@ -151,6 +156,7 @@
           fromName: msg.fromName,
           text: msg.text,
         }];
+        groupService.acknowledge(msg.id, msg.to);
       }
     });
 

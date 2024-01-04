@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs';
 import Entity from './entity';
 import webSocketService, { type SubscriberLike } from './websocket';
 import { fetchJson } from '../js/fetch';
@@ -34,7 +33,7 @@ interface UserMessageSentMessage {
 }
 
 interface MessageReceivedMessage {
-  m: 'message_received',
+  m: 'message_received';
   id: string | string[];
 }
 
@@ -104,7 +103,7 @@ class ChatService {
     return webSocketService.subscribe<IncomingUserChatMessage>('chat', subscriber);
   }
 
-  async acknowledge(id: string | string[], uidFrom: string) {
+  acknowledge(id: string | string[], uidFrom: string) {
     const msg: MessageReceivedMessage = {
       m: 'message_received',
       id,

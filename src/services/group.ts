@@ -28,6 +28,7 @@ interface Group {
   public: boolean;
   memberKind: number | null;
   members?: Member[];
+  unreadMessages?: number;
 }
 
 interface GroupChatMessage {
@@ -52,6 +53,11 @@ interface GroupMessageSentMessage {
   id: string;
   time: string;
   text: string;
+}
+
+interface GroupMessageReceivedMessage {
+  m: 'group_message_received';
+  id: string | string[];
 }
 
 class GroupService {
@@ -85,6 +91,8 @@ class GroupService {
         }
       }
     });
+
+    this.messageReceived(msg => this._newMessage(msg));
   }
 
   _addGroup(group: Group) {
@@ -95,6 +103,43 @@ class GroupService {
   _removeGroup(id: string) {
     this._groups.data = this._groups.data!.filter(g => g.id !== id);
     this._groups.publish();
+  }
+
+  _newMessage(msg: IncomingGroupChatMessage) {
+    if (!this._groups.data) {
+      this._groups.refresh();
+      return;
+    }
+
+    const index = this._groups.data.findIndex(g => g.id === msg.to);
+    if (index === -1) {
+      this._groups.refresh();
+      return;
+    } else if (this._groups.data[index].unreadMessages) {
+      ++this._groups.data[index].unreadMessages!;
+    } else {
+      this._groups.data[index].unreadMessages = 1;
+    }
+    this._groups.publish();
+  }
+
+  _markMessageRead(gid: string, count: number) {
+    if (!this._groups.data) {
+      this._groups.refresh();
+      return;
+    }
+
+    const index = this._groups.data.findIndex(g => g.id === gid);
+    if (index === -1) {
+      this._groups.refresh();
+      return;
+    }
+
+    const group = this._groups.data[index];
+    if (group.unreadMessages !== undefined) {
+      group.unreadMessages -= count;
+      this._groups.publish();
+    }
   }
 
   getGroups() {
@@ -214,6 +259,16 @@ class GroupService {
   membershipChanged(subscriber: SubscriberLike<GroupMembershipChangedMessage>) {
     return webSocketService.subscribe<GroupMembershipChangedMessage>(
       'group_membership_changed', subscriber);
+  }
+
+  acknowledge(id: string | string[], gid: string) {
+    const msg: GroupMessageReceivedMessage = {
+      m: 'group_message_received',
+      id,
+    };
+    webSocketService.sendJson(msg);
+
+    this._markMessageRead(gid, Array.isArray(id) ? id.length : 1);
   }
 
   send(msg: GroupChatMessage) {
