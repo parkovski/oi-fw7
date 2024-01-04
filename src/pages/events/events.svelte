@@ -21,6 +21,21 @@
   let viewActions;
   let viewKind = localStorage.getItem('event-preferred-view') || 'calendar';
 
+  function getColorForKind(kind) {
+    switch (kind) {
+    case -1:
+      return 'var(--f7-color-red)';
+    case 0:
+      return 'var(--f7-color-orange)';
+    case 1:
+      return 'var(--f7-color-yellow)';
+    case 2:
+      return 'var(--f7-color-green)';
+    case 3:
+      return 'var(--f7-color-blue)';
+    }
+  }
+
   onMount(() => {
     let eventsSubscription;
     onLogin(() => {
@@ -36,8 +51,7 @@
               startTime: e.startTime,
               endTime: e.endTime,
               kind: e.kind,
-              color: '#2196f3',
-              // color: '#4caf50',
+              color: getColorForKind(e.kind),
             };
           });
         });
