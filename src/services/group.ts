@@ -6,6 +6,7 @@ import {
   ClientGroupMessage, ServerGroupMessage, GroupMessageSentMessage, GroupMessageReceivedMessage,
   GroupMembershipChangedMessage,
 } from 'oi-types/groupchat';
+import { GroupEventSummary, GroupEvent } from 'oi-types/groupevent';
 
 // Type used by `GroupService.send`.
 export interface GroupMessage {
@@ -16,6 +17,8 @@ export interface GroupMessage {
 class GroupService {
   _groups: Entity<Group[]>;
   _groupMap = new Map<string, Entity<Group>>;
+  _eventSummaryMap = new Map<string, Entity<GroupEventSummary[]>>;
+  _eventMap = new Map<string, Entity<GroupEvent>>;
 
   constructor() {
     this._groups = new Entity<Group[]>(() => fetchJson(`/groups`));
@@ -204,9 +207,37 @@ class GroupService {
     }
   }
 
+  getEvents(gid: string) {
+    let entity = this._eventSummaryMap.get(gid);
+    if (!entity) {
+      entity = new Entity<GroupEventSummary[]>(async () => {
+        const events = await fetchJson(`/groups/${gid}/events`);
+        events.forEach((event: any) => {
+          event.startTime = new Date(event.startTime);
+          event.endTime = new Date(event.endTime);
+        })
+        return events;
+      });
+      this._eventSummaryMap.set(gid, entity);
+    }
+    return entity;
+  }
+
+  getEvent(id: string) {
+    let entity = this._eventMap.get(id);
+    if (!entity) {
+      entity = new Entity<GroupEvent>(async () => {
+        const event = await fetchJson(`/groupevents/${id}`);
+        event.startTime = new Date(event.startTime);
+        event.endTime = new Date(event.endTime);
+        return event;
+      });
+      return entity;
+    }
+  }
+
   async newEvent(gid: string, title: string, description: string | null,
-                 place: string | null, startTime: Date, endTime: Date,
-                 invited: string[] | undefined) {
+                 place: string | null, startTime: Date, endTime: Date) {
     const eid = await fetchText(`/groups/${gid}/newevent`, {
       method: 'POST',
       body: new URLSearchParams({
@@ -214,8 +245,7 @@ class GroupService {
         description: description || '',
         place: place || '',
         startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        invited: invited && JSON.stringify(invited) || '[]',
+        endTime: endTime.toISOString()
       }),
     });
     //const events = await this._events.get();

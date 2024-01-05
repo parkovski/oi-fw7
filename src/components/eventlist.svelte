@@ -6,6 +6,7 @@
   import { formatTime, formatDate } from '../js/timeutils';
 
   export let events = [];
+  export let groupEvents = false;
   $: events = events.sort((a, b) => a.startTime - b.startTime);
 
   function getFooterText(event) {
@@ -20,6 +21,14 @@
       return 'Attending';
     case 3:
       return 'Hosting';
+    }
+  }
+
+  function getViewLink(id) {
+    if (groupEvents) {
+      return `/groups/viewevent/${id}/`;
+    } else {
+      return `/events/view/${id}/`;
     }
   }
 
@@ -43,7 +52,7 @@
 
 <List style="margin-top: 0">
   {#each events as event (event.id)}
-    <ListItem class="no-padding" href="/events/view/{event.id}/">
+    <ListItem class="no-padding" href={getViewLink(event.id)}>
       <div class="event-color" style='background-color: {event.color}'></div>
       <div class="item-title">
         {event.title}

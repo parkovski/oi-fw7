@@ -10,6 +10,7 @@
     Icon,
     Fab,
     Link,
+    Badge,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
 
@@ -26,34 +27,39 @@
   let chats = [];
   let chatsAggregate = [];
   let pendingChats = [];
+  let events = [];
+  let upcomingEvents = [];
+  let calendarValue;
 
-  const events = (function() {
-    const today = new Date();
-    const todayYear = today.getFullYear();
-    const todayMonth = today.getMonth();
-    const todayDay = today.getDate();
+  function getUpcomingEvents(events) {
+    const upcoming = [];
+    const now = new Date;
+    events.forEach(e => {
+      if (e.startTime > now) {
+        upcoming.push(e);
+      }
+    });
+    upcomingEvents = upcoming;
+  }
 
-    return [
-      {
-        id: '0',
-        title: 'Test Event',
-        date: new Date(todayYear, todayMonth, todayDay),
-        startTime: new Date,
-        endTime: new Date,
-        kind: 0,
-        color: '#2196f3',
-      },
-      {
-        id: '1',
-        title: 'Test Event 2',
-        date: new Date(todayYear, todayMonth, todayDay + 1),
-        startTime: new Date,
-        endTime: new Date,
-        kind: 0,
-        color: '#4caf50',
-      },
-    ];
-  })();
+  $: getUpcomingEvents(events);
+
+  function getColorForKind(kind) {
+    switch (kind) {
+    case -1:
+      return 'var(--f7-color-red)';
+    case 0:
+      return 'var(--f7-color-orange)';
+    case 1:
+      return 'var(--f7-color-yellow)';
+    case 2:
+      return 'var(--f7-color-green)';
+    case 3:
+      return 'var(--f7-color-blue)';
+    default:
+      throw 'Invalid attendance kind';
+    }
+  }
 
   function getAggregateChats(chats) {
     const aggregate = [];
@@ -124,6 +130,14 @@
     f7router.navigate('/groups/');
   }
 
+  function newEventClicked() {
+    const props = {};
+    //if (viewKind === 'calendar') {
+      props.initialDate = calendarValue;
+    //}
+    f7router.navigate(`/groups/newevent/${f7route.params.id}/`, { props });
+  }
+
   onMount(() => {
     const myUid = localStorage.getItem('uid');
 
@@ -134,6 +148,21 @@
         loadChat();
       }
     });
+
+    const groupEventsSubscription =
+      groupService.getEvents(f7route.params.id).subscribe(es => {
+        events = es.map(e => ({
+          id: e.id,
+          title: e.title,
+          date: new Date(e.startTime.getFullYear(), e.startTime.getMonth(),
+                         e.startTime.getDate()),
+          startTime: e.startTime,
+          endTime: e.endTime,
+          kind: e.kind,
+          color: getColorForKind(e.kind),
+        }));
+      });
+
 
     const messageSentSubscription = groupService.messageSent(msg => {
       const chat = pendingChats.find(pend => pend.uuid === msg.uuid);
@@ -160,6 +189,7 @@
 
     return () => {
       groupSubscription.unsubscribe();
+      groupEventsSubscription.unsubscribe();
       messageSentSubscription.unsubscribe();
       messageReceivedSubscription.unsubscribe();
     };
@@ -204,7 +234,12 @@
           style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
           <Segmented>
             <Button small fill id="chatButton" on:click={changeView('chat')}>Chat</Button>
-            <Button small id="calendarButton" on:click={changeView('calendar')}>Calendar</Button>
+            <Button small id="calendarButton" on:click={changeView('calendar')}>
+              Calendar
+              {#if upcomingEvents.length}
+                <Badge color="blue" style="margin-left: 8px">{upcomingEvents.length}</Badge>
+              {/if}
+            </Button>
             <Button small id="membersButton" on:click={changeView('members')}>Members</Button>
           </Segmented>
         </Block>
@@ -213,10 +248,11 @@
           <Chat aggregate={chatsAggregate} {pendingChats} {onSend} />
         </div>
       {:else if currentButton === 'calendar'}
-        <Fab position="right-bottom" href="/groups/newevent/{f7route.params.id}/">
+        <Fab position="right-bottom" onClick={newEventClicked}>
           <Icon ios="f7:plus" md="material:add" />
         </Fab>
-        <Calendar {events} elementId="group-calendar" />
+        <Calendar groupEvents {events} elementId="group-calendar"
+          bind:value={calendarValue} />
       {:else if currentButton === 'members'}
         <div class="contacts-container">
           <Contacts contacts={group.members} />

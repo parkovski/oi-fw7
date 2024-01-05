@@ -8,17 +8,13 @@
     ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import Select from '../../components/select.svelte';
   import TimePicker from '../../components/timepicker.svelte';
-  import userService from '../../services/user';
   import groupService from '../../services/group';
 
   export let initialDate;
   export let f7router;
   export let f7route;
 
-  let contacts = [];
-  let contactsSelected;
   let title = '';
   let location = '';
   let dates = [new Date];
@@ -31,12 +27,6 @@
   let validationErrorTime = null;
 
   onMount(() => {
-    userService.getContacts().get().then(
-      contactData => contacts = contactData.contacts.map(c => ({
-        value: c.id,
-        label: c.name,
-      }))
-    );
     if (initialDate) {
       dates = [initialDate];
     }
@@ -105,8 +95,7 @@
       description.length === 0 ? null : description,
       location.length === 0 ? null : location,
       dates[0],
-      dates[1],
-      contactsSelected?.map(c => c.value)
+      dates[1]
     );
     f7router.navigate(`/groups/viewevent/${eid}/`);
   }
@@ -141,11 +130,6 @@
         {validationErrorTime}
       </ListItem>
     {/if}
-    <ListItem>
-      <Select items={contacts} searchable multiple
-        placeholder="Select contacts" bind:value={contactsSelected}
-      />
-    </ListItem>
     <ListInput type="textarea" name="description" placeholder="Description"
       bind:value={description} />
     <ListButton on:click={createClicked}>Create event</ListButton>

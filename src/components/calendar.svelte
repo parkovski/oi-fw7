@@ -11,6 +11,7 @@
   export let elementId = '#calendar';
   export let value;
   export let calendar;
+  export let groupEvents = false;
 
   let eventItems = [];
 
@@ -62,6 +63,14 @@
     }
   }
 
+  function getViewLink(id) {
+    if (groupEvents) {
+      return `/groups/viewevent/${id}/`;
+    } else {
+      return `/events/view/${id}/`;
+    }
+  }
+
   onMount(() => {
     calendar = f7.calendar.create({
       containerEl: '#' + elementId,
@@ -98,7 +107,7 @@
 <div id={elementId}></div>
 <List class="no-margin no-hairlines no-safe-area-left">
   {#each eventItems as event}
-    <ListItem class="no-padding" href="/events/view/{event.id}/">
+    <ListItem class="no-padding" href={getViewLink(event.id)}>
       <div class="event-color" style={`background-color: ${event.color}`}></div>
       <div class="item-title">
         {event.title}
