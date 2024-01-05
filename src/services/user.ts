@@ -1,6 +1,6 @@
 import Entity from './entity';
 import { fetchAny, fetchText, fetchJson } from '../js/fetch';
-import { User, ContactData } from 'oi-types/user';
+import { User, ContactData, ContactKind } from 'oi-types/user';
 
 class UserService {
   _users = new Map<string, Entity<User>>;
@@ -37,11 +37,11 @@ class UserService {
       const contactsData = await this._contacts.get();
       if (status === 'approved') {
         userData.has_contact = true;
-        userData.kind = 1;
+        userData.kind = ContactKind.Approved;
         contactsData.contacts.push(userData);
       } else if (status === 'requested') {
         userData.has_contact = 'pending';
-        userData.kind = 0;
+        userData.kind = ContactKind.Requested;
         contactsData.pending.push(userData);
       }
       user.publish();
@@ -56,7 +56,7 @@ class UserService {
       if ((await fetchAny(`/contacts/${id}/remove`, { method: 'POST' })).ok) {
         const userData = await user.get();
         const contactsData = await this._contacts.get();
-        userData.kind = null;
+        userData.kind = undefined;
         this._contacts.data!.contacts = contactsData.contacts.filter(c => c.id !== id);
         this._contacts.data!.pending = contactsData.pending.filter(c => c.id !== id);
         user.publish();
