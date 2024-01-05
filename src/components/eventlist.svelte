@@ -21,6 +21,8 @@
       return 'Attending';
     case 3:
       return 'Hosting';
+    default:
+      return 'Group invite';
     }
   }
 

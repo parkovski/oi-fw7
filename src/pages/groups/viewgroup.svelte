@@ -57,7 +57,7 @@
     case 3:
       return 'var(--f7-color-blue)';
     default:
-      throw 'Invalid attendance kind';
+      return 'var(--f7-color-orange)';
     }
   }
 
