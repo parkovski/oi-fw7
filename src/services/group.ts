@@ -204,6 +204,34 @@ class GroupService {
     }
   }
 
+  async newEvent(gid: string, title: string, description: string | null,
+                 place: string | null, startTime: Date, endTime: Date,
+                 invited: string[] | undefined) {
+    const eid = await fetchText(`/groups/${gid}/newevent`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        title,
+        description: description || '',
+        place: place || '',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        invited: invited && JSON.stringify(invited) || '[]',
+      }),
+    });
+    //const events = await this._events.get();
+    //if (events.findIndex(e => e.id === eid) === -1) {
+    //  events.push({
+    //    id: eid,
+    //    title,
+    //    startTime,
+    //    endTime,
+    //    kind: AttendanceKind.Hosting,
+    //  });
+    //}
+    //this._events.publish();
+    return eid;
+  }
+
   messageSent(subscriber: SubscriberLike<GroupMessageSentMessage>) {
     return webSocketService.subscribe<GroupMessageSentMessage>('group_message_sent', subscriber);
   }

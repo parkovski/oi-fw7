@@ -82,7 +82,7 @@ class EventService {
     })
   }
 
-  async newEvent(title: string, description: string | null, place: string,
+  async newEvent(title: string, description: string | null, place: string | null,
                  startTime: Date, endTime: Date, isPublic: boolean,
                  invited: string[] | undefined) {
     const eid = await fetchText(`/newevent`, {
@@ -90,7 +90,7 @@ class EventService {
       body: new URLSearchParams({
         title,
         description: description || '',
-        place,
+        place: place || '',
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
         public: ''+isPublic,

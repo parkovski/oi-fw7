@@ -213,7 +213,7 @@
           <Chat aggregate={chatsAggregate} {pendingChats} {onSend} />
         </div>
       {:else if currentButton === 'calendar'}
-        <Fab position="right-bottom" href="/groups/newevent/">
+        <Fab position="right-bottom" href="/groups/newevent/{f7route.params.id}/">
           <Icon ios="f7:plus" md="material:add" />
         </Fab>
         <Calendar {events} elementId="group-calendar" />

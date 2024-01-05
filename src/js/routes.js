@@ -11,6 +11,8 @@ import NewGroupPage from '../pages/groups/newgroup.svelte';
 import GroupInvitePage from '../pages/groups/viewinvite.svelte';
 import GroupRequestsPage from '../pages/groups/viewrequests.svelte';
 import GroupInviteUsersPage from '../pages/groups/inviteusers.svelte';
+import NewGroupEventPage from '../pages/groups/newevent.svelte';
+import ViewGroupEventPage from '../pages/groups/viewevent.svelte';
 import EventPanelPage from '../pages/events/eventpanel.svelte';
 import EventsPage from '../pages/events/events.svelte';
 import NewEventPage from '../pages/events/newevent.svelte';
@@ -76,6 +78,14 @@ var routes = [
   {
     path: '/groups/invite/:id/',
     component: GroupInviteUsersPage,
+  },
+  {
+    path: '/groups/newevent/:id/',
+    component: NewGroupEventPage,
+  },
+  {
+    path: '/groups/viewevent/:id/',
+    component: ViewGroupEventPage,
   },
   {
     path: '/panels/event/:id/',
