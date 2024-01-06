@@ -286,7 +286,7 @@ class GroupService {
       m: 'group_message_received',
       id,
     };
-    webSocketService.json(msg);
+    webSocketService.sendJson(msg);
 
     this._markMessageRead(gid, Array.isArray(id) ? id.length : 1);
   }
@@ -297,7 +297,7 @@ class GroupService {
       uuid: crypto.randomUUID(),
       ...msg,
     };
-    webSocketService.json(outgoingMsg);
+    webSocketService.sendJson(outgoingMsg);
     return outgoingMsg;
   }
 }
