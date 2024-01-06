@@ -87,7 +87,7 @@ class ChatService {
       m: 'message_received',
       id,
     }
-    webSocketService.sendJson(msg);
+    webSocketService.json(msg);
 
     this._markMessageRead(uidFrom, Array.isArray(id) ? id.length : 1);
   }
@@ -98,7 +98,7 @@ class ChatService {
       uuid: crypto.randomUUID(),
       ...msg,
     };
-    webSocketService.sendJson(outgoingMsg);
+    webSocketService.json(outgoingMsg);
     return outgoingMsg;
   }
 }

@@ -35,8 +35,17 @@ export default class Entity<T> {
     return this.data!;
   }
 
-  then(fn: (data: T) => void) {
-    return this.get().then(fn);
+  then<U = T, V = never>(
+    onfulfilled?: ((data: T) => U | PromiseLike<U>) | null | undefined,
+    onrejected?: ((reason: any) => V | PromiseLike<V>) | null | undefined
+  ): Promise<U | V> {
+    return this.get().then(onfulfilled, onrejected);
+  }
+
+  catch<U = never>(
+    onrejected?: ((reason: any) => U | PromiseLike<U>) | null | undefined
+  ): Promise<T | U> {
+    return this.get().catch(onrejected);
   }
 
   publish() {

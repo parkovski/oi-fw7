@@ -52,9 +52,14 @@
       <ListItem link={getGroupLink(group)} title={group.name}
         footer={getFooterText(group)}>
         <Icon slot="media" ios="f7:person_3_fill" md="material:groups" />
-        {#if group.unreadMessages}
-          <Badge color="red">{group.unreadMessages}</Badge>
-        {/if}
+        <div>
+          {#if group.upcomingEvents}
+            <Badge color="blue">{group.upcomingEvents}</Badge>
+          {/if}
+          {#if group.unreadMessages}
+            <Badge color="red">{group.unreadMessages}</Badge>
+          {/if}
+      </div>
       </ListItem>
     {/each}
   </List>

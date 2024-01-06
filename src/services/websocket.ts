@@ -99,7 +99,7 @@ class WebSocketService {
     this._webSocket.send(data);
   }
 
-  sendJson(data: object) {
+  json(data: object) {
     this._webSocket.send(JSON.stringify(data));
   }
 

@@ -6,7 +6,7 @@ import {
   ClientGroupMessage, ServerGroupMessage, GroupMessageSentMessage, GroupMessageReceivedMessage,
   GroupMembershipChangedMessage,
 } from 'oi-types/groupchat';
-import { GroupEventSummary, GroupEvent } from 'oi-types/groupevent';
+import { GroupEventSummary, GroupEvent, AttendanceKind } from 'oi-types/groupevent';
 
 // Type used by `GroupService.send`.
 export interface GroupMessage {
@@ -248,17 +248,19 @@ class GroupService {
         endTime: endTime.toISOString()
       }),
     });
-    //const events = await this._events.get();
-    //if (events.findIndex(e => e.id === eid) === -1) {
-    //  events.push({
-    //    id: eid,
-    //    title,
-    //    startTime,
-    //    endTime,
-    //    kind: AttendanceKind.Hosting,
-    //  });
-    //}
-    //this._events.publish();
+    const eventsEntity = this.getEvents(gid);
+    const events = await eventsEntity;
+    if (events.findIndex(e => e.id === eid) === -1) {
+      events.push({
+        id: eid,
+        gid,
+        title,
+        startTime,
+        endTime,
+        kind: AttendanceKind.Hosting,
+      });
+    }
+    eventsEntity.publish();
     return eid;
   }
 
@@ -284,7 +286,7 @@ class GroupService {
       m: 'group_message_received',
       id,
     };
-    webSocketService.sendJson(msg);
+    webSocketService.json(msg);
 
     this._markMessageRead(gid, Array.isArray(id) ? id.length : 1);
   }
@@ -295,7 +297,7 @@ class GroupService {
       uuid: crypto.randomUUID(),
       ...msg,
     };
-    webSocketService.sendJson(outgoingMsg);
+    webSocketService.json(outgoingMsg);
     return outgoingMsg;
   }
 }
