@@ -6,7 +6,9 @@ import {
   ClientGroupMessage, ServerGroupMessage, GroupMessageSentMessage, GroupMessageReceivedMessage,
   GroupMembershipChangedMessage,
 } from 'oi-types/groupchat';
-import { GroupEventSummary, GroupEvent, AttendanceKind } from 'oi-types/groupevent';
+import {
+  GroupEventSummary, GroupEvent, AttendanceKind, GroupEventCreatedMessage,
+} from 'oi-types/groupevent';
 
 // Type used by `GroupService.send`.
 export interface GroupMessage {
@@ -23,32 +25,30 @@ class GroupService {
   constructor() {
     this._groups = new Entity<Group[]>(() => fetchJson(`/groups`));
 
-    this.membershipChanged(membership => {
-      if (!this._groups.data) {
-        return;
-      }
-
-      let mappedGroup = this._groupMap.get(membership.id)?.data;
-      if (mappedGroup) {
-        mappedGroup.memberKind = membership.kind;
-      }
-
-      if (membership.kind === null) {
-        this._removeGroup(membership.id);
-      } else {
-        const index = this._groups.data.findIndex(g => g.id === membership.id);
-        if (index === -1) {
-          this.getGroup(membership.id).then(group => {
-            this._addGroup(group);
-          });
-        } else {
-          this._groups.data[index].memberKind = membership.kind;
-          this._groups.publish();
-        }
-      }
-    });
-
+    this.membershipChanged(msg => this._membershipChanged(msg));
     this.messageReceived(msg => this._newMessage(msg));
+    this.eventCreated(msg => { this._eventCreated(msg.gid, msg.eid) });
+  }
+
+  _updateGroup(id: string, f: (group: Group) => void) {
+    if (this._groups.data) {
+      let group = this._groups.data.find(g => g.id === id);
+      if (group) {
+        f(group);
+        this._groups.publish();
+      }
+    } else {
+      this._groups.refresh();
+    }
+    let entity = this._groupMap.get(id);
+    if (entity && entity.data) {
+      f(entity.data);
+      entity.publish();
+    } else if (entity) {
+      entity.refresh();
+    } else {
+      this.getGroup(id).refresh();
+    }
   }
 
   _addGroup(group: Group) {
@@ -65,39 +65,71 @@ class GroupService {
     if (msg.from === localStorage.getItem('uid')) {
       return;
     }
-    if (!this._groups.data) {
-      this._groups.refresh();
-      return;
-    }
 
-    const index = this._groups.data.findIndex(g => g.id === msg.to);
-    if (index === -1) {
-      this._groups.refresh();
-      return;
-    } else if (this._groups.data[index].unreadMessages) {
-      ++this._groups.data[index].unreadMessages!;
-    } else {
-      this._groups.data[index].unreadMessages = 1;
-    }
-    this._groups.publish();
+    this._updateGroup(msg.to, g => {
+      if (g.unreadMessages !== undefined) {
+        ++g.unreadMessages;
+      } else {
+        g.unreadMessages = 1;
+      }
+    });
   }
 
   _markMessageRead(gid: string, count: number) {
+    this._updateGroup(gid, g => {
+      if (g.unreadMessages !== undefined) {
+        g.unreadMessages -= count;
+      }
+    });
+  }
+
+  _membershipChanged(membership: GroupMembershipChangedMessage) {
     if (!this._groups.data) {
-      this._groups.refresh();
       return;
     }
 
-    const index = this._groups.data.findIndex(g => g.id === gid);
-    if (index === -1) {
-      this._groups.refresh();
-      return;
+    let mappedGroup = this._groupMap.get(membership.id)?.data;
+    if (mappedGroup) {
+      mappedGroup.memberKind = membership.kind;
     }
 
-    const group = this._groups.data[index];
-    if (group.unreadMessages !== undefined) {
-      group.unreadMessages -= count;
-      this._groups.publish();
+    if (membership.kind === null) {
+      this._removeGroup(membership.id);
+    } else {
+      const index = this._groups.data.findIndex(g => g.id === membership.id);
+      if (index === -1) {
+        this.getGroup(membership.id).then(group => {
+          this._addGroup(group);
+        });
+      } else {
+        this._groups.data[index].memberKind = membership.kind;
+        this._groups.publish();
+      }
+    }
+  }
+
+  async _eventCreated(gid: string, eid: string) {
+    const eventsEntity = this.getEvents(gid);
+    const events = await eventsEntity;
+    if (events.findIndex(e => e.id === eid) === -1) {
+      const event = await this.getEvent(eid);
+      events.push({
+        id: eid,
+        gid,
+        title: event.title,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        kind: event.kind,
+      });
+      eventsEntity.publish();
+
+      this._updateGroup(gid, g => {
+        if (g.upcomingEvents !== undefined) {
+          ++g.upcomingEvents;
+        } else {
+          g.upcomingEvents = 1;
+        }
+      });
     }
   }
 
@@ -232,8 +264,8 @@ class GroupService {
         event.endTime = new Date(event.endTime);
         return event;
       });
-      return entity;
     }
+    return entity;
   }
 
   async newEvent(gid: string, title: string, description: string | null,
@@ -248,33 +280,23 @@ class GroupService {
         endTime: endTime.toISOString()
       }),
     });
-    const eventsEntity = this.getEvents(gid);
-    const events = await eventsEntity;
-    if (events.findIndex(e => e.id === eid) === -1) {
-      events.push({
-        id: eid,
-        gid,
-        title,
-        startTime,
-        endTime,
-        kind: AttendanceKind.Hosting,
-      });
-    }
-    eventsEntity.publish();
     return eid;
   }
 
   messageSent(subscriber: SubscriberLike<GroupMessageSentMessage>) {
-    return webSocketService.subscribe<GroupMessageSentMessage>('group_message_sent', subscriber);
+    return webSocketService.subscribe('group_message_sent', subscriber);
   }
 
   messageReceived(subscriber: SubscriberLike<ServerGroupMessage>) {
-    return webSocketService.subscribe<ServerGroupMessage>('groupchat', subscriber);
+    return webSocketService.subscribe('groupchat', subscriber);
   }
 
   membershipChanged(subscriber: SubscriberLike<GroupMembershipChangedMessage>) {
-    return webSocketService.subscribe<GroupMembershipChangedMessage>(
-      'group_membership_changed', subscriber);
+    return webSocketService.subscribe('group_membership_changed', subscriber);
+  }
+
+  eventCreated(subscriber: SubscriberLike<GroupEventCreatedMessage>) {
+    return webSocketService.subscribe('group_event_created', subscriber);
   }
 
   acknowledge(id: string | string[], gid: string) {

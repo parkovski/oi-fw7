@@ -103,7 +103,7 @@ class WebSocketService {
     this._webSocket.send(JSON.stringify(data));
   }
 
-  subscribe<T extends Message>(message: string, subscriber: SubscriberLike<T>): Subscription;
+  subscribe<T extends Message>(message: T['m'], subscriber: SubscriberLike<T>): Subscription;
   subscribe(message: 'binary', subscriber: SubscriberLike<Blob>): Subscription;
   subscribe<T extends Message>(message: string, subscriber: SubscriberLike<T>) {
     let handler = this._handlers.get(message);
