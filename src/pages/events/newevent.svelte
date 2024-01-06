@@ -111,7 +111,7 @@
       isPublic,
       contactsSelected?.map(c => c.value)
     );
-    f7router.navigate(`/events/view/${eid}/`);
+    f7router.navigate(`/events/view/${eid}/`, { reloadCurrent: true });
   }
 </script>
 

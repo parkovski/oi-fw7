@@ -97,7 +97,7 @@
       dates[0],
       dates[1]
     );
-    f7router.navigate(`/groups/viewevent/${eid}/`);
+    f7router.navigate(`/groups/viewevent/${eid}/`, { reloadCurrent: true });
   }
 </script>
 

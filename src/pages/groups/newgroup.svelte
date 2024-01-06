@@ -17,7 +17,7 @@
   let items = [];
   let value;
   let name;
-  let isPublic;
+  let isPublic = false;
 
   let validationErrorName = null;
 
@@ -49,7 +49,7 @@
     }
     const invited = value && value.map(v => v.value);
     const gid = await groupService.newGroup(name.trim(), invited, isPublic);
-    f7router.navigate(`/groups/view/${gid}/`);
+    f7router.navigate(`/groups/view/${gid}/`, { reloadCurrent: true });
   }
 </script>
 
