@@ -239,6 +239,21 @@ class GroupService {
     }
   }
 
+  async deleteGroup(id: string) {
+    try {
+      await fetchAny(`/groups/${id}/delete`, { method: 'POST' });
+      if (this._groupMap.has(id)) {
+        this._groupMap.delete(id);
+      }
+      if (this._groups.data) {
+        this._groups.data = this._groups.data.filter(g => g.id !== id);
+        this._groups.publish();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   getEvents(gid: string) {
     let entity = this._eventSummaryMap.get(gid);
     if (!entity) {

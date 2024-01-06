@@ -27,6 +27,13 @@
     f7.views.groups.router.navigate(`/groups/`);
   }
 
+  async function deleteGroup() {
+    const gid = f7.views.groups.router.currentRoute.params.id;
+    await groupService.deleteGroup(gid);
+    f7.panel.close('#right-panel');
+    f7.views.groups.router.navigate('/groups/');
+  }
+
   let confirmLeaveActions;
   async function confirmLeaveGroup() {
     if (!confirmLeaveActions) {
@@ -52,6 +59,31 @@
     confirmLeaveActions.open();
   }
 
+  let confirmDeleteActions;
+  async function confirmDeleteGroup() {
+    if (!confirmDeleteActions) {
+      confirmDeleteActions = f7.actions.create({
+        buttons: [
+          {
+            text: 'Delete group?',
+            label: true,
+          },
+          {
+            text: 'Delete',
+            color: 'red',
+            onClick: deleteGroup,
+          },
+          {
+            text: 'Cancel',
+            onClick: () => confirmDeleteActions.close(),
+          },
+        ],
+        targetEl: document.querySelector('#confirm-delete-group'),
+      });
+    }
+    confirmDeleteActions.open();
+  }
+
   onMount(() => {
     const groupSubscription =
       groupService.getGroup(f7route.params.id).subscribe(value => group = value);
@@ -59,6 +91,7 @@
     return () => {
       groupSubscription.unsubscribe();
       confirmLeaveActions && confirmLeaveActions.destroy();
+      confirmDeleteActions && confirmDeleteActions.destroy();
     }
   })
 </script>
@@ -75,7 +108,13 @@
       </ListItem>
     {/if}
     <ListItem>
-      <Link text="Leave group" color="red" onClick={confirmLeaveGroup} />
+      <Link id="confirm-leave-group" text="Leave group" color="red" onClick={confirmLeaveGroup} />
     </ListItem>
+    {#if group.memberKind === 2}
+      <ListItem>
+        <Link id="confirm-delete-group" text="Delete group" color="red"
+          onClick={confirmDeleteGroup} />
+      </ListItem>
+    {/if}
   </List>
 </Page>
