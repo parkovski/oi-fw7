@@ -35,7 +35,7 @@
       <Link text="My Profile" onClick={() => panelNavigate('/profile/')}/>
     </ListItem>
     <ListItem>
-      <Link text="Scan QR code" onClick={() => panelNavigate('/qrcode/')}/>
+      <Link text="Scan QR Code" onClick={() => panelNavigate('/qrcode/')}/>
     </ListItem>
     <ListItem>
       <Link text="Settings" onClick={() => panelNavigate('/settings/')}/>
