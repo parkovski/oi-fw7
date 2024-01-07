@@ -27,18 +27,12 @@ const webSocketUrl =
       : 'wss://api.oi.parkovski.com');
 
 class WebSocketService {
-  _webSocket: WebSocket;
+  _webSocket: WebSocket | undefined;
   _handlers: Map<string, MessageHandler<any>> = new Map;
   _retries: number = 0;
 
   constructor() {
-    this._webSocket = new WebSocket(webSocketUrl);
-    this._webSocket.addEventListener('error', this._onError.bind(this));
-    this._webSocket.addEventListener('close', this._onClose.bind(this));
-    this._webSocket.addEventListener('open', this._onOpen.bind(this));
-    this._webSocket.addEventListener('message', this._onMessage.bind(this));
-
-    this.subscribe<ConnectOkMessage>('connect_ok', _msg => { this._retries = 0 });
+    this.subscribe<ConnectOkMessage>('connect_ok', _msg => { this._retries = 0; });
   }
 
   reconnect(reset: boolean = false) {
@@ -78,6 +72,7 @@ class WebSocketService {
       setTimeout(this.reconnect.bind(this), 5000);
       break;
     default:
+      console.error('WebSocket: Too many reconnect attempts.');
       break;
     }
   }
@@ -108,15 +103,15 @@ class WebSocketService {
   }
 
   get readyState() {
-    return this._webSocket.readyState;
+    return this._webSocket?.readyState || WebSocket.CLOSED;
   }
 
   send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
-    this._webSocket.send(data);
+    this._webSocket?.send(data);
   }
 
   sendJson(data: object) {
-    this._webSocket.send(JSON.stringify(data));
+    this._webSocket?.send(JSON.stringify(data));
   }
 
   subscribe<T extends Message>(message: T['m'], subscriber: SubscriberLike<T>): Subscription;
