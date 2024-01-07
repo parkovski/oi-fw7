@@ -83,6 +83,29 @@ export async function getContactRequests(req: Request, res: Response) {
   }
 }
 
+export async function hasContact(req: Request, res: Response) {
+  try {
+    const session = validateUuid(req.cookies.session, 401);
+    const uidTo = validateNumeric(req.params.uid);
+    const contactResult = await getPool().query<{ kind: ContactKind }>(
+      `
+      SELECT kind FROM contacts
+      WHERE (uid_owner, uid_contact) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
+      `,
+      [session, uidTo]
+    );
+    if (contactResult.rowCount === 0 || contactResult.rows[0].kind === ContactKind.Requested) {
+      res.write('false');
+    } else {
+      res.write('true');
+    }
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    res.end();
+  }
+}
+
 export async function addContact(req: Request, res: Response) {
   let client;
 

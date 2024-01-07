@@ -14,7 +14,7 @@ import {
 } from './group.js';
 import {
   getContacts, getContactRequests, addContact, removeContact, approveContact,
-  denyContact,
+  denyContact, hasContact,
 } from './contact.js';
 import {
   chatListen, chatMessageReceived, getUserChat, getUserChatSummary,
@@ -102,6 +102,7 @@ export default async function serve(port: number) {
 
   app.get('/contacts', getContacts);
   app.get('/contactrequests', getContactRequests);
+  app.get('/contacts/:uid/exists', hasContact);
   app.post('/contacts/:uid/add', addContact);
   app.post('/contacts/:uid/remove', removeContact);
   app.post('/contacts/:uid/approve', approveContact);

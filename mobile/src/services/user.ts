@@ -20,6 +20,10 @@ class UserService {
     return this._requests;
   }
 
+  async hasContact(id: string): Promise<boolean> {
+    return (await fetchText(`/contacts/${id}/exists`)) === 'true';
+  }
+
   getUser(id: string): Entity<User> {
     let user = this._users.get(id);
     if (!user) {
