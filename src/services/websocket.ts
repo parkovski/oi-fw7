@@ -1,10 +1,15 @@
 import { Observable } from 'rxjs';
 import type { Subscriber, TeardownLogic, Subscription } from 'rxjs';
+import { onLogin } from '../js/onlogin';
 
 export type SubscriberLike<T> = Subscriber<T> | ((msg: T) => TeardownLogic);
 
 export interface Message {
   m: string;
+}
+
+export interface ConnectOkMessage {
+  m: 'connect_ok';
 }
 
 interface MessageHandler<T extends Message | Blob | ArrayBuffer> {
@@ -32,10 +37,17 @@ class WebSocketService {
     this._webSocket.addEventListener('close', this._onClose.bind(this));
     this._webSocket.addEventListener('open', this._onOpen.bind(this));
     this._webSocket.addEventListener('message', this._onMessage.bind(this));
+
+    this.subscribe<ConnectOkMessage>('connect_ok', _msg => { this._retries = 0 });
   }
 
-  reconnect() {
-    ++this._retries;
+  reconnect(reset: boolean = false) {
+    if (reset) {
+      this._retries = 0;
+    } else {
+      ++this._retries;
+    }
+
     this._webSocket = new WebSocket(webSocketUrl);
     this._webSocket.addEventListener('error', this._onError.bind(this));
     this._webSocket.addEventListener('close', this._onClose.bind(this));
@@ -66,7 +78,6 @@ class WebSocketService {
   }
 
   _onOpen(_event: Event) {
-    this._retries = 0;
   }
 
   _onMessage(event: MessageEvent) {
@@ -128,3 +139,7 @@ class WebSocketService {
 
 const service = new WebSocketService;
 export default service;
+
+onLogin(() => {
+  service.reconnect(true);
+});
