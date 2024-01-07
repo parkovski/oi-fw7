@@ -14,6 +14,7 @@
   import userService from '../../services/user';
 
   export let f7route;
+  export let f7router;
 
   let contact = {
     id: f7route.params.id,
@@ -33,6 +34,10 @@
       removeContactActions && removeContactActions.destroy();
     }
   });
+
+  function sendMessage() {
+    f7router.navigate(`/messages/view/${contact.id}/`);
+  }
 
   function addContact() {
     userService.addContact(contact.id);
@@ -113,6 +118,7 @@
     </CardHeader>
     <CardContent>
       <p>Username: {contact.username}</p>
+      <Button onClick={sendMessage}>Send message</Button>
     </CardContent>
   </Card>
 </Page>
