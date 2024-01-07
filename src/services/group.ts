@@ -279,6 +279,7 @@ class GroupService {
         event.endTime = new Date(event.endTime);
         return event;
       });
+      this._eventMap.set(id, entity);
     }
     return entity;
   }
@@ -296,6 +297,27 @@ class GroupService {
       }),
     });
     return eid;
+  }
+
+  async setAttendance(eid: string, kind: AttendanceKind) {
+    await fetchText(`/groupevents/${eid}/setattendance`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        kind: '' + kind,
+      }),
+    });
+    const eventEntity = this.getEvent(eid);
+    const event = await eventEntity;
+    event.kind = kind;
+    eventEntity.publish();
+    // TODO update value in _eventSummaryMap.
+    const eventsEntity = this.getEvents(event.gid);
+    const events = await eventsEntity;
+    const eventSummary = events.find(e => e.id === eid);
+    if (eventSummary) {
+      eventSummary.kind = kind;
+      eventsEntity.publish();
+    }
   }
 
   messageSent(subscriber: SubscriberLike<GroupMessageSentMessage>) {
