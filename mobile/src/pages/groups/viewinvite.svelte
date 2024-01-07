@@ -26,12 +26,12 @@
 
   async function accept() {
     console.log(await groupService.joinGroup(f7route.params.id));
-    f7router.navigate(`/groups/view/${f7route.params.id}/`);
+    f7router.navigate(`/groups/view/${f7route.params.id}/`, { reloadCurrent: true });
   }
 
   async function decline() {
     await groupService.leaveGroup(f7route.params.id);
-    f7router.navigate('/groups/');
+    f7router.navigate('/groups/', { reloadCurrent: true });
   }
 </script>
 

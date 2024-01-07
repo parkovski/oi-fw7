@@ -9,6 +9,47 @@
     CardHeader,
     CardContent,
   } from 'framework7-svelte';
+  import profileService from '../../services/profile';
+  import { onMount } from 'svelte';
+  import { onLogin } from '../../js/onlogin';
+
+  let items = [];
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  }
+
+  function translateItem(item) {
+    const [kind, id] = item.id.split(':');
+    switch (kind) {
+    case 'groupinvite':
+      return {
+        id: item.id,
+        title: 'Group invite',
+        name: item.name,
+        link: `/groups/viewinvite/${id}/`,
+        textBefore: 'You\'ve been invited to join the group ',
+        textAfter: '.',
+      };
+
+    case 'event':
+      return {
+        id: item.id,
+        title: 'Upcoming event',
+        name: item.name,
+        link: `/events/view/${id}/`,
+        textBefore: 'Your event ',
+        textAfter: ' is coming up on ' + formatDate(item.date) + '.',
+      };
+    }
+  }
+
+  onMount(() => {
+    onLogin(() => {
+      profileService.getHomeSummary().then(is => items = is.map(translateItem));
+    });
+  });
 </script>
 
 <Page name="home">
@@ -21,22 +62,18 @@
   </Navbar>
 
   <!-- Page content -->
-  <Card>
-    <CardHeader>
-      Random event #12
-    </CardHeader>
-    <CardContent>
-      This is an event you've been invited to.
-      <Link href="/groups/view/4/">Friday hangouts</Link>
-    </CardContent>
-  </Card>
-
-  <Card>
-    <CardHeader>
-      My Party
-    </CardHeader>
-    <CardContent>
-      I'm having a party and you're invited
-    </CardContent>
-  </Card>
+  {#each items as item (item.id)}
+    <Card>
+      <CardHeader>
+        {item.title}
+      </CardHeader>
+      <CardContent>
+        {item.textBefore}<Link href={item.link}>{item.name}</Link>{item.textAfter}
+      </CardContent>
+    </Card>
+  {:else}
+    <Card>
+      <CardContent>Nothing here</CardContent>
+    </Card>
+  {/each}
 </Page>

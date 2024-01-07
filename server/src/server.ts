@@ -29,6 +29,7 @@ import {
 import {
   getGroupEvents, getGroupEventInfo, newGroupEvent, setGroupEventAttendance,
 } from './groupevent.js';
+import { getHomeSummary } from './home.js';
 
 export default async function serve(port: number) {
   const dbHost = process.env.DB_HOST || 'localhost';
@@ -75,6 +76,7 @@ export default async function serve(port: number) {
   }
 
   app.get('/hello', hello);
+  app.get('/home', getHomeSummary);
   app.get('/profile', getMyProfile);
   app.post('/profile/update', updateProfile);
   app.get('/user/:uid', getUserInfo);
