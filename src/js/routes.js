@@ -4,6 +4,7 @@ import ProfilePage from '../pages/home/profile.svelte';
 import AboutPage from '../pages/home/about.svelte';
 import QRCodePage from '../pages/home/scanqrcode.svelte';
 import SettingsPage from '../pages/home/settings.svelte';
+import DeveloperPage from '../pages/home/developer.svelte';
 import GroupPanelPage from '../pages/groups/grouppanel.svelte';
 import GroupsPage from '../pages/groups/groups.svelte';
 import ViewGroupPage from '../pages/groups/viewgroup.svelte';
@@ -50,6 +51,10 @@ var routes = [
   {
     path: '/settings/',
     component: SettingsPage,
+  },
+  {
+    path: '/developer/',
+    component: DeveloperPage,
   },
   {
     path: '/panels/group/:id/',
