@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { getPool, getUserId } from './db.js';
+import { getPool } from './db.js';
 import { handleError, StatusError } from './error.js';
 import { validateUuid, validateMinMaxLength, } from './validation.js';
 import { User, Profile, MinUser, AuthInfo } from 'oi-types/user';

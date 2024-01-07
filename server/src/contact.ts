@@ -12,17 +12,20 @@ export async function getContacts(req: Request, res: Response) {
 
     client = await getPool().connect();
 
+    const myUid = await getUserId(client, session);
+
     const contactResult = await client.query<User>(
       `
       SELECT users.id, users.name, users.username, contacts.kind
       FROM contacts
       INNER JOIN users ON contacts.uid_contact = users.id
-      WHERE contacts.uid_owner = (SELECT uid FROM sessions WHERE sesskey = $1)
+      WHERE contacts.uid_owner = $1
       `,
-      [session]
+      [myUid]
     );
     const response: ContactData = {
       contacts: [],
+      followers: [],
       pending: [],
     };
     contactResult.rows.forEach(row => {
@@ -32,6 +35,18 @@ export async function getContacts(req: Request, res: Response) {
         response.contacts.push(row);
       }
     });
+
+    const followersResult = await client.query<User>(
+      `
+      SELECT users.id, users.name, users.username
+      FROM contacts
+      INNER JOIN users ON contacts.uid_owner = users.id
+      WHERE contacts.uid_contact = $1
+      `,
+      [myUid]
+    );
+    followersResult.rows.forEach(row => response.followers.push(row));
+
     res.json(response);
   } catch (e) {
     handleError(e, res);

@@ -14,8 +14,9 @@
   import { onMount } from 'svelte';
 
   let contacts = [];
+  let followers = [];
   let requests = [];
-  let currentButton = 'contacts';
+  let currentButton = 'following';
 
   onMount(() => {
     const contactsSubscription = userService.getContacts().subscribe(value => {
@@ -23,6 +24,7 @@
         has_contact: 'pending',
         ...p,
       })));
+      followers = value.followers;
     });
     const requestsSubscription = userService.getContactRequests().subscribe(value =>
       requests = value
@@ -62,12 +64,15 @@
   <Block class="no-margin"
     style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
     <Segmented>
-      <Button small fill id="contactsButton" on:click={changeView('contacts')}>Contacts</Button>
+      <Button small fill id="followingButton" on:click={changeView('following')}>Following</Button>
+      <Button small id="followersButton" on:click={changeView('followers')}>Followers</Button>
       <Button small id="requestsButton" on:click={changeView('requests')}>Requests</Button>
     </Segmented>
   </Block>
-  {#if currentButton === 'contacts'}
+  {#if currentButton === 'following'}
     <Contacts contacts={contacts} />
+  {:else if currentButton === 'followers'}
+    <Contacts contacts={followers} />
   {:else if currentButton === 'requests'}
     {#if requests.length === 0}
       <Block>

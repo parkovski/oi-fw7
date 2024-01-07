@@ -20,6 +20,7 @@ export interface User {
 
 export interface ContactData {
   contacts: User[];
+  followers: User[];
   pending: User[];
 }
 
