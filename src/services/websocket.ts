@@ -48,6 +48,11 @@ class WebSocketService {
       ++this._retries;
     }
 
+    if (this._webSocket &&
+        this._webSocket.readyState != WebSocket.CLOSING &&
+        this._webSocket.readyState != WebSocket.CLOSED) {
+      this._webSocket.close();
+    }
     this._webSocket = new WebSocket(webSocketUrl);
     this._webSocket.addEventListener('error', this._onError.bind(this));
     this._webSocket.addEventListener('close', this._onClose.bind(this));
