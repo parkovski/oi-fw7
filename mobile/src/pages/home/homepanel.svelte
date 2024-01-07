@@ -43,11 +43,9 @@
     <ListItem>
       <Link text="About" onClick={() => panelNavigate('/about/')}/>
     </ListItem>
-    {#if process.env.NODE_ENV !== 'production'}
-      <ListItem>
-        <Link text="Developer" onClick={() => panelNavigate('/developer/')}/>
-      </ListItem>
-    {/if}
+    <ListItem>
+      <Link text="Developer" onClick={() => panelNavigate('/developer/')}/>
+    </ListItem>
     <ListItem>
       <Link class="color-red" text="Sign out" onClick={() => logout()}/>
     </ListItem>
