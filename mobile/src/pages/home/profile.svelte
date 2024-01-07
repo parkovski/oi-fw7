@@ -76,7 +76,7 @@
   #qr-container {
     width: 100%;
     text-align: center;
-    margin-top: 2em;
+    margin: 2em auto;
   }
 </style>
 
