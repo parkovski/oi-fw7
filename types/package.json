@@ -1,0 +1,14 @@
+{
+  "name": "oi-types",
+  "version": "1.0.0",
+  "description": "OpenInvite common types",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports": {
+    "./*": "./lib/*.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
