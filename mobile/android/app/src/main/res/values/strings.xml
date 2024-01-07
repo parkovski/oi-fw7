@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OpenInvite</string>
+    <string name="title_activity_main">OpenInvite</string>
+    <string name="package_name">com.parkovski.openinvite</string>
+    <string name="custom_url_scheme">com.parkovski.openinvite</string>
+</resources>
