@@ -6,17 +6,32 @@
     CardHeader,
     CardContent,
     Icon,
+    Button,
+    List,
+    ListItem,
+    ListInput,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
-
   import profileService from '../../services/profile';
+  import { fetchAny } from '../../js/fetch';
 
-  let profile = {};
   let qrcodeUrl;
+  let editing = false;
+  let verified;
+  let name;
+  let username;
+  let email;
+  let phone;
 
   onMount(() => {
-    const profileSubscription = profileService.getProfile().subscribe(p => profile = p);
+    const profileSubscription = profileService.getProfile().subscribe(p => {
+      verified = p.verified;
+      name = p.name;
+      username = p.username;
+      email = p.email;
+      phone = p.phone;
+    });
     profileService.getProfile().get().then(async profile => {
       const qrcode = await writeBarcodeToImageFile(
         `openinvite:profile/${profile.id}`,
@@ -37,12 +52,31 @@
       qrcodeUrl && URL.revokeObjectURL(qrcodeUrl);
     };
   });
+
+  async function onEditClick() {
+    if (!editing) {
+      editing = true;
+    } else {
+      await fetchAny(`/profile/update`, {
+        method: 'POST',
+        body: new URLSearchParams({
+          name: name ?? '',
+          username: username ?? '',
+          email: email ?? '',
+          phone: phone ?? '',
+        }),
+      });
+      profileService.getProfile().refresh();
+      editing = false;
+    }
+  }
 </script>
 
 <style>
   #qr-container {
     width: 100%;
     text-align: center;
+    margin-top: 2em;
   }
 </style>
 
@@ -52,19 +86,29 @@
     <CardHeader>
       <div>
         <Icon ios="f7:person_fill" md="material:person"
-          /><span style="margin-left: 8px">{profile.name}</span>
+          /><span style="margin-left: 8px">{name}</span>
       </div>
+      <Button onClick={onEditClick}>{#if editing}Save{:else}Edit{/if}</Button>
     </CardHeader>
     <CardContent>
-      {#if profile.verified}
-        <p>Verified</p>
-      {/if}
-      <p>Username: {profile.username}</p>
-      {#if profile.phone}
-        <p>Phone: {profile.phone}</p>
-      {/if}
-      {#if profile.email}
-        <p>Email: {profile.email}</p>
+      {#if editing}
+        <List>
+          <ListInput label="Name" type="text" bind:value={name}/>
+          <ListInput label="Username" type="text" bind:value={username}/>
+          <ListInput label="Email" type="text" bind:value={email}/>
+          <ListInput label="Phone" type="text" bind:value={phone}/>
+        </List>
+      {:else}
+        {#if verified}
+          <p>Verified</p>
+        {/if}
+        <p>Username: {username}</p>
+        {#if phone}
+          <p>Phone: {phone}</p>
+        {/if}
+        {#if email}
+          <p>Email: {email}</p>
+        {/if}
       {/if}
       <div id="qr-container">
         <img id="qr-code" alt="Profile QR code">
