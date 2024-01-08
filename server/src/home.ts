@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getPool, getUserId } from './db.js';
 import { handleError } from './error.js';
 import { validateUuid } from './validation.js';
-import { HomeItem } from 'oi-types/home';
+import { Summary } from 'oi-types/summary';
 import { AttendanceKind } from 'oi-types/event';
 
 interface GroupInviteSummary {
@@ -27,7 +27,7 @@ export async function getHomeSummary(req: Request, res: Response) {
 
     const myUid = await getUserId(client, session);
 
-    const summary: HomeItem[] = [];
+    const summary: Summary[] = [];
 
     const groupInvites = await client.query<GroupInviteSummary>(
       `

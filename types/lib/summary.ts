@@ -1,6 +1,7 @@
 export interface Summary {
   id: `${string}:${string}`;
   name: string;
+  date?: string;
 }
 
 export interface GroupInviteSummary extends Summary {
