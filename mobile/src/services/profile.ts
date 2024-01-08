@@ -1,7 +1,6 @@
 import Entity from './entity';
 import { fetchJson } from '../js/fetch';
 import { Profile } from 'oi-types/user';
-import { HomeItem } from 'oi-types/home';
 
 class ProfileService {
   _profile: Entity<Profile>;
@@ -12,10 +11,6 @@ class ProfileService {
 
   getProfile() {
     return this._profile;
-  }
-
-  getHomeSummary(): Promise<HomeItem[]> {
-    return fetchJson('/home');
   }
 }
 

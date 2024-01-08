@@ -9,7 +9,7 @@
     CardHeader,
     CardContent,
   } from 'framework7-svelte';
-  import profileService from '../../services/profile';
+  import summaryService from '../../services/summary';
   import { onMount } from 'svelte';
   import { onLogin } from '../../js/onlogin';
 
@@ -46,9 +46,16 @@
   }
 
   onMount(() => {
+    let summarySubscription;
+
     onLogin(() => {
-      profileService.getHomeSummary().then(is => items = is.map(translateItem));
+      summarySubscription = summaryService.getItems().subscribe(
+        is => items = is.map(translateItem));
     });
+
+    return () => {
+      summarySubscription && summarySubscription.unsubscribe();
+    };
   });
 </script>
 
