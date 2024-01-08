@@ -1,16 +1,15 @@
-export interface Summary {
-  id: `${string}:${string}`;
-  name: string;
-  date?: string;
-}
-
-export interface GroupInviteSummary extends Summary {
+export interface GroupInviteSummary {
   id: `groupinvite:${string}`;
   name: string;
 }
 
-export interface EventSummary extends Summary {
+export interface EventSummary {
   id: `event:${string}`;
   name: string;
   date: string;
 }
+
+export type Summary =
+  | GroupInviteSummary
+  | EventSummary
+  ;
