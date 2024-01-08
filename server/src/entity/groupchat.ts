@@ -1,12 +1,12 @@
 import type { WebSocket } from 'ws';
 import type { Request, Response } from 'express';
-import clients from './wsclients.js';
-import { getPool, getUserId } from './db.js';
-import escapeHtml from './escapehtml.js';
-import { handleError } from './error.js';
+import clients from '../server/wsclients.js';
+import { getPool, getUserId } from '../util/db.js';
+import escapeHtml from '../util/escapehtml.js';
+import { handleError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateMinMaxLength, validateArrayEach,
-} from './validation.js';
+} from '../util/validation.js';
 import { Membership } from 'oi-types/group';
 import {
   ClientGroupMessage, ServerGroupMessage, GroupChatSummary, GroupMessageSentMessage,

@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { getPool } from './db.js';
-import { handleError, StatusError } from './error.js';
-import { validateUuid, validateMinMaxLength, } from './validation.js';
+import { getPool } from '../util/db.js';
+import { handleError, StatusError } from '../util/error.js';
+import { validateUuid, validateMinMaxLength, } from '../util/validation.js';
 import { User, Profile, MinUser, AuthInfo } from 'oi-types/user';
 
 interface HelloResult {

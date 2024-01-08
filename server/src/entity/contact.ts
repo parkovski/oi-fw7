@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from './db.js';
-import { handleError } from './error.js';
-import { validateUuid, validateNumeric } from './validation.js';
+import { getPool, getUserId } from '../util/db.js';
+import { handleError } from '../util/error.js';
+import { validateUuid, validateNumeric } from '../util/validation.js';
 import { ContactKind, User, ContactData } from 'oi-types/user';
 
 export async function getContacts(req: Request, res: Response) {

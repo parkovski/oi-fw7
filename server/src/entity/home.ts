@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from './db.js';
-import { handleError } from './error.js';
-import { validateUuid } from './validation.js';
+import { getPool, getUserId } from '../util/db.js';
+import { handleError } from '../util/error.js';
+import { validateUuid } from '../util/validation.js';
 import { Summary } from 'oi-types/summary';
 import { AttendanceKind } from 'oi-types/event';
 

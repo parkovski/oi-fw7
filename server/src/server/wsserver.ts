@@ -1,5 +1,5 @@
 import cookie from 'cookie';
-import { getPool, getUserId } from './db.js';
+import { getPool, getUserId } from '../util/db.js';
 import clients from './wsclients.js';
 import { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';

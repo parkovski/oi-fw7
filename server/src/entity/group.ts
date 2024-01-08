@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from './db.js';
-import wsclients from './wsclients.js';
-import { handleError, StatusError } from './error.js';
+import { getPool, getUserId } from '../util/db.js';
+import wsclients from '../server/wsclients.js';
+import { handleError, StatusError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateArrayEach, validateMinMaxLength,
   validateBoolean,
-} from './validation.js';
+} from '../util/validation.js';
 import {
   Membership, GroupSummary, GroupMember, Group,
 } from 'oi-types/group';

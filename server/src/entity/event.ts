@@ -1,12 +1,12 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from './db.js';
-import { handleError, StatusError } from './error.js';
+import { getPool, getUserId } from '../util/db.js';
+import { handleError, StatusError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateMinMaxLength,
   validateFutureDate, validateBoolean, validateArrayEach,
   validateMaybeNegative,
-} from './validation.js';
-import wsclients from './wsclients.js';
+} from '../util/validation.js';
+import wsclients from '../server/wsclients.js';
 import {
   AttendanceKind, EventMember, Event, EventSummary
 } from 'oi-types/event';

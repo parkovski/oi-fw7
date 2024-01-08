@@ -3,33 +3,33 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { WebSocketServer } from 'ws';
 import { onWebSocketConnected, listen as wslisten } from './wsserver.js';
-import { initPool } from './db.js';
+import { initPool } from '../util/db.js';
 import {
   hello, getMyProfile, getUserInfo, authorize, logout, register, updateProfile,
-} from './user.js';
+} from '../entity/user.js';
 import {
   getGroups, getGroupInfo, inviteToGroup, makeGroupAdmin, joinGroup,
   leaveGroup, newGroup, getGroupRequests, approveGroupRequest,
   denyGroupRequest, deleteGroup,
-} from './group.js';
+} from '../entity/group.js';
 import {
   getContacts, getContactRequests, addContact, removeContact, approveContact,
   denyContact, hasContact,
-} from './contact.js';
+} from '../entity/contact.js';
 import {
   chatListen, chatMessageReceived, getUserChat, getUserChatSummary,
-} from './chat.js';
+} from '../entity/chat.js';
 import {
   groupChatListen, groupMessageReceived, getGroupChat
-} from './groupchat.js';
+} from '../entity/groupchat.js';
 import {
   getEvents, getEventInfo, newEvent, setEventAttendance, inviteToEvent,
   makeEventHost,
-} from './event.js';
+} from '../entity/event.js';
 import {
   getGroupEvents, getGroupEventInfo, newGroupEvent, setGroupEventAttendance,
-} from './groupevent.js';
-import { getHomeSummary } from './home.js';
+} from '../entity/groupevent.js';
+import { getHomeSummary } from '../entity/home.js';
 
 export default async function serve(port: number) {
   const dbHost = process.env.DB_HOST || 'localhost';

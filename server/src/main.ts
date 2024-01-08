@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
-import serve from './server.js';
+import serve from './server/server.js';
 
 const commands = {
   serve() {
