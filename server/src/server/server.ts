@@ -38,6 +38,10 @@ export default async function serve(port: number) {
   const database = process.env.DB_NAME || 'openinvite';
 
   // Make sure our push keys are set.
+  if (!process.env.VAPID_PUBKEY) {
+    console.error('Environment variable VAPID_PUBKEY not set.');
+    process.exit(1);
+  }
   if (!process.env.VAPID_PRIVKEY) {
     console.error('Environment variable VAPID_PRIVKEY not set.');
     process.exit(1);

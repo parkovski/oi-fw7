@@ -78,10 +78,16 @@ export async function storePushEndpoint(req: Request, res: Response) {
   try {
     const session = validateUuid(req.cookies.session);
     const endpoint = req.body.endpoint;
+    const p256dh = req.body.p256dh;
+    const auth = req.body.auth;
 
     const q = await getPool().query(
-      `UPDATE sessions SET push_endpoint = $1 WHERE sesskey = $2`,
-      [endpoint, session]
+      `
+      UPDATE sessions
+      SET push_endpoint = $1, key_p256dh = $2, key_auth = $3
+      WHERE sesskey = $4
+      `,
+      [endpoint, p256dh, auth, session]
     );
     if (q.rowCount === 0) {
       res.status(404).write('Set push endpoint failed');

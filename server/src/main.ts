@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
 import serve from './server/server.js';
+import sendPushNotification from './util/push.js';
 
 const commands = {
   serve() {
@@ -17,11 +18,16 @@ const commands = {
     console.log(await bcrypt.hash(password, 10));
   },
 
+  push() {
+    sendPushNotification();
+  },
+
   help() {
     console.log(
 `Commands:
   serve <port>
-  hash <password>`
+  hash <password>
+  push <session> <message>`
     );
   },
 };

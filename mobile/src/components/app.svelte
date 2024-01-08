@@ -58,6 +58,60 @@
     }
   }
 
+  function base64ArrayBuffer(arrayBuffer) {
+    // Thanks to https://gist.github.com/jonleighton/958841
+    // MIT licensed
+    var base64    = ''
+    var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+    var bytes         = new Uint8Array(arrayBuffer)
+    var byteLength    = bytes.byteLength
+    var byteRemainder = byteLength % 3
+    var mainLength    = byteLength - byteRemainder
+
+    var a, b, c, d
+    var chunk
+
+    // Main loop deals with bytes in chunks of 3
+    for (var i = 0; i < mainLength; i = i + 3) {
+      // Combine the three bytes into a single integer
+      chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2]
+
+      // Use bitmasks to extract 6-bit segments from the triplet
+      a = (chunk & 16515072) >> 18 // 16515072 = (2^6 - 1) << 18
+      b = (chunk & 258048)   >> 12 // 258048   = (2^6 - 1) << 12
+      c = (chunk & 4032)     >>  6 // 4032     = (2^6 - 1) << 6
+      d = chunk & 63               // 63       = 2^6 - 1
+
+      // Convert the raw binary segments to the appropriate ASCII encoding
+      base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d]
+    }
+
+    // Deal with the remaining bytes and padding
+    if (byteRemainder == 1) {
+      chunk = bytes[mainLength]
+
+      a = (chunk & 252) >> 2 // 252 = (2^6 - 1) << 2
+
+      // Set the 4 least significant bits to zero
+      b = (chunk & 3)   << 4 // 3   = 2^2 - 1
+
+      base64 += encodings[a] + encodings[b] + '=='
+    } else if (byteRemainder == 2) {
+      chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1]
+
+      a = (chunk & 64512) >> 10 // 64512 = (2^6 - 1) << 10
+      b = (chunk & 1008)  >>  4 // 1008  = (2^6 - 1) << 4
+
+      // Set the 2 least significant bits to zero
+      c = (chunk & 15)    <<  2 // 15    = 2^4 - 1
+
+      base64 += encodings[a] + encodings[b] + encodings[c] + '='
+    }
+
+    return base64
+  }
+
   onMount(() => {
     f7ready(() => {
       // Init capacitor APIs (see capacitor-app.js)
@@ -82,6 +136,35 @@
       ['home', 'groups', 'events', 'contacts', 'messages'].forEach(tab =>
         f7.views[tab].router.on('routeChanged', onRouteChanged)
       );
+
+      onLogin(async () => {
+        if (!('Notification' in window) || !('serviceWorker' in navigator) ||
+            !('PushManager' in window)) {
+          console.warn('Push notifications not supported in this browser.');
+          return;
+        }
+        const permission = Notification.permission;
+        if (permission === 'granted' && f7.serviceWorker.registrations.length) {
+          const registration = await f7.serviceWorker.container.ready;
+          let subscription = await registration.pushManager.getSubscription();
+          if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_SERVER_KEY),
+            });
+            const keyP256dh = subscription.getKey('p256dh');
+            const keyAuth = subscription.getKey('auth');
+            await fetchText('/push-endpoint', {
+              method: 'PUT',
+              body: new URLSearchParams({
+                endpoint: subscription.endpoint,
+                p256dh: base64ArrayBuffer(keyP256dh),
+                auth: base64ArrayBuffer(keyAuth),
+              }),
+            });
+          }
+        }
+      })
     });
   });
 
@@ -116,25 +199,8 @@
       localStorage.setItem('uid', uid);
       f7.loginScreen.close();
       if (process.env.NODE_ENV === 'production') {
-        let permission = Notification.permission;
         if ('Notification' in window && Notification.permission !== 'granted') {
-          permission = await Notification.requestPermission();
-        }
-        if (permission === 'granted' && f7.serviceWorker.registrations.length) {
-          const registration = await f7.serviceWorker.container.ready;
-          let subscription = await registration.pushManager.getSubscription();
-          if (!subscription) {
-            subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_SERVER_KEY),
-            });
-            await fetchText('/push-endpoint', {
-              method: 'PUT',
-              body: new URLSearchParams({
-                endpoint: subscription.endpoint,
-              }),
-            });
-          }
+          await Notification.requestPermission();
         }
       }
       postLoginEvent();

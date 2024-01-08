@@ -3,6 +3,6 @@ module.exports = {
   globPatterns: ['**/*.{woff,woff2,js,css,png,jpg,svg,html}'],
   /* pass array of globs to exclude from caching */
   globIgnores: [],
-  ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
+  swSrc: 'src/js/service-worker.js',
   swDest: 'www/service-worker.js',
 };
