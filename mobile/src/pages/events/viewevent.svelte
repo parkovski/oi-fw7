@@ -136,30 +136,30 @@
       <List style="margin-top: 0">
         <ListItem groupTitle>Hosts</ListItem>
         {#each attendance.hosts as user (user.id)}
-          <ListItem>{user.name}</ListItem>
+          <ListItem href={`/contacts/view/${user.id}/`}>{user.name}</ListItem>
         {/each}
         {#if attendance.attending.length}
           <ListItem groupTitle>Attending</ListItem>
           {#each attendance.attending as user (user.id)}
-            <ListItem>{user.name}</ListItem>
+            <ListItem href={`/contacts/view/${user.id}/`}>{user.name}</ListItem>
           {/each}
         {/if}
         {#if attendance.maybeAttending.length}
           <ListItem groupTitle>Maybe Attending</ListItem>
           {#each attendance.maybeAttending as user (user.id)}
-            <ListItem>{user.name}</ListItem>
+            <ListItem href={`/contacts/view/${user.id}/`}>{user.name}</ListItem>
           {/each}
         {/if}
         {#if attendance.invited.length}
           <ListItem groupTitle>Invited</ListItem>
           {#each attendance.invited as user (user.id)}
-            <ListItem>{user.name}</ListItem>
+            <ListItem href={`/contacts/view/${user.id}/`}>{user.name}</ListItem>
           {/each}
         {/if}
         {#if attendance.notAttending.length}
           <ListItem groupTitle>Not Attending</ListItem>
           {#each attendance.notAttending as user (user.id)}
-            <ListItem>{user.name}</ListItem>
+            <ListItem href={`/contacts/view/${user.id}/`}>{user.name}</ListItem>
           {/each}
         {/if}
       </List>
