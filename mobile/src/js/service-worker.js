@@ -4,7 +4,9 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox
 workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
 
 self.addEventListener('push', e => {
-  self.registration.showNotification('Push notification', {
+  const promiseChain = self.registration.showNotification('Push notification', {
     body: e.data.text(),
   });
+  // Need to do this so the service worker stays active.
+  e.waitUntil(promiseChain);
 });
