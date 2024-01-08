@@ -28,8 +28,8 @@
   }
 
   function sendNotification() {
-    new Notification('Test notification', {
-      body: 'Test notification'
+    new Notification('OpenInvite', {
+      body: 'Test notification.'
     });
   }
 
