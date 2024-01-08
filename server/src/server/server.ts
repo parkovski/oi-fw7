@@ -29,7 +29,7 @@ import {
 import {
   getGroupEvents, getGroupEventInfo, newGroupEvent, setGroupEventAttendance,
 } from '../entity/groupevent.js';
-import { getHomeSummary } from '../entity/home.js';
+import { getHomeSummary, storePushEndpoint } from '../entity/home.js';
 
 export default async function serve(port: number) {
   const dbHost = process.env.DB_HOST || 'localhost';
@@ -59,6 +59,7 @@ export default async function serve(port: number) {
     app.use((_req, res, next) => {
       res.header('Access-Control-Allow-Origin', 'https://oi.parkovski.com');
       res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT');
       next();
     });
   } else {
@@ -71,12 +72,14 @@ export default async function serve(port: number) {
         res.header('Access-Control-Allow-Origin', 'https://oi.parkovski.com');
       }
       res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT');
       next();
     });
   }
 
   app.get('/hello', hello);
   app.get('/home', getHomeSummary);
+  app.put('/push-endpoint', storePushEndpoint);
   app.get('/profile', getMyProfile);
   app.post('/profile/update', updateProfile);
   app.get('/user/:uid', getUserInfo);

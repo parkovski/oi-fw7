@@ -73,3 +73,23 @@ export async function getHomeSummary(req: Request, res: Response) {
     res.end();
   }
 }
+
+export async function storePushEndpoint(req: Request, res: Response) {
+  try {
+    const session = validateUuid(req.cookies.session);
+    const endpoint = req.body.endpoint;
+
+    const q = await getPool().query(
+      `UPDATE sessions SET push_endpoint = $1 WHERE sesskey = $2`,
+      [endpoint, session]
+    );
+    if (q.rowCount === 0) {
+      res.status(404).write('Set push endpoint failed');
+    }
+    res.write('ok');
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    res.end();
+  }
+}

@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS sessions(
   uid bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   client text NOT NULL,
   sesskey uuid NOT NULL PRIMARY KEY,
-  last_used timestamp without time zone NOT NULL DEFAULT NOW()
+  last_used timestamp without time zone NOT NULL DEFAULT NOW(),
+  push_endpoint text
 );
 
 CREATE TABLE IF NOT EXISTS events(

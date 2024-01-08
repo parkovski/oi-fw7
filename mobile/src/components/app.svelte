@@ -22,7 +22,7 @@
 
   import capacitorApp from '../js/capacitor-app';
   import routes from '../js/routes';
-  import { postLoginEvent } from '../js/onlogin';
+  import { postLoginEvent, onLogin } from '../js/onlogin';
 
   const device = getDevice();
 
@@ -83,7 +83,7 @@
         f7.views[tab].router.on('routeChanged', onRouteChanged)
       );
     });
-  })
+  });
 
   let username;
   let password;
@@ -97,8 +97,30 @@
           p: password,
         }),
       });
-      f7.loginScreen.close();
       localStorage.setItem('uid', uid);
+      f7.loginScreen.close();
+      if (process.env.NODE_ENV === 'production') {
+        let permission = Notification.permission;
+        if ('Notification' in window && Notification.permission !== 'granted') {
+          permission = await Notification.requestPermission();
+        }
+        if (permission === 'granted' && f7.serviceWorker.registrations.length) {
+          const registration = await f7.serviceWorker.container.ready;
+          let subscription = await registration.pushManager.getSubscription();
+          if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: import.meta.env.VITE_SERVER_KEY,
+            });
+            await fetchText('/push-endpoint', {
+              method: 'PUT',
+              body: new URLSearchParams({
+                endpoint: subscription.endpoint,
+              }),
+            });
+          }
+        }
+      }
       postLoginEvent();
     }
     catch (e) {
