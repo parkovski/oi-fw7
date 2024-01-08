@@ -30,9 +30,16 @@ class WebSocketService {
   _webSocket: WebSocket | undefined;
   _handlers: Map<string, MessageHandler<any>> = new Map;
   _retries: number = 0;
+  _onError_listener;
+  _onClose_listener;
+  _onOpen_listener;
+  _onMessage_listener;
 
   constructor() {
-    this.subscribe<ConnectOkMessage>('connect_ok', _msg => { this._retries = 0; });
+    this._onError_listener = this._onError.bind(this);
+    this._onClose_listener = this._onClose.bind(this);
+    this._onOpen_listener = this._onOpen.bind(this);
+    this._onMessage_listener = this._onMessage.bind(this);
   }
 
   reconnect(reset: boolean = false) {
@@ -42,34 +49,40 @@ class WebSocketService {
       ++this._retries;
     }
 
-    if (this._webSocket &&
-        this._webSocket.readyState != WebSocket.CLOSING &&
-        this._webSocket.readyState != WebSocket.CLOSED) {
-      this._webSocket.close();
+    if (this._webSocket) {
+      // Remove the event listener to allow it to close without triggering
+      // more reconnect events.
+      this._webSocket.removeEventListener('close', this._onClose_listener);
+      if (this._webSocket.readyState !== WebSocket.CLOSING &&
+          this._webSocket.readyState !== WebSocket.CLOSED) {
+        this._webSocket.close();
+      }
     }
     this._webSocket = new WebSocket(webSocketUrl);
-    this._webSocket.addEventListener('error', this._onError.bind(this));
-    this._webSocket.addEventListener('close', this._onClose.bind(this));
-    this._webSocket.addEventListener('open', this._onOpen.bind(this));
-    this._webSocket.addEventListener('message', this._onMessage.bind(this));
+    this._webSocket.addEventListener('error', this._onError_listener);
+    this._webSocket.addEventListener('close', this._onClose_listener);
+    this._webSocket.addEventListener('open', this._onOpen_listener);
+    this._webSocket.addEventListener('message', this._onMessage_listener);
   }
 
-  _onError(_event: Event) {
+  _onError(event: Event) {
+    console.error(event);
   }
 
   _onClose(_event: CloseEvent) {
+    const reconnect = this.reconnect.bind(this, false);
     switch (this._retries) {
     case 0:
-      this.reconnect();
+      setTimeout(reconnect, 1);
       break;
     case 1:
-      setTimeout(this.reconnect.bind(this), 1000);
+      setTimeout(reconnect, 1000);
       break;
     case 2:
-      setTimeout(this.reconnect.bind(this), 3000);
+      setTimeout(reconnect, 3000);
       break;
     case 3:
-      setTimeout(this.reconnect.bind(this), 5000);
+      setTimeout(reconnect, 5000);
       break;
     default:
       console.error('WebSocket: Too many reconnect attempts.');
@@ -78,6 +91,7 @@ class WebSocketService {
   }
 
   _onOpen(_event: Event) {
+    this._retries = 0;
   }
 
   _onMessage(event: MessageEvent) {

@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import webpush from 'web-push';
 import { rateLimit } from 'express-rate-limit';
 import { WebSocketServer } from 'ws';
 import { onWebSocketConnected, listen as wslisten } from './wsserver.js';
@@ -38,6 +39,10 @@ export default async function serve(port: number) {
   const database = process.env.DB_NAME || 'openinvite';
 
   // Make sure our push keys are set.
+  if (!process.env.VAPID_EMAIL) {
+    console.error('Environment variable VAPID_EMAIL not set.');
+    process.exit(1);
+  }
   if (!process.env.VAPID_PUBKEY) {
     console.error('Environment variable VAPID_PUBKEY not set.');
     process.exit(1);
@@ -46,6 +51,12 @@ export default async function serve(port: number) {
     console.error('Environment variable VAPID_PRIVKEY not set.');
     process.exit(1);
   }
+
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL,
+    process.env.VAPID_PUBKEY,
+    process.env.VAPID_PRIVKEY
+  );
 
   // Check early that the database works.
   const pool = initPool({ host: dbHost, user: dbUser, password: dbPassword, database });

@@ -1,5 +1,7 @@
 import type { WebSocket } from 'ws';
 import type { Message } from './wsserver.js';
+import { getPool } from '../util/db.js';
+import webpush from 'web-push';
 
 // HACK - Why is this type not public?
 type BufferLike =
@@ -43,6 +45,44 @@ export class ClientSender {
 
   hasReceiver(): boolean {
     return this._webSockets !== undefined;
+  }
+}
+
+export class PushSender {
+  _uid: string;
+
+  constructor(uid: string) {
+    this._uid = uid;
+  }
+
+  async send(message: string) {
+    let client;
+    try {
+      client = await getPool().connect();
+      const q = await client.query(
+        `SELECT push_endpoint, key_p256dh, key_auth FROM sessions WHERE uid = $1`,
+        [this._uid]
+      );
+      await Promise.all(q.rows.map(row => {
+        if (row.push_endpoint === null) {
+          return Promise.resolve();
+        }
+        const subscription = {
+          endpoint: row.push_endpoint,
+          keys: {
+            p256dh: row.key_p256dh,
+            auth: row.key_auth,
+          }
+        };
+        return webpush.sendNotification(subscription, message);
+      }));
+    } finally {
+      client && client.release();
+    }
+  }
+
+  sendJson<T extends Message>(message: T) {
+    return this.send(JSON.stringify(message));
   }
 }
 

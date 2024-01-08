@@ -1,6 +1,6 @@
 import type { WebSocket } from 'ws';
 import type { Request, Response } from 'express';
-import clients from '../server/wsclients.js';
+import clients, { PushSender } from '../server/wsclients.js';
 import { getPool, getUserId } from '../util/db.js';
 import escapeHtml from '../util/escapehtml.js';
 import { handleError } from '../util/error.js';
@@ -75,14 +75,19 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       [uid]
     );
     const yourSessions = clients.getSender(msg.to);
-    yourSessions.sendJson<ServerChatMessage>({
+    const message: ServerChatMessage = {
       m: 'chat',
       id: row.id,
       from: uid,
       fromName: nameResult.rows[0].name,
       time: row.sent,
       text: msg.text,
-    });
+    };
+    if (yourSessions.hasReceiver()) {
+      yourSessions.sendJson(message);
+    } else {
+      await new PushSender(msg.to).sendJson(message);
+    }
   } catch {
     // Ignore
   } finally {

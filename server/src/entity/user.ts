@@ -31,7 +31,12 @@ export async function hello(req: Request, res: Response) {
 
     // Expires in 30 days (1000ms/s * 3600s/hr * 24hr/day * 30days)
     const expires = new Date(Date.now() + 1000 * 3600 * 24 * 30);
-    res.cookie('session', session, { expires });
+    res.cookie('session', session, {
+      expires,
+      sameSite: 'none',
+      secure: true,
+      //signed: true,
+    });
     res.send(`${helloResult.rows[0].id}\nHello, ${helloResult.rows[0].name}`);
   } catch (e) {
     handleError(e, res);
@@ -225,7 +230,12 @@ export async function authorize(req: Request, res: Response) {
 
       // Expires in 30 days (1000ms/s * 3600s/hr * 24hr/day * 30days)
       const expires = new Date(Date.now() + 1000 * 3600 * 24 * 30);
-      res.cookie('session', sessionResult.rows[0].sesskey, { expires });
+      res.cookie('session', sessionResult.rows[0].sesskey, {
+        expires,
+        sameSite: 'none',
+        secure: true,
+        //signed: true,
+      });
       res.write(uid);
     } catch (e) {
       handleError(e, res);

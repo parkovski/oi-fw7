@@ -32,10 +32,10 @@
     theme: 'auto', // Automatic theme detection
     // App routes
     routes: routes,
-    // Register service worker (only on production build)
-    serviceWorker: process.env.NODE_ENV ==='production' ? {
+    // Register service worker
+    serviceWorker: {
       path: '/service-worker.js',
-    } : {},
+    },
     // Input settings
     input: {
       scrollIntoViewOnFocus: device.capacitor,
@@ -129,7 +129,7 @@
           postLoginEvent();
         })
         .catch(e => {
-          console.log(e);
+          console.error(e);
           f7.loginScreen.open(document.getElementById('login-screen'));
         });
 
@@ -144,8 +144,8 @@
           return;
         }
         const permission = Notification.permission;
-        if (permission === 'granted' && f7.serviceWorker.registrations.length) {
-          const registration = await f7.serviceWorker.container.ready;
+        if (permission === 'granted') {
+          const registration = await navigator.serviceWorker.ready;
           let subscription = await registration.pushManager.getSubscription();
           if (!subscription) {
             subscription = await registration.pushManager.subscribe({
@@ -206,7 +206,7 @@
       postLoginEvent();
     }
     catch (e) {
-      console.log(e);
+      console.error(e);
     }
   }
 

@@ -57,7 +57,6 @@ function onMessage(this: WebSocket, data: Buffer, isBinary: boolean) {
 
 function onConnect(this: WebSocket, uid: string, _req: IncomingMessage) {
   clients.add(this, uid);
-  this.send('{"m":"connect_ok"}');
 }
 
 async function setupWebSocket(ws: WebSocket, cookies: Record<string, string>, req: IncomingMessage) {

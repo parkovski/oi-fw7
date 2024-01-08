@@ -21,6 +21,7 @@
     default: return 'bad value';
     }
   }
+  let readyState = getReadyState();
 
   let notificationPermission = Notification.permission;
   async function enableNotifications() {
@@ -37,15 +38,13 @@
   let keyP256dh;
   let keyAuth;
   onMount(() => {
-    if (f7.serviceWorker.registrations.length) {
-      f7.serviceWorker.container.ready.then(registration => {
-        registration.pushManager.getSubscription().then(subscription => {
-          pushEndpoint = subscription.endpoint;
-          keyP256dh = subscription.getKey('p256dh');
-          keyAuth = subscription.getKey('auth');
-        });
+    navigator.serviceWorker.ready.then(registration => {
+      registration.pushManager.getSubscription().then(subscription => {
+        pushEndpoint = subscription.endpoint;
+        keyP256dh = subscription.getKey('p256dh');
+        keyAuth = subscription.getKey('auth');
       });
-    }
+    });
   });
 
   function base64ArrayBuffer(arrayBuffer) {
@@ -112,11 +111,29 @@
       }),
     })
   }
+
+  function closeWebSocket() {
+    webSocketService._webSocket.addEventListener('close', () => readyState = getReadyState());
+    webSocketService._webSocket.close();
+    readyState = getReadyState();
+  }
+
+  function restartWebSocket() {
+    webSocketService.reconnect(true);
+    readyState = getReadyState();
+    webSocketService._webSocket.addEventListener('open', () => readyState = getReadyState());
+  }
 </script>
 
 <Page>
-  <Navbar title="Developer Info" backLink="Back" />
-  <Block>WebSocket status: {getReadyState()}</Block>
+  <Navbar title="Developer Tools" backLink="Back" />
+  <Block>
+    WebSocket status: {readyState}
+    <div class="grid grid-cols-2 grid-gap">
+      <Button onClick={closeWebSocket}>Close</Button>
+      <Button onClick={restartWebSocket}>Restart</Button>
+    </div>
+  </Block>
   <Block>
     Notification permission: {notificationPermission}
     <div class="grid grid-cols-2 grid-gap">
@@ -126,7 +143,7 @@
   </Block>
   <Block>
     Push endpoint:
-    <div style="overflow-x: scroll">{pushEndpoint}</div>
+    <pre style="overflow-x: scroll; margin: 0">{pushEndpoint}</pre>
     <Button onClick={sendPushEndpoint}>Send to server</Button>
   </Block>
 </Page>

@@ -18,8 +18,11 @@ CREATE TABLE IF NOT EXISTS sessions(
   client text NOT NULL,
   sesskey uuid NOT NULL PRIMARY KEY,
   last_used timestamp without time zone NOT NULL DEFAULT NOW(),
-  push_endpoint text
+  push_endpoint text,
+  key_p256dh text,
+  key_auth text
 );
+CREATE INDEX IF NOT EXISTS sessions_uid_idx ON sessions(uid);
 
 CREATE TABLE IF NOT EXISTS events(
   id bigserial PRIMARY KEY,
