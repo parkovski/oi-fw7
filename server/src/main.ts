@@ -17,11 +17,6 @@ const commands = {
     console.log(await bcrypt.hash(password, 10));
   },
 
-  getkey() {
-    console.log('Public key: ', process.env.VAPID_PUBKEY);
-    console.log('Private key:', process.env.VAPID_PRIVKEY);
-  },
-
   help() {
     console.log(
 `Commands:

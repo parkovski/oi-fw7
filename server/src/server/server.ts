@@ -37,6 +37,12 @@ export default async function serve(port: number) {
   const dbPassword = process.env.DB_PASSWORD;
   const database = process.env.DB_NAME || 'openinvite';
 
+  // Make sure our push keys are set.
+  if (!process.env.VAPID_PRIVKEY) {
+    console.error('Environment variable VAPID_PRIVKEY not set.');
+    process.exit(1);
+  }
+
   // Check early that the database works.
   const pool = initPool({ host: dbHost, user: dbUser, password: dbPassword, database });
   const res = await pool.query('SELECT $1::text as message', ['Hello OpenInvite!']);
