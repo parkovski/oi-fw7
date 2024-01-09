@@ -8,13 +8,11 @@
     Icon,
     Button,
     List,
-    ListItem,
     ListInput,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
   import profileService from '../../services/profile';
-  import { fetchAny } from '../../js/fetch';
 
   let qrcodeUrl;
   let editing = false;
@@ -32,7 +30,7 @@
       email = p.email;
       phone = p.phone;
     });
-    profileService.getProfile().get().then(async profile => {
+    profileService.getProfile().then(async profile => {
       const qrcode = await writeBarcodeToImageFile(
         `openinvite:profile/${profile.id}`,
         {
@@ -57,16 +55,7 @@
     if (!editing) {
       editing = true;
     } else {
-      await fetchAny(`/profile/update`, {
-        method: 'POST',
-        body: new URLSearchParams({
-          name: name ?? '',
-          username: username ?? '',
-          email: email ?? '',
-          phone: phone ?? '',
-        }),
-      });
-      profileService.getProfile().refresh();
+      await profileService.updateProfile(name, username, email, phone);
       editing = false;
     }
   }

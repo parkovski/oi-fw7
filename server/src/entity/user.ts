@@ -79,6 +79,20 @@ export async function updateProfile(req: Request, res: Response) {
     const email = req.body.email;
     const phone = req.body.phone;
 
+    if (username) {
+      validateMinMaxLength(username, 1, 64);
+    }
+    if (name) {
+      validateMinMaxLength(name, 1, 255);
+    }
+    if (email) {
+      validateMinMaxLength(email, 1, 255);
+    }
+    if (phone) {
+      // Rough guess...
+      validateMinMaxLength(phone, 5, 20);
+    }
+
     client = await getPool().connect();
 
     const userResult = await client.query(

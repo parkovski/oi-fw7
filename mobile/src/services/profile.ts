@@ -1,5 +1,5 @@
 import Entity from './entity';
-import { fetchJson } from '../js/fetch';
+import { fetchAny, fetchJson } from '../js/fetch';
 import { Profile } from 'oi-types/user';
 
 class ProfileService {
@@ -11,6 +11,19 @@ class ProfileService {
 
   getProfile() {
     return this._profile;
+  }
+
+  async updateProfile(name?: string, username?: string, email?: string, phone?: string) {
+    await fetchAny(`/profile/update`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        name: name ?? '',
+        username: username ?? '',
+        email: email ?? '',
+        phone: phone ?? '',
+      }),
+    });
+    this._profile.refresh();
   }
 }
 
