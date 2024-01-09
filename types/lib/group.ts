@@ -1,3 +1,8 @@
+import { AttendanceKind } from './event';
+export { AttendanceKind };
+import { EventMember } from './event';
+export type { EventMember };
+
 export const enum Membership {
   Requested = -1,
   Invited = 0,
@@ -28,4 +33,36 @@ export interface Group {
   members?: GroupMember[];
   unreadMessages?: number;
   upcomingEvents?: number;
+}
+
+export interface GroupEventSummary {
+  id: string;
+  gid: string;
+  title: string;
+  startTime: Date;
+  endTime: Date;
+  kind: AttendanceKind | null;
+}
+
+export interface GroupEvent {
+  id: string;
+  gid: string;
+  title: string;
+  description: string | null;
+  place: string | null;
+  startTime: Date;
+  endTime: Date;
+  kind: AttendanceKind | null;
+  members?: EventMember[];
+}
+
+// Group chat type returned by the HTTP API.
+export interface GroupChatSummary {
+  id: string;
+  uid_from: string;
+  name: string;
+  username: string;
+  message: string;
+  sent: string; // or Date?
+  received: string;
 }

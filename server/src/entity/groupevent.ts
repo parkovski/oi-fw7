@@ -7,9 +7,9 @@ import {
 } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';
 import {
-  GroupEventSummary, GroupEvent, EventMember, GroupEventCreatedMessage,
-} from 'oi-types/groupevent';
-import { Membership } from 'oi-types/group';
+  GroupEventSummary, GroupEvent, EventMember, Membership,
+} from 'oi-types/group';
+import { GroupEventCreatedMessage } from 'oi-types/message';
 
 export async function getGroupEvents(req: Request, res: Response) {
   let client;

@@ -7,11 +7,11 @@ import { handleError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateMinMaxLength, validateArrayEach,
 } from '../util/validation.js';
-import { Membership } from 'oi-types/group';
+import { Membership, GroupChatSummary } from 'oi-types/group';
 import {
-  ClientGroupMessage, ServerGroupMessage, GroupChatSummary, GroupMessageSentMessage,
+  ClientGroupMessage, ServerGroupMessage, GroupMessageSentMessage,
   GroupMessageReceivedMessage,
-} from 'oi-types/groupchat';
+} from 'oi-types/message';
 
 export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) {
   let client;

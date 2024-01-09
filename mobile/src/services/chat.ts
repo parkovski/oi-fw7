@@ -10,7 +10,7 @@ import {
 } from 'oi-types/message';
 
 // Used by `ChatService.send`.
-interface ChatMessage {
+interface OutgoingChatMessage {
   to: string;
   text: string;
 }
@@ -65,7 +65,7 @@ class ChatService {
     }
   }
 
-  getChat(id: string): Promise<ChatMessage> {
+  getChat(id: string): Promise<ChatMessage[]> {
     return fetchJson(`/chat/${id}`).then(chat => {
       chat.sent = new Date(chat.sent);
       chat.received = new Date(chat.received);
@@ -99,7 +99,7 @@ class ChatService {
     this._markMessageRead(uidFrom, Array.isArray(id) ? id.length : 1);
   }
 
-  send(msg: ChatMessage) {
+  send(msg: OutgoingChatMessage) {
     const outgoingMsg: ClientChatMessage = {
       m: 'chat',
       uuid: crypto.randomUUID(),

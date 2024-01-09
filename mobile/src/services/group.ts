@@ -1,14 +1,13 @@
 import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 import webSocketService, { type SubscriberLike } from './websocket';
-import { Membership, Group } from 'oi-types/group';
+import {
+  Membership, Group, GroupEventSummary, GroupEvent, AttendanceKind,
+} from 'oi-types/group';
 import {
   ClientGroupMessage, ServerGroupMessage, GroupMessageSentMessage, GroupMessageReceivedMessage,
-  GroupMembershipChangedMessage,
-} from 'oi-types/groupchat';
-import {
-  GroupEventSummary, GroupEvent, AttendanceKind, GroupEventCreatedMessage,
-} from 'oi-types/groupevent';
+  GroupMembershipChangedMessage, GroupEventCreatedMessage,
+} from 'oi-types/message';
 
 // Type used by `GroupService.send`.
 export interface GroupMessage {

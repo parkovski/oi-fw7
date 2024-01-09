@@ -1,3 +1,5 @@
+import { Membership } from './group';
+
 export interface Message {
   m: string;
 }
@@ -69,6 +71,54 @@ export interface MessageSentMessage extends Message {
 export interface MessageReceivedMessage extends Message {
   m: 'message_received';
   id: string | string[];
+}
+
+// }}}
+
+// Group {{{
+
+// Group message type sent from client to server.
+export interface ClientGroupMessage extends Message {
+  m: 'groupchat';
+  to: string;
+  text: string;
+  uuid: string;
+}
+
+// Group message type sent from server to client.
+export interface ServerGroupMessage extends Message {
+  m: 'groupchat';
+  id: string;
+  from: string;
+  fromName: string;
+  to: string;
+  time: string;
+  text: string;
+}
+
+export interface GroupMessageSentMessage extends Message {
+  m: 'group_message_sent';
+  uuid: string;
+  id: string;
+  time: string;
+  text: string;
+}
+
+export interface GroupMessageReceivedMessage {
+  m: 'group_message_received';
+  id: string | string[];
+}
+
+export interface GroupMembershipChangedMessage {
+  m: 'group_membership_changed';
+  id: string;
+  kind: Membership | null;
+}
+
+export interface GroupEventCreatedMessage {
+  m: 'group_event_created';
+  gid: string;
+  eid: string;
 }
 
 // }}}
