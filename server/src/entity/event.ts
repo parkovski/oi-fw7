@@ -300,12 +300,12 @@ export async function newEvent(req: Request, res: Response) {
     client = await getPool().connect();
     const uid = await getUserId(client, session);
 
-    let newEventResult = await client.query<{ id: string; name: string }>(
+    let newEventResult = await client.query<{ id: string; title: string }>(
       `
       INSERT INTO events
       (title, description, created_by, place, start_time, end_time, public)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, name
+      RETURNING id, title
       `,
       [title, description, uid, place, startTime, endTime, isPublic]
     );
@@ -314,7 +314,7 @@ export async function newEvent(req: Request, res: Response) {
       return;
     }
     const eid = newEventResult.rows[0].id;
-    const name = newEventResult.rows[0].name;
+    const name = newEventResult.rows[0].title;
 
     // Add myself as a host (kind 3).
     await client.query(
@@ -325,18 +325,20 @@ export async function newEvent(req: Request, res: Response) {
       [uid, eid]
     );
 
+    const eventAddedMessage: EventAddedMessage = {
+      m: 'event_added',
+      id: eid,
+      name,
+    };
+    wsclients.sendWs(uid, eventAddedMessage);
+
     if (invited.length) {
       await client.query(
         `INSERT INTO attendance (uid, eid, kind) VALUES (unnest($1::bigint array), $2, 0)`,
         [invited, eid]
       );
-      const msg: EventAddedMessage = {
-        m: 'event_added',
-        id: eid,
-        name,
-      };
       for (let uid of invited) {
-        wsclients.sendWsOrPush(uid, msg);
+        wsclients.sendWsOrPush(uid, eventAddedMessage);
       }
     }
 
