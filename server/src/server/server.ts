@@ -53,7 +53,7 @@ export default async function serve(port: number) {
   }
 
   webpush.setVapidDetails(
-    process.env.VAPID_EMAIL,
+    `mailto:${process.env.VAPID_EMAIL}`,
     process.env.VAPID_PUBKEY,
     process.env.VAPID_PRIVKEY
   );
