@@ -8,9 +8,11 @@ import {
 } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';
 import {
-  AttendanceKind, EventMember, Event, EventSummary, EventAddedMessage,
-  EventAttendanceChangedMessage,
+  AttendanceKind, EventMember, Event, EventSummary,
 } from 'oi-types/event';
+import {
+  EventAddedMessage, EventAttendanceChangedMessage,
+} from 'oi-types/message';
 
 export async function getEvents(req: Request, res: Response) {
   try {

@@ -2,9 +2,11 @@ import Entity from './entity';
 import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 import webSocketService, { type SubscriberLike } from './websocket';
 import {
-  AttendanceKind, Event, EventSummary, EventAddedMessage, EventRemovedMessage,
-  EventAttendanceChangedMessage,
+  AttendanceKind, Event, EventSummary,
 } from 'oi-types/event';
+import {
+  EventAddedMessage, EventRemovedMessage, EventAttendanceChangedMessage,
+} from 'oi-types/message';
 
 class EventService {
   _events: Entity<EventSummary[]>;

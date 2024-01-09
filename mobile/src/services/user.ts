@@ -1,6 +1,8 @@
 import Entity from './entity';
 import { fetchAny, fetchText, fetchJson } from '../js/fetch';
+import webSocketService, { type SubscriberLike } from './websocket';
 import { User, ContactData, ContactKind } from 'oi-types/user';
+import { ContactRequestedMessage, ContactRequestChangedMessage } from 'oi-types/message';
 
 class UserService {
   _users = new Map<string, Entity<User>>;
@@ -10,6 +12,18 @@ class UserService {
   constructor() {
     this._contacts = new Entity(() => fetchJson(`/contacts`));
     this._requests = new Entity(() => fetchJson(`/contactrequests`));
+
+    this.contactRequested(() => {
+      this._requests.refresh();
+    });
+    this.contactRequestApproved(() => {
+      this._requests.refresh();
+      this._contacts.refresh();
+    });
+    this.contactRequestDenied(() => {
+      this._requests.refresh();
+      this._contacts.refresh();
+    });
   }
 
   getContacts(): Entity<ContactData> {
@@ -86,6 +100,18 @@ class UserService {
       this._requests.publish();
     } catch {
     }
+  }
+
+  contactRequested(subscriber: SubscriberLike<ContactRequestedMessage>) {
+    webSocketService.subscribe('contact_requested', subscriber);
+  }
+
+  contactRequestApproved(subscriber: SubscriberLike<ContactRequestChangedMessage>) {
+    webSocketService.subscribe('contact_request_approved', subscriber);
+  }
+
+  contactRequestDenied(subscriber: SubscriberLike<ContactRequestChangedMessage>) {
+    webSocketService.subscribe('contact_request_denied', subscriber);
   }
 }
 
