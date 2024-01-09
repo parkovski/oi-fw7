@@ -29,6 +29,23 @@ function getNotificationOptions(message) {
       body: `You're invited to ${message.name}.`
     };
 
+  case 'contact_requested':
+    return {
+      body: `You have a new contact request from ${message.name}`,
+      actions: [
+        {
+          action: 'reject',
+          type: 'button',
+          title: 'Reject',
+        },
+        {
+          action: 'accept',
+          type: 'button',
+          title: 'Accept',
+        },
+      ],
+    };
+
   default:
     return {
       body: `Unknown notification type "${message.m}."`

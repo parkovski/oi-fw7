@@ -9,19 +9,12 @@ import {
 } from '../util/validation.js';
 import { ContactKind } from 'oi-types/user';
 import {
-  ClientChatMessage, ServerChatMessage, MessageSentMessage,
-  MessageReceivedMessage, ChatSummary,
+   ChatSummary, ChatMessage,
 } from 'oi-types/chat';
-
-// Returned from http method getUserChat. TODO: Unify this w/ above.
-interface OutgoingChatMessage2 {
-  id: string;
-  uid_from: string;
-  uid_to: string;
-  message: string;
-  sent: string; // Date???
-  name_from: string;
-}
+import {
+  ClientChatMessage, ServerChatMessage, MessageSentMessage,
+  MessageReceivedMessage,
+} from 'oi-types/message';
 
 interface UnreadMessageSummary {
   count: number;
@@ -125,11 +118,12 @@ export async function getUserChat(req: Request, res: Response) {
     client = await getPool().connect();
 
     const myUid = await getUserId(client, session);
-    const messageResult = await client.query<OutgoingChatMessage2>(
+    const messageResult = await client.query<ChatMessage>(
       `
-      SELECT user_messages.id, user_messages.uid_from, user_messages.uid_to,
-        user_messages.message, user_messages.sent, user_messages.received,
-        users.name as name_from
+      SELECT user_messages.id, user_messages.uid_from AS "from",
+        user_messages.uid_to AS "to", users.name as "fromName",
+        user_messages.message AS "text", user_messages.sent,
+        user_messages.received
       FROM user_messages
       INNER JOIN users ON user_messages.uid_from = users.id
       WHERE (uid_from = $1 AND uid_to = $2) OR (uid_to = $1 AND uid_from = $2)

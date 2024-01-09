@@ -2,9 +2,12 @@ import Entity from './entity';
 import webSocketService, { type SubscriberLike } from './websocket';
 import { fetchJson } from '../js/fetch';
 import {
-  ChatSummary, ClientChatMessage, ServerChatMessage, MessageSentMessage,
-  MessageReceivedMessage
+  ChatSummary, ChatMessage
 } from 'oi-types/chat';
+import {
+  ClientChatMessage, ServerChatMessage, MessageSentMessage,
+  MessageReceivedMessage,
+} from 'oi-types/message';
 
 // Used by `ChatService.send`.
 interface ChatMessage {
@@ -62,8 +65,12 @@ class ChatService {
     }
   }
 
-  getChat(id: string) {
-    return fetchJson(`/chat/${id}`);
+  getChat(id: string): Promise<ChatMessage> {
+    return fetchJson(`/chat/${id}`).then(chat => {
+      chat.sent = new Date(chat.sent);
+      chat.received = new Date(chat.received);
+      return chat;
+    });
   }
 
   getChatSummary() {

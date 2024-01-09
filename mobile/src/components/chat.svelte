@@ -11,8 +11,11 @@
   let chat;
   let textEditor;
   let isScrolledToBottom = true;
+  let myUid;
 
   onMount(() => {
+    myUid = localStorage.getItem('uid');
+
     textEditor.instance().contentEl.addEventListener('keydown', function(e) {
       if (e.composing || e.keyCode === 229) {
         return;
@@ -119,7 +122,7 @@
         <p class="chat-from">{agg.chats[0].fromName}</p>
       {/if}
       {#each agg.chats as chat (chat.id)}
-        {#if chat.from}
+        {#if chat.from !== myUid}
           <p class="chatbubble chat-left">{@html chat.text}</p>
         {:else}
           <p class="chatbubble chat-right">{@html chat.text}</p>
@@ -127,7 +130,7 @@
       {/each}
     {/each}
     {#each chats as chat (chat.id)}
-      {#if chat.from}
+      {#if chat.from !== myUid}
         <p class="chatbubble chat-left">{@html chat.text}</p>
       {:else}
         <p class="chatbubble chat-right">{@html chat.text}</p>
