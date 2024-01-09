@@ -14,8 +14,6 @@ export interface User {
   name: string;
   username: string;
   kind?: ContactKind;
-  uid_contact?: string;
-  has_contact?: boolean | 'pending';
 }
 
 export interface ContactData {

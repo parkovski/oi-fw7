@@ -40,11 +40,9 @@ class UserService {
       const userData = await user.get();
       const contactsData = await this._contacts.get();
       if (status === 'approved') {
-        userData.has_contact = true;
         userData.kind = ContactKind.Approved;
         contactsData.contacts.push(userData);
       } else if (status === 'requested') {
-        userData.has_contact = 'pending';
         userData.kind = ContactKind.Requested;
         contactsData.pending.push(userData);
       }

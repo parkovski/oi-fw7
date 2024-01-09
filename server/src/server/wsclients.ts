@@ -126,6 +126,23 @@ export class ClientManager {
     return new ClientSender(sockets);
   }
 
+  sendWs<T extends Message>(uid: string, message: T) {
+    this.getSender(uid).sendJson(message);
+  }
+
+  sendPush<T extends Message>(uid: string, message: T) {
+    new PushSender(uid).sendJson(message);
+  }
+
+  sendWsOrPush<T extends Message>(uid: string, message: T) {
+    const sender = this.getSender(uid);
+    if (sender.hasReceiver()) {
+      sender.sendJson(message);
+    } else {
+      new PushSender(uid).sendJson(message);
+    }
+  }
+
   getUid(ws: WebSocket): string | undefined {
     return this.wsToUid.get(ws);
   }

@@ -20,10 +20,7 @@
 
   onMount(() => {
     const contactsSubscription = userService.getContacts().subscribe(value => {
-      contacts = value.contacts.concat(value.pending.map(p => ({
-        has_contact: 'pending',
-        ...p,
-      })));
+      contacts = value.contacts.concat(value.pending);
       followers = value.followers;
     });
     const requestsSubscription = userService.getContactRequests().subscribe(value =>

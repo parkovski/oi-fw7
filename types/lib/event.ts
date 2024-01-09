@@ -18,8 +18,8 @@ export interface Event {
   title: string;
   description: string | null;
   place: string | null;
-  startTime: string; // or Date?
-  endTime: string;
+  startTime: Date;
+  endTime: Date;
   public: boolean;
   kind: AttendanceKind | null;
   members?: EventMember[];
@@ -37,4 +37,16 @@ export interface EventSummary {
 export interface EventAddedMessage {
   m: 'event_added';
   id: string;
+  name: string;
+}
+
+export interface EventRemovedMessage {
+  m: 'event_removed';
+  id: string;
+}
+
+export interface EventAttendanceChangedMessage {
+  m: 'event_attendance_changed',
+  id: string;
+  kind: number;
 }

@@ -167,8 +167,7 @@ export async function getUserInfo(req: Request, res: Response) {
 
       const userResult = await getPool().query<User>(
         `
-        SELECT users.id, users.name, users.username, contacts.uid_contact,
-          contacts.kind
+        SELECT users.id, users.name, users.username, contacts.kind
         FROM users
         LEFT JOIN contacts ON users.id = contacts.uid_contact
           AND contacts.uid_owner = (SELECT uid FROM sessions WHERE sesskey = $2)
@@ -179,14 +178,7 @@ export async function getUserInfo(req: Request, res: Response) {
       if (userResult.rowCount === 0) {
         res.status(404);
       } else {
-        const result = userResult.rows[0];
-        if (result.uid_contact !== null) {
-          result.has_contact = true;
-        } else {
-          result.has_contact = false;
-        }
-        delete result.uid_contact;
-        res.json(result);
+        res.json(userResult.rows[0]);
       }
     } else {
       const userResult = await getPool().query<MinUser>(

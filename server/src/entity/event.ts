@@ -8,7 +8,8 @@ import {
 } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';
 import {
-  AttendanceKind, EventMember, Event, EventSummary
+  AttendanceKind, EventMember, Event, EventSummary, EventAddedMessage,
+  EventAttendanceChangedMessage,
 } from 'oi-types/event';
 
 export async function getEvents(req: Request, res: Response) {
@@ -119,19 +120,21 @@ export async function setEventAttendance(req: Request, res: Response) {
 
     client = await getPool().connect();
 
+    const myUid = await getUserId(client, session);
+
     // Update attendance only if not hosting.
     const attendanceResult = await client.query(
-      `
-      UPDATE attendance
-      SET kind = $1
-      WHERE (uid, eid) = ((SELECT uid FROM sessions WHERE sesskey = $2), $3)
-        AND (kind != 3)
-      `,
-      [kind, session, eid]
+      `UPDATE attendance SET kind = $1 WHERE (uid, eid) = ($2, $3) AND (kind != 3)`,
+      [kind, myUid, eid]
     );
     if (attendanceResult.rowCount === 0) {
-      res.status(400);
+      res.status(404);
     } else {
+      wsclients.getSender(myUid).sendJson<EventAttendanceChangedMessage>({
+        m: 'event_attendance_changed',
+        id: eid,
+        kind,
+      });
       res.write('' + kind);
     }
   } catch (e) {
@@ -158,9 +161,13 @@ export async function inviteToEvent(req: Request, res: Response) {
     const loggedInUid = await getUserId(client, session);
 
     // Make sure I am in the event's member list
-    const memberResult = await client.query<{ kind: AttendanceKind; public: boolean }>(
+    const memberResult = await client.query<{
+      kind: AttendanceKind;
+      public: boolean;
+      name: string;
+    }>(
       `
-      SELECT attendance.kind, events.public
+      SELECT attendance.kind, events.public, events.name
       FROM attendance
       RIGHT JOIN events ON attendance.eid = events.id AND attendance.uid = $1
       WHERE events.id = $2
@@ -176,20 +183,23 @@ export async function inviteToEvent(req: Request, res: Response) {
       return;
     }
 
-    await client.query(
+    const insertResult = await client.query<{ uid: string }>(
       `
       INSERT INTO attendance (uid, eid, kind)
       VALUES (unnest($1::bigint array), $2, 0)
       ON CONFLICT (uid, eid) DO NOTHING
+      RETURNING uid
       `,
       [invitedUids, eid]
     );
-    const msg = {
+
+    const msg: EventAddedMessage = {
       m: 'event_added',
       id: eid,
+      name: memberResult.rows[0].name
     }
-    for (let uid of invitedUids) {
-      wsclients.getSender(uid).sendJson(msg);
+    for (let row of insertResult.rows) {
+      wsclients.sendWsOrPush(row.uid, msg);
     }
   } catch (e) {
     handleError(e, res);
@@ -246,8 +256,14 @@ export async function makeEventHost(req: Request, res: Response) {
         `UPDATE attendance SET kind = 3 WHERE uid = ANY($1) AND eid = $2`,
         [toInvite, eid]
       );
+      const message: EventAttendanceChangedMessage = {
+        m: 'event_attendance_changed',
+        id: eid,
+        kind: AttendanceKind.Hosting,
+      };
+      toInvite.forEach(uid => wsclients.sendWsOrPush(uid, message));
     } else {
-      res.status(400).write('No rows updated');
+      res.status(400).write('Selected users are not marked as attending');
     }
   } catch (e) {
     handleError(e, res);
@@ -282,12 +298,12 @@ export async function newEvent(req: Request, res: Response) {
     client = await getPool().connect();
     const uid = await getUserId(client, session);
 
-    let newEventResult = await client.query<{ id: string }>(
+    let newEventResult = await client.query<{ id: string; name: string }>(
       `
       INSERT INTO events
       (title, description, created_by, place, start_time, end_time, public)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id
+      RETURNING id, name
       `,
       [title, description, uid, place, startTime, endTime, isPublic]
     );
@@ -296,6 +312,7 @@ export async function newEvent(req: Request, res: Response) {
       return;
     }
     const eid = newEventResult.rows[0].id;
+    const name = newEventResult.rows[0].name;
 
     // Add myself as a host (kind 3).
     await client.query(
@@ -311,9 +328,13 @@ export async function newEvent(req: Request, res: Response) {
         `INSERT INTO attendance (uid, eid, kind) VALUES (unnest($1::bigint array), $2, 0)`,
         [invited, eid]
       );
-      const msg = { m: 'event_added', id: eid };
+      const msg: EventAddedMessage = {
+        m: 'event_added',
+        id: eid,
+        name,
+      };
       for (let uid of invited) {
-        wsclients.getSender(uid).sendJson(msg);
+        wsclients.sendWsOrPush(uid, msg);
       }
     }
 

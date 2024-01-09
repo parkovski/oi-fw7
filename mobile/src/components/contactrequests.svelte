@@ -36,7 +36,7 @@
     <ListItem title={firstLetter} groupTitle />
     {#each contactsByFirstLetter[firstLetter] as contact (contact.id)}
       <ListItem title={contact.name} href={`/contacts/view/${contact.id}/`}
-        footer={contact.has_contact === 'pending' ? 'Requested' : undefined}>
+        footer={contact.kind === 0 ? 'Requested' : undefined}>
         <Icon slot="media" ios="f7:person_fill" md="material:person" />
         <Button fill color="red" on:click={() => onDeny(contact.id)}>Deny</Button>
         <Button fill on:click={() => onApprove(contact.id)}>Approve</Button>

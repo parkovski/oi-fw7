@@ -4,14 +4,11 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox
 const __manifest__ = self.__WB_MANIFEST || [];
 workbox.precaching.precacheAndRoute(__manifest__);
 
-self.addEventListener('push', e => {
-  const data = e.data.json();
-
-  let options;
-  switch (data.m) {
+function getNotificationOptions(message) {
+  switch (message.m) {
   case 'chat':
-    options = {
-      body: data.fromName + ': ' + data.text,
+    return {
+      body: `${message.fromName}: ${message.text}`,
       actions: [
         {
           action: 'dismiss',
@@ -26,11 +23,22 @@ self.addEventListener('push', e => {
         },
       ],
     };
-    break;
-  default:
-    options = { body: '(unknown message type)' };
-  }
 
+  case 'event_added':
+    return {
+      body: `You're invited to ${message.name}.`
+    };
+
+  default:
+    return {
+      body: `Unknown notification type "${message.m}."`
+    };
+  }
+}
+
+self.addEventListener('push', e => {
+  const data = e.data.json();
+  const options = getNotificationOptions(data);
   const promiseChain = self.registration.showNotification('OpenInvite', options);
   // Need to do this so the service worker stays active.
   e.waitUntil(promiseChain);
