@@ -1,4 +1,4 @@
-import type { Message } from './messages';
+import type { Message } from './message';
 import type { Membership } from './group';
 
 // Group message type sent from client to server.

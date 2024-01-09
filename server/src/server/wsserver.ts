@@ -4,10 +4,7 @@ import clients from './wsclients.js';
 import { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';
 import type { IncomingMessage } from 'node:http';
-
-export interface Message {
-  m: string;
-}
+import type { Message } from 'oi-types/message';
 
 export type WebSocketListener<T extends Message | Buffer> = (this: WebSocket, message: T) => void;
 

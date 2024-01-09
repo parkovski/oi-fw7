@@ -1,4 +1,4 @@
-import type { Message } from './messages';
+import type { Message } from './message';
 
 export interface ChatSummary {
   uid: string;

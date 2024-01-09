@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import type { Message } from './wsserver.js';
+import type { Message } from 'oi-types/message';
 import { getPool } from '../util/db.js';
 import webpush from 'web-push';
 
