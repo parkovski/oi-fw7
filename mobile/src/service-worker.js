@@ -6,6 +6,21 @@ workbox.precaching.precacheAndRoute(__manifest__);
 
 function getNotificationOptions(message) {
   switch (message.m) {
+  case 'event_added':
+    return {
+      body: `You're invited to ${message.name}.`,
+    };
+
+  case 'event_responded':
+    return {
+      body: 'Someone responded to your event.',
+    };
+
+  case 'event_commented':
+    return {
+      body: 'Someone commented on your event.',
+    };
+
   case 'chat':
     return {
       body: `${message.fromName}: ${message.text}`,
@@ -24,9 +39,22 @@ function getNotificationOptions(message) {
       ],
     };
 
-  case 'event_added':
+  case 'groupchat':
     return {
-      body: `You're invited to ${message.name}.`
+      body: `Group chat: ${message.text}`,
+      actions: [
+        {
+          action: 'dismiss',
+          type: 'button',
+          title: 'Dismiss',
+        },
+        {
+          action: 'reply',
+          type: 'text',
+          title: 'Reply',
+          placeholder: 'Type a response...',
+        },
+      ],
     };
 
   case 'contact_requested':
@@ -46,19 +74,29 @@ function getNotificationOptions(message) {
       ],
     };
 
-  default:
+  case 'contact_added':
     return {
-      body: `Unknown notification type "${message.m}."`
+      body: 'Someone is following you.',
     };
+
+  case 'contact_approved':
+    return {
+      body: 'Someone approved your follow request.',
+    };
+
+  default:
+    return;
   }
 }
 
 self.addEventListener('push', e => {
   const data = e.data.json();
   const options = getNotificationOptions(data);
-  const promiseChain = self.registration.showNotification('OpenInvite', options);
-  // Need to do this so the service worker stays active.
-  e.waitUntil(promiseChain);
+  if (options) {
+    const promiseChain = self.registration.showNotification('OpenInvite', options);
+    // Need to do this so the service worker stays active.
+    e.waitUntil(promiseChain);
+  }
 });
 
 self.addEventListener('notificationclick', e => {
