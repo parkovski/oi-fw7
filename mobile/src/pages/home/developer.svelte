@@ -101,8 +101,40 @@
     return base64
   }
 
-  function sendPushEndpoint() {
-    fetchText('/push-endpoint', {
+  function urlBase64ToUint8Array(base64String) {
+    // Thanks to https://gist.github.com/Klerith/80abd742d726dd587f4bd5d6a0ab26b6
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+
+    for (var i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  async function getPushEndpoint() {
+    if (pushEndpoint) {
+      return;
+    }
+
+    let registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_SERVER_KEY),
+      });
+    }
+    pushEndpoint = subscription.endpoint;
+    keyP256dh = subscription.getKey('p256dh');
+    keyAuth = subscription.getKey('auth');
+
+    await fetchText('/push-endpoint', {
       method: 'PUT',
       body: new URLSearchParams({
         endpoint: pushEndpoint,
@@ -144,6 +176,6 @@
   <Block>
     Push endpoint:
     <pre style="overflow-x: scroll; margin: 0">{pushEndpoint}</pre>
-    <Button onClick={sendPushEndpoint}>Send to server</Button>
+    <Button onClick={getPushEndpoint}>Generate endpoint</Button>
   </Block>
 </Page>
