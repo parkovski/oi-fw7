@@ -107,7 +107,7 @@
     chats = cs.map(c => ({
       id: c.id,
       to: f7route.params.id,
-      from: c.uid_from === myUid ? undefined : c.uid_from,
+      from: c.uid_from,
       fromName: c.name,
       text: c.message,
     }));
