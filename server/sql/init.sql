@@ -125,6 +125,7 @@ CREATE TABLE IF NOT EXISTS notification_settings(
   event_added boolean NOT NULL DEFAULT TRUE,
   event_responded boolean NOT NULL DEFAULT TRUE,
   event_commented boolean NOT NULL DEFAULT TRUE,
+  event_attendance_changed boolean NOT NULL DEFAULT TRUE,
   chat boolean NOT NULL DEFAULT TRUE,
   groupchat boolean NOT NULL DEFAULT TRUE,
   contact_requested boolean NOT NULL DEFAULT TRUE,

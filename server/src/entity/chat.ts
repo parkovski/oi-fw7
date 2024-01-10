@@ -65,7 +65,8 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
 
     const nameResult = await client.query<{ name: string; chat: boolean }>(
       `
-      SELECT users.name, COALESCE(notification_settings.chat, TRUE) FROM users
+      SELECT users.name, COALESCE(notification_settings.chat, TRUE) AS chat
+      FROM users
       LEFT JOIN notification_settings ON users.id = notification_settings.uid
       WHERE users.id = $1
       `,

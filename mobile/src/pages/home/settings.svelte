@@ -13,6 +13,7 @@
   let newEventInvite;
   let eventRespondedTo;
   let eventCommentedOn;
+  let eventAttendanceChanged;
   let messageReceived;
   let groupMessageReceived;
   let newFollower;
@@ -35,6 +36,7 @@
       newEventInvite,
       eventRespondedTo,
       eventCommentedOn,
+      eventAttendanceChanged,
       messageReceived,
       groupMessageReceived,
       newFollowRequest,
@@ -51,11 +53,12 @@
     newEventInvite.instance().on('change', toggleNotification('event_added'));
     eventRespondedTo.instance().on('change', toggleNotification('event_responded'));
     eventCommentedOn.instance().on('change', toggleNotification('event_commented'));
+    eventAttendanceChanged.instance().on('change', toggleNotification('event_attendance_changed'));
     messageReceived.instance().on('change', toggleNotification('chat'));
     groupMessageReceived.instance().on('change', toggleNotification('groupchat'));
     newFollowRequest.instance().on('change', toggleNotification('contact_requested'));
     newFollower.instance().on('change', toggleNotification('contact_added'));
-    followRequestApproved.instance().on('change', toggleNotification('contact_approved'));
+    followRequestApproved.instance().on('change', toggleNotification('contact_request_approved'));
   });
 </script>
 
@@ -80,6 +83,10 @@
     <ListItem>
       <span>Event commented on</span>
       <Toggle checked bind:this={eventCommentedOn} />
+    </ListItem>
+    <ListItem>
+      <span>Event attendance changed (made host)</span>
+      <Toggle checked bind:this={eventAttendanceChanged} />
     </ListItem>
     <ListItem groupTitle>Messages</ListItem>
     <ListItem>

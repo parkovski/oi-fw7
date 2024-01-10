@@ -197,7 +197,7 @@ export async function inviteToEvent(req: Request, res: Response) {
 
     const notificationResult = await client.query<{ event_added: boolean }>(
       `
-      SELECT COALESCE(notification_settings.event_added, TRUE)
+      SELECT COALESCE(notification_settings.event_added, TRUE) AS event_added
       FROM users
       LEFT JOIN notification_settings ON users.id = notification_settings.uid
       WHERE users.id = ANY($1::bigint array)
@@ -274,7 +274,17 @@ export async function makeEventHost(req: Request, res: Response) {
         id: eid,
         kind: AttendanceKind.Hosting,
       };
-      toInvite.forEach(uid => wsclients.sendWsOrPush(uid, message));
+      const wantsPush = await client.query<{ event_attendance_changed: boolean }>(
+        `
+        SELECT COALESCE(event_attendance_changed, TRUE) AS event_attendance_changed
+        FROM users
+        LEFT JOIN notification_settings ON users.id = notification_settings.uid
+        WHERE users.id = ANY($1::bigint array)
+        `,
+        [toInvite]
+      );
+      toInvite.forEach((uid, index) =>
+        wsclients.sendWsOrPush(uid, message, wantsPush.rows[index].event_attendance_changed));
     } else {
       res.status(400).write('Selected users are not marked as attending');
     }
@@ -348,8 +358,17 @@ export async function newEvent(req: Request, res: Response) {
         `INSERT INTO attendance (uid, eid, kind) VALUES (unnest($1::bigint array), $2, 0)`,
         [invited, eid]
       );
-      for (let uid of invited) {
-        wsclients.sendWsOrPush(uid, eventAddedMessage);
+      const wantsPush = await client.query<{ event_added: boolean }>(
+        `
+        SELECT COALESCE(event_added, TRUE) AS event_added
+        FROM users
+        LEFT JOIN notification_settings ON users.id = notification_settings.uid
+        WHERE users.id = ANY($1::bigint array)
+        `,
+        [invited]
+      );
+      for (let i = 0; i < invited.length; ++i) {
+        wsclients.sendWsOrPush(invited[i], eventAddedMessage, wantsPush.rows[i].event_added);
       }
     }
 
