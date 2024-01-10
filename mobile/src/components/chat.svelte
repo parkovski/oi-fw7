@@ -45,17 +45,18 @@
 
   function sendMessage() {
     const instance = textEditor.instance();
+    //let text = instance.getValue();
     let text = instance.contentEl.innerText || innerTextPolyfill(instance.contentEl);
     /*if (text.endsWith('<br>')) {
       // ^^ Firefox does this so delete the trailing <br>.
       text = text.substring(0, text.length - 4);
     }*/
+    text = text.trim();
+    instance.clearValue();
     if (text === '') {
       return;
     }
     onSend(text);
-    instance.value = '';
-    instance.contentEl.innerHTML = '';
   }
 
   onMount(() => {
@@ -65,6 +66,7 @@
       if (e.composing || e.keyCode === 229) {
         return;
       }
+      // TODO: On mobile, pressing return should add a new line.
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
@@ -191,8 +193,7 @@
     <TextEditor
       bind:this={textEditor}
       placeholder="Say something..."
-      mode="popover"
-      buttons={['bold', 'italic', 'underline']}
+      mode=""
       resizable
       style="flex: 1 1 auto; margin-right: 0"
     />

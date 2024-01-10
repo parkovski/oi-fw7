@@ -41,7 +41,6 @@
       }
 
       chatService.getChat(f7route.params.id).then(cs => {
-        console.log(cs);
         chats = cs;
         const unread = cs.filter(c => c.from !== myUid && !c.received).map(c => c.id);
         chatService.acknowledge(unread, f7route.params.id);

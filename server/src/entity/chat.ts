@@ -67,7 +67,6 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       `SELECT name FROM users WHERE id = $1`,
       [uid]
     );
-    const yourSessions = clients.getSender(msg.to);
     const message: ServerChatMessage = {
       m: 'chat',
       id: row.id,
@@ -76,11 +75,7 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       time: row.sent,
       text: msg.text,
     };
-    if (yourSessions.hasReceiver()) {
-      yourSessions.sendJson(message);
-    } else {
-      await new PushSender(msg.to).sendJson(message);
-    }
+    clients.sendWsOrPush(msg.to, message);
   } catch {
     // Ignore
   } finally {
