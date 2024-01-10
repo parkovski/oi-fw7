@@ -189,6 +189,10 @@
 
   async function login() {
     try {
+      let permissionPromise;
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        permissionPromise = Notification.requestPermission();
+      }
       const uid = await fetchText('/authorize', {
         method: 'POST',
         body: new URLSearchParams({
@@ -198,11 +202,7 @@
       });
       localStorage.setItem('uid', uid);
       f7.loginScreen.close();
-      if (process.env.NODE_ENV === 'production') {
-        if ('Notification' in window && Notification.permission !== 'granted') {
-          await Notification.requestPermission();
-        }
-      }
+      permissionPromise && await permissionPromise;
       postLoginEvent();
     }
     catch (e) {
