@@ -18,6 +18,7 @@
   let myUid;
 
   function innerTextPolyfill(elem){
+    // Thanks to https://stackoverflow.com/questions/6868162/get-plain-text-from-contenteditable-div
     var sel = window.getSelection();
 
     // Remember old selection
