@@ -63,8 +63,12 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       text: row.message,
     });
 
-    const nameResult = await client.query<{ name: string }>(
-      `SELECT name FROM users WHERE id = $1`,
+    const nameResult = await client.query<{ name: string; chat: boolean }>(
+      `
+      SELECT users.name, COALESCE(notification_settings.chat, TRUE) FROM users
+      LEFT JOIN notification_settings ON users.id = notification_settings.uid
+      WHERE users.id = $1
+      `,
       [uid]
     );
     const message: ServerChatMessage = {
@@ -75,7 +79,7 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       time: row.sent,
       text: msg.text,
     };
-    clients.sendWsOrPush(msg.to, message);
+    clients.sendWsOrPush(msg.to, message, nameResult.rows[0].chat);
   } catch {
     // Ignore
   } finally {

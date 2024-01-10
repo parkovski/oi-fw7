@@ -195,13 +195,24 @@ export async function inviteToEvent(req: Request, res: Response) {
       [invitedUids, eid]
     );
 
+    const notificationResult = await client.query<{ event_added: boolean }>(
+      `
+      SELECT COALESCE(notification_settings.event_added, TRUE)
+      FROM users
+      LEFT JOIN notification_settings ON users.id = notification_settings.uid
+      WHERE users.id = ANY($1::bigint array)
+      `,
+      [insertResult.rows.map(row => row.uid)]
+    );
+
     const msg: EventAddedMessage = {
       m: 'event_added',
       id: eid,
       name: memberResult.rows[0].title
     }
-    for (let row of insertResult.rows) {
-      wsclients.sendWsOrPush(row.uid, msg);
+    for (let i = 0; i < insertResult.rowCount!; ++i) {
+      wsclients.sendWsOrPush(
+        insertResult.rows[i].uid, msg, notificationResult.rows[i].event_added);
     }
   } catch (e) {
     handleError(e, res);

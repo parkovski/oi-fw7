@@ -134,21 +134,21 @@ export class ClientManager {
     new PushSender(uid).sendJson(message);
   }
 
-  sendWsOrPush<T extends Message>(uid: string, message: T, pushOk?: boolean) {
+  sendWsOrPush<T extends Message>(uid: string, message: T, pushOk: boolean) {
     const sender = this.getSender(uid);
     if (sender.hasReceiver()) {
       sender.sendJson(message);
-    } else if (pushOk === true || pushOk === undefined) {
+    } else if (pushOk) {
       new PushSender(uid).sendJson(message);
     }
   }
 
-  sendWsAndPush<T extends Message>(uid: string, message: T, pushOk?: boolean) {
+  sendWsAndPush<T extends Message>(uid: string, message: T, pushOk: boolean) {
     const sender = this.getSender(uid);
     if (sender.hasReceiver()) {
       sender.sendJson(message);
     }
-    if (pushOk === true || pushOk === undefined) {
+    if (pushOk) {
       new PushSender(uid).sendJson(message);
     }
   }

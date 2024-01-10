@@ -208,11 +208,12 @@ export async function approveContact(req: Request, res: Response) {
 
     const updateContactResult = await client.query<{ uid_contact: string; name: string }>(
       `
-      UPDATE contacts SET kind = 1
+      UPDATE contacts SET contacts.kind = 1
       FROM users
-      WHERE (uid_owner, uid_contact) = ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
-        AND users.id = uid_contact
-      RETURNING uid_contact, users.name
+      WHERE (contacts.uid_owner, contacts.uid_contact) =
+        ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
+        AND users.id = contacts.uid_contact
+      RETURNING contacts.uid_contact, users.name
       `,
       [uidOwner, session]
     );
