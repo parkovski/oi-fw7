@@ -53,6 +53,8 @@
           pendingChats = pendingChats.filter(pend => pend.uuid !== msg.uuid);
           chats = [...chats, {
             id: msg.id,
+            from: myUid,
+            fromName: 'Me',
             to: msg.to,
             text: msg.text,
           }];
@@ -65,6 +67,7 @@
             id: msg.id,
             from: msg.from,
             fromName: msg.fromName,
+            to: myUid,
             text: msg.text,
           }];
           chatService.acknowledge(msg.id, msg.from);

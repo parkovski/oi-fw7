@@ -166,10 +166,10 @@ export async function inviteToEvent(req: Request, res: Response) {
     const memberResult = await client.query<{
       kind: AttendanceKind;
       public: boolean;
-      name: string;
+      title: string;
     }>(
       `
-      SELECT attendance.kind, events.public, events.name
+      SELECT attendance.kind, events.public, events.title
       FROM attendance
       RIGHT JOIN events ON attendance.eid = events.id AND attendance.uid = $1
       WHERE events.id = $2
@@ -198,7 +198,7 @@ export async function inviteToEvent(req: Request, res: Response) {
     const msg: EventAddedMessage = {
       m: 'event_added',
       id: eid,
-      name: memberResult.rows[0].name
+      name: memberResult.rows[0].title
     }
     for (let row of insertResult.rows) {
       wsclients.sendWsOrPush(row.uid, msg);

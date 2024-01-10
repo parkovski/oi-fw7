@@ -1,5 +1,9 @@
 <script>
-  import { Block, TextEditor } from 'framework7-svelte';
+  import {
+    Button,
+    Icon,
+    TextEditor
+  } from 'framework7-svelte';
   import { onMount, afterUpdate } from 'svelte';
   import escapeHtml from '../js/escapehtml';
 
@@ -13,6 +17,21 @@
   let isScrolledToBottom = true;
   let myUid;
 
+  function sendMessage() {
+    const instance = textEditor.instance();
+    let text = instance.value;
+    if (text.endsWith('<br>')) {
+      // ^^ Firefox does this so delete the trailing <br>.
+      text = text.substring(0, text.length - 4);
+    }
+    if (text === '') {
+      return;
+    }
+    onSend(text);
+    instance.value = '';
+    instance.contentEl.innerHTML = '';
+  }
+
   onMount(() => {
     myUid = localStorage.getItem('uid');
 
@@ -22,18 +41,7 @@
       }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const instance = textEditor.instance();
-        let text = instance.value;
-        if (text.endsWith('<br>')) {
-          // ^^ Firefox does this so delete the trailing <br>.
-          text = text.substring(0, text.length - 4);
-        }
-        if (text === '') {
-          return;
-        }
-        onSend(text);
-        instance.value = '';
-        instance.contentEl.innerHTML = '';
+        sendMessage();
       }
     });
 
@@ -112,6 +120,18 @@
 
   .editor {
     flex: 0 1 auto;
+    display: flex;
+    flex-flow: row;
+    align-items: flex-end;
+  }
+
+  :global(.chat-send-button) {
+    flex: 0 1 auto;
+    margin: var(--f7-text-editor-margin) 0;
+  }
+
+  :global(.ios .chat-send-button) {
+    margin-bottom: calc(1.3333 * var(--f7-text-editor-margin));
   }
 </style>
 
@@ -148,6 +168,10 @@
       mode="popover"
       buttons={['bold', 'italic', 'underline']}
       resizable
+      style="flex: 1 1 auto; margin-right: 0"
     />
+    <Button class="chat-send-button" onClick={sendMessage}>
+      <Icon ios="f7:arrow_up_circle_fill" md="material:send" />
+    </Button>
   </div>
 </div>
