@@ -107,11 +107,11 @@
     chats = cs.map(c => ({
       id: c.id,
       to: f7route.params.id,
-      from: c.uid_from,
-      fromName: c.name,
+      from: c.from,
+      fromName: c.fromName,
       text: c.message,
     }));
-    const unread = cs.filter(c => c.uid_from !== myUid && !c.received).map(c => c.id);
+    const unread = cs.filter(c => c.from !== myUid && !c.received).map(c => c.id);
     groupService.acknowledge(unread, f7route.params.id);
   }
 

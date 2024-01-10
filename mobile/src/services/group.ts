@@ -3,6 +3,7 @@ import { fetchJson, fetchText, fetchAny } from '../js/fetch';
 import webSocketService, { type SubscriberLike } from './websocket';
 import {
   Membership, Group, GroupEventSummary, GroupEvent, AttendanceKind,
+  GroupChatSummary,
 } from 'oi-types/group';
 import {
   ClientGroupMessage, ServerGroupMessage, GroupMessageSentMessage, GroupMessageReceivedMessage,
@@ -145,7 +146,7 @@ class GroupService {
     return group;
   }
 
-  getGroupChat(id: string) {
+  getGroupChat(id: string): Promise<GroupChatSummary[]> {
     return fetchJson(`/groups/${id}/chat`);
   }
 

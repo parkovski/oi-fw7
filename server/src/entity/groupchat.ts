@@ -135,8 +135,9 @@ export async function getGroupChat(req: Request, res: Response) {
 
     const messageResult = await client.query<GroupChatSummary>(
       `
-      SELECT group_messages.id, group_messages.uid_from, users.name,
-        users.username, group_messages.message, group_messages.sent,
+      SELECT group_messages.id, group_messages.uid_from AS "from",
+        users.name AS "fromName", users.username AS "fromUsername",
+        group_messages.message, group_messages.sent,
         group_messages_read.time AS received
       FROM group_messages
       INNER JOIN users ON group_messages.uid_from = users.id

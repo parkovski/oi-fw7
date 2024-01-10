@@ -59,9 +59,9 @@ export interface GroupEvent {
 // Group chat type returned by the HTTP API.
 export interface GroupChatSummary {
   id: string;
-  uid_from: string;
-  name: string;
-  username: string;
+  from: string;
+  fromName: string;
+  fromUsername: string;
   message: string;
   sent: string; // or Date?
   received: string;
