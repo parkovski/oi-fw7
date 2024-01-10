@@ -1,165 +1,107 @@
-<Page name="settings">
-  <Navbar title="Settings" backLink="Back"/>
-
-  <BlockTitle>Form Example</BlockTitle>
-  <List strongIos outlineIos dividersIos>
-    <ListInput
-      label="Name"
-      type="text"
-      placeholder="Your name"
-    ></ListInput>
-
-    <ListInput
-      label="E-mail"
-      type="email"
-      placeholder="E-mail"
-    ></ListInput>
-
-    <ListInput
-      label="URL"
-      type="url"
-      placeholder="URL"
-    ></ListInput>
-
-    <ListInput
-      label="Password"
-      type="password"
-      placeholder="Password"
-    ></ListInput>
-
-    <ListInput
-      label="Phone"
-      type="tel"
-      placeholder="Phone"
-    ></ListInput>
-
-    <ListInput
-      label="Gender"
-      type="select"
-      >
-      <option>Male</option>
-      <option>Female</option>
-    </ListInput>
-
-    <ListInput
-      label="Birth date"
-      type="date"
-      placeholder="Birth day"
-      value="2014-04-30"
-    ></ListInput>
-
-    <ListItem
-      title="Toggle"
-    >
-      <span slot="after">
-        <Toggle />
-      </span>
-    </ListItem>
-
-    <ListInput
-      label="Range"
-      input={false}
-    >
-      <span slot="input">
-        <Range value={50} min={0} max={100} step={1} />
-      </span>
-    </ListInput>
-
-    <ListInput
-      type="textarea"
-      label="Textarea"
-      placeholder="Bio"
-    ></ListInput>
-    <ListInput
-      type="textarea"
-      label="Resizable"
-      placeholder="Bio"
-      resizable
-    ></ListInput>
-  </List>
-
-  <BlockTitle>Buttons</BlockTitle>
-  <Block strongIos outlineIos class="grid grid-cols-2 grid-gap">
-    <Button>Button</Button>
-    <Button fill>Fill</Button>
-
-    <Button raised>Raised</Button>
-    <Button raised fill>Raised Fill</Button>
-
-    <Button round>Round</Button>
-    <Button round fill>Round Fill</Button>
-
-    <Button outline>Outline</Button>
-    <Button round outline>Outline Round</Button>
-
-    <Button small outline>Small</Button>
-    <Button small round outline>Small Round</Button>
-
-    <Button small fill>Small</Button>
-    <Button small round fill>Small Round</Button>
-
-    <Button large raised>Large</Button>
-    <Button large fill raised>Large Fill</Button>
-
-    <Button large fill raised color="red">Large Red</Button>
-    <Button large fill raised color="green">Large Green</Button>
-  </Block>
-
-  <BlockTitle>Checkbox group</BlockTitle>
-  <List strongIos outlineIos dividersIos>
-    <ListItem
-      checkbox
-      name="my-checkbox"
-      value="Books"
-      title="Books"
-    ></ListItem>
-    <ListItem
-      checkbox
-      name="my-checkbox"
-      value="Movies"
-      title="Movies"
-    ></ListItem>
-    <ListItem
-      checkbox
-      name="my-checkbox"
-      value="Food"
-      title="Food"
-    ></ListItem>
-  </List>
-
-  <BlockTitle>Radio buttons group</BlockTitle>
-  <List strongIos outlineIos dividersIos>
-    <ListItem
-      radio
-      name="radio"
-      value="Books"
-      title="Books"
-    ></ListItem>
-    <ListItem
-      radio
-      name="radio"
-      value="Movies"
-      title="Movies"
-    ></ListItem>
-    <ListItem
-      radio
-      name="radio"
-      value="Food"
-      title="Food"
-    ></ListItem>
-  </List>
-</Page>
 <script>
   import {
     Page,
     Navbar,
     List,
-    ListInput,
     ListItem,
     Toggle,
-    BlockTitle,
-    Button,
-    Range,
-    Block
   } from 'framework7-svelte';
+  import { onMount } from 'svelte';
+
+  let allNotificationsChanging = false;
+  let allNotifications;
+  let newEventInvite;
+  let eventRespondedTo;
+  let eventCommentedOn;
+  let messageReceived;
+  let groupMessageReceived;
+  let newFollower;
+  let newFollowRequest;
+  let followRequestApproved;
+
+  function toggleNotification(event) {
+    return function(instance) {
+      if (allNotificationsChanging) return;
+      console.log(event + (instance.checked ? ' on' : ' off'));
+    };
+  }
+
+  function toggleAllNotifications(instance) {
+    console.log('all notifications ' + (instance.checked ? 'on' : 'off'));
+  }
+
+  onMount(() => {
+    const notifications = [
+      newEventInvite,
+      eventRespondedTo,
+      eventCommentedOn,
+      messageReceived,
+      groupMessageReceived,
+      newFollowRequest,
+      newFollower,
+      followRequestApproved,
+    ];
+    allNotifications.instance().on('change', inst => {
+      allNotificationsChanging = true;
+      toggleAllNotifications(inst);
+      notifications.forEach(item => item.instance().checked = inst.checked);
+      allNotificationsChanging = false;
+    });
+
+    newEventInvite.instance().on('change', toggleNotification('event_added'));
+    eventRespondedTo.instance().on('change', toggleNotification('event_responded'));
+    eventCommentedOn.instance().on('change', toggleNotification('event_commented'));
+    messageReceived.instance().on('change', toggleNotification('chat'));
+    groupMessageReceived.instance().on('change', toggleNotification('groupchat'));
+    newFollowRequest.instance().on('change', toggleNotification('contact_requested'));
+    newFollower.instance().on('change', toggleNotification('contact_added'));
+    followRequestApproved.instance().on('change', toggleNotification('contact_approved'));
+  });
 </script>
+
+<Page name="settings">
+  <Navbar title="Settings" backLink="Back"/>
+
+  <List strongIos style="margin-top: 0">
+    <ListItem groupTitle>Notifications</ListItem>
+    <ListItem>
+      <span>All notifications</span>
+      <Toggle checked bind:this={allNotifications} />
+    </ListItem>
+    <ListItem groupTitle>Events</ListItem>
+    <ListItem>
+      <span>New event invite</span>
+      <Toggle checked bind:this={newEventInvite} />
+    </ListItem>
+    <ListItem>
+      <span>Event I'm hosting responded to</span>
+      <Toggle checked bind:this={eventRespondedTo} />
+    </ListItem>
+    <ListItem>
+      <span>Event commented on</span>
+      <Toggle checked bind:this={eventCommentedOn} />
+    </ListItem>
+    <ListItem groupTitle>Messages</ListItem>
+    <ListItem>
+      <span>Message received</span>
+      <Toggle checked bind:this={messageReceived} />
+    </ListItem>
+    <ListItem>
+      <span>Group message received</span>
+      <Toggle checked bind:this={groupMessageReceived} />
+    </ListItem>
+    <ListItem groupTitle>Followers</ListItem>
+    <ListItem>
+      <span>New follower</span>
+      <Toggle checked bind:this={newFollower} />
+    </ListItem>
+    <ListItem>
+      <span>New follow request</span>
+      <Toggle checked bind:this={newFollowRequest} />
+    </ListItem>
+    <ListItem>
+      <span>Follow request approved</span>
+      <Toggle checked bind:this={followRequestApproved} />
+    </ListItem>
+  </List>
+</Page>
