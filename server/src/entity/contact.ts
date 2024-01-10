@@ -1,10 +1,12 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from '../util/db.js';
+import { getPool, getUserId, getNotificationSetting } from '../util/db.js';
 import { handleError } from '../util/error.js';
 import { validateUuid, validateNumeric } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';
 import { ContactKind, User, ContactData } from 'oi-types/user';
-import { ContactRequestedMessage, ContactRequestChangedMessage } from 'oi-types/message';
+import {
+  ContactRequestedMessage, ContactRequestApprovedMessage, ContactAddedMessage,
+} from 'oi-types/message';
 
 export async function getContacts(req: Request, res: Response) {
   let client;
@@ -144,13 +146,20 @@ export async function addContact(req: Request, res: Response) {
     );
     if (contactKind === ContactKind.Requested) {
       res.end('requested');
+      const setting = await getNotificationSetting(client, contactUid, 'contact_requested');
       wsclients.sendWsOrPush<ContactRequestedMessage>(contactUid, {
         m: 'contact_requested',
         id: myUid,
         name: userResult.rows[0].name,
-      });
+      }, setting);
     } else {
       res.end('approved');
+      const setting = await getNotificationSetting(client, contactUid, 'contact_added');
+      wsclients.sendWsOrPush<ContactAddedMessage>(contactUid, {
+        m: 'contact_added',
+        id: myUid,
+        name: userResult.rows[0].name,
+      }, setting);
     }
   } catch (e) {
     handleError(e, res);
@@ -197,21 +206,26 @@ export async function approveContact(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const updateContactResult = await client.query<{ uid_contact: string }>(
+    const updateContactResult = await client.query<{ uid_contact: string; name: string }>(
       `
       UPDATE contacts SET kind = 1
+      FROM users
       WHERE (uid_owner, uid_contact) = ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
-      RETURNING uid_contact
+        AND users.id = uid_contact
+      RETURNING uid_contact, users.name
       `,
       [uidOwner, session]
     );
     if (updateContactResult.rowCount === 0) {
       res.status(404);
     } else {
-      wsclients.sendWs<ContactRequestChangedMessage>(uidOwner, {
+      const setting = await getNotificationSetting(client, uidOwner, 'contact_request_approved');
+      const message: ContactRequestApprovedMessage = {
         m: 'contact_request_approved',
         id: updateContactResult.rows[0].uid_contact,
-      })
+        name: updateContactResult.rows[0].name,
+      };
+      wsclients.sendWsOrPush(uidOwner, message, setting);
     }
   } catch (e) {
     handleError(e, res);
@@ -230,21 +244,18 @@ export async function denyContact(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const deleteContactResult = await client.query<{ uid_contact: string }>(
+    const deleteContactResult = await client.query<{ uid_contact: string; name: string }>(
       `
       DELETE FROM contacts
+      USING users
       WHERE (uid_owner, uid_contact) = ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
-      RETURNING uid_contact
+        AND users.id = uid_contact
+      RETURNING uid_contact, users.name
       `,
       [uidOwner, session]
     );
     if (deleteContactResult.rowCount === 0) {
       res.status(404);
-    } else {
-      wsclients.sendWs<ContactRequestChangedMessage>(uidOwner, {
-        m: 'contact_request_denied',
-        id: deleteContactResult.rows[0].uid_contact,
-      });
     }
   } catch (e) {
     handleError(e, res);

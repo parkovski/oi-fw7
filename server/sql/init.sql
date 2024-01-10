@@ -119,3 +119,15 @@ CREATE TABLE IF NOT EXISTS group_attendance(
 );
 CREATE INDEX IF NOT EXISTS group_attendance_uid_idx ON group_attendance(uid);
 CREATE INDEX IF NOT EXISTS group_attendance_eid_idx ON group_attendance(eid);
+
+CREATE TABLE IF NOT EXISTS notification_settings(
+  uid bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_added boolean NOT NULL DEFAULT TRUE,
+  event_responded boolean NOT NULL DEFAULT TRUE,
+  event_commented boolean NOT NULL DEFAULT TRUE,
+  chat boolean NOT NULL DEFAULT TRUE,
+  groupchat boolean NOT NULL DEFAULT TRUE,
+  contact_requested boolean NOT NULL DEFAULT TRUE,
+  contact_added boolean NOT NULL DEFAULT TRUE,
+  contact_request_approved boolean NOT NULL DEFAULT TRUE
+);

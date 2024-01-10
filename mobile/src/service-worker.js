@@ -59,7 +59,7 @@ function getNotificationOptions(message) {
 
   case 'contact_requested':
     return {
-      body: `You have a new contact request from ${message.name}`,
+      body: `You have a new follower request from ${message.name}`,
       actions: [
         {
           action: 'reject',
@@ -76,12 +76,19 @@ function getNotificationOptions(message) {
 
   case 'contact_added':
     return {
-      body: 'Someone is following you.',
+      body: `${message.name} is now following you.`,
+      actions: [
+        {
+          action: 'follow-back',
+          type: 'button',
+          title: 'Follow back',
+        },
+      ],
     };
 
-  case 'contact_approved':
+  case 'contact_request_approved':
     return {
-      body: 'Someone approved your follow request.',
+      body: `${message.name} approved your follow request.`,
     };
 
   default:

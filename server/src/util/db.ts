@@ -22,3 +22,17 @@ export async function getUserId(client: pg.PoolClient, session: string): Promise
   }
   return q.rows[0].uid;
 }
+
+export async function getNotificationSetting(
+  client: pg.PoolClient, uid: string, setting: string
+): Promise<boolean> {
+  const q = await client.query<{ setting: boolean }>(
+    `SELECT "${setting}" AS setting FROM notification_settings WHERE uid = $1`,
+    [uid]
+  );
+  if (q.rowCount === 0) {
+    // Notifications default to on.
+    return true;
+  }
+  return q.rows[0].setting;
+}

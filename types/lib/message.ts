@@ -23,6 +23,12 @@ export interface EventAttendanceChangedMessage {
   kind: number;
 }
 
+export interface EventCommented {
+  m: 'event_commented';
+  id: string;
+  text: string;
+}
+
 // }}}
 
 // Contacts {{{
@@ -33,9 +39,16 @@ export interface ContactRequestedMessage {
   name: string;
 }
 
-export interface ContactRequestChangedMessage {
-  m: 'contact_request_approved' | 'contact_request_denied';
+export interface ContactRequestApprovedMessage {
+  m: 'contact_request_approved';
   id: string;
+  name: string;
+}
+
+export interface ContactAddedMessage {
+  m: 'contact_added';
+  id: string;
+  name: string;
 }
 
 // }}}

@@ -134,11 +134,11 @@ export class ClientManager {
     new PushSender(uid).sendJson(message);
   }
 
-  sendWsOrPush<T extends Message>(uid: string, message: T) {
+  sendWsOrPush<T extends Message>(uid: string, message: T, pushOk?: boolean) {
     const sender = this.getSender(uid);
     if (sender.hasReceiver()) {
       sender.sendJson(message);
-    } else {
+    } else if (pushOk === true || pushOk === undefined) {
       new PushSender(uid).sendJson(message);
     }
   }
