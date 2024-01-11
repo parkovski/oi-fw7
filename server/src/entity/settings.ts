@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from '../util/db.js';
-import { handleError, StatusError } from '../util/error.js';
+import { getPool } from '../util/db.js';
+import { handleError } from '../util/error.js';
 import {
   validateUuid, validateOneOf, validateBoolean
 } from '../util/validation.js';

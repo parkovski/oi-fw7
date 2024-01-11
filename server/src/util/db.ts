@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { StatusError } from './error.js';
+import type { NotificationSettings } from 'oi-types/settings';
 
 let pool: pg.Pool | undefined;
 
@@ -24,7 +25,7 @@ export async function getUserId(client: pg.PoolClient, session: string): Promise
 }
 
 export async function getNotificationSetting(
-  client: pg.PoolClient, uid: string, setting: string
+  client: pg.PoolClient, uid: string, setting: keyof NotificationSettings
 ): Promise<boolean> {
   const q = await client.query<{ setting: boolean }>(
     `SELECT "${setting}" AS setting FROM notification_settings WHERE uid = $1`,
