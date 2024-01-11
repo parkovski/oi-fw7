@@ -11,7 +11,7 @@ import {
   AttendanceKind, EventMember, Event, EventSummary,
 } from 'oi-types/event';
 import {
-  EventAddedMessage, EventAttendanceChangedMessage,
+  EventAddedMessage, EventAttendanceChangedMessage, EventRespondedMessage,
 } from 'oi-types/message';
 
 export async function getEvents(req: Request, res: Response) {
@@ -132,12 +132,35 @@ export async function setEventAttendance(req: Request, res: Response) {
     if (attendanceResult.rowCount === 0) {
       res.status(404);
     } else {
-      wsclients.getSender(myUid).sendJson<EventAttendanceChangedMessage>({
+      wsclients.sendWs<EventAttendanceChangedMessage>(myUid, {
         m: 'event_attendance_changed',
         id: eid,
         kind,
       });
       res.write('' + kind);
+
+      const myName = await client.query(
+        `SELECT name FROM users WHERE id = $1`, [myUid]
+      );
+      // Notify the hosts.
+      const hosts = await client.query(
+        `
+        SELECT users.id
+        FROM attendance
+        INNER JOIN users ON attendance.uid = users.id
+        WHERE attendance.eid = $1 AND attendance.kind = 3
+        `,
+        [eid]
+      );
+      const message: EventRespondedMessage = {
+        m: 'event_responded',
+        id: eid,
+        name: myName.rows[0].name,
+        kind,
+      };
+      hosts.rows.forEach(row => {
+        wsclients.sendPush(row.id, message);
+      })
     }
   } catch (e) {
     handleError(e, res);
@@ -269,10 +292,14 @@ export async function makeEventHost(req: Request, res: Response) {
         `UPDATE attendance SET kind = 3 WHERE uid = ANY($1) AND eid = $2`,
         [toInvite, eid]
       );
+      const titleResult = await client.query(
+        `SELECT title FROM events WHERE id = $1`, [eid]
+      );
       const message: EventAttendanceChangedMessage = {
         m: 'event_attendance_changed',
         id: eid,
         kind: AttendanceKind.Hosting,
+        name: titleResult.rows[0].title,
       };
       const wantsPush = await client.query<{ event_attendance_changed: boolean }>(
         `
@@ -284,7 +311,7 @@ export async function makeEventHost(req: Request, res: Response) {
         [toInvite]
       );
       toInvite.forEach((uid, index) =>
-        wsclients.sendWsOrPush(uid, message, wantsPush.rows[index].event_attendance_changed));
+        wsclients.sendWsAndPush(uid, message, wantsPush.rows[index].event_attendance_changed));
     } else {
       res.status(400).write('Selected users are not marked as attending');
     }
@@ -368,7 +395,7 @@ export async function newEvent(req: Request, res: Response) {
         [invited]
       );
       for (let i = 0; i < invited.length; ++i) {
-        wsclients.sendWsOrPush(invited[i], eventAddedMessage, wantsPush.rows[i].event_added);
+        wsclients.sendWsAndPush(invited[i], eventAddedMessage, wantsPush.rows[i].event_added);
       }
     }
 

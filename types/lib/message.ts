@@ -1,4 +1,5 @@
 import { Membership } from './group';
+import { AttendanceKind } from './event';
 
 export interface Message {
   m: string;
@@ -21,12 +22,21 @@ export interface EventAttendanceChangedMessage {
   m: 'event_attendance_changed',
   id: string;
   kind: number;
+  // Must be defined when this message is sent via push.
+  name?: string;
 }
 
 export interface EventCommented {
   m: 'event_commented';
   id: string;
   text: string;
+}
+
+export interface EventRespondedMessage {
+  m: 'event_responded';
+  id: string;
+  name: string;
+  kind: AttendanceKind;
 }
 
 // }}}

@@ -147,7 +147,7 @@ export async function addContact(req: Request, res: Response) {
     if (contactKind === ContactKind.Requested) {
       res.end('requested');
       const setting = await getNotificationSetting(client, contactUid, 'contact_requested');
-      wsclients.sendWsOrPush<ContactRequestedMessage>(contactUid, {
+      wsclients.sendWsAndPush<ContactRequestedMessage>(contactUid, {
         m: 'contact_requested',
         id: myUid,
         name: userResult.rows[0].name,
@@ -155,7 +155,7 @@ export async function addContact(req: Request, res: Response) {
     } else {
       res.end('approved');
       const setting = await getNotificationSetting(client, contactUid, 'contact_added');
-      wsclients.sendWsOrPush<ContactAddedMessage>(contactUid, {
+      wsclients.sendWsAndPush<ContactAddedMessage>(contactUid, {
         m: 'contact_added',
         id: myUid,
         name: userResult.rows[0].name,
@@ -226,7 +226,7 @@ export async function approveContact(req: Request, res: Response) {
         id: updateContactResult.rows[0].uid_contact,
         name: updateContactResult.rows[0].name,
       };
-      wsclients.sendWsOrPush(uidOwner, message, setting);
+      wsclients.sendWsAndPush(uidOwner, message, setting);
     }
   } catch (e) {
     handleError(e, res);
