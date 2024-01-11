@@ -137,10 +137,19 @@ export function validateArray(arr: any): any[] {
   return arr;
 }
 
-export function validateArrayEach(arr: any, validate: (item: any) => void): any[] {
+export function validateArrayEach<T>(arr: any, validate: (item: T) => void): T[] {
   arr = validateArray(arr);
   for (let item of arr) {
     validate(item);
   }
   return arr;
+}
+
+export function validateOneOf<T>(obj: T, arr: T[]): T {
+  for (let item of arr) {
+    if (Object.is(obj, item)) {
+      return obj;
+    }
+  }
+  throw new StatusError(400, 'Invalid set item');
 }

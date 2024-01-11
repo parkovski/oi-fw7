@@ -7,6 +7,7 @@
     Toggle,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
+  import settingsService from '../../services/settings';
 
   let allNotificationsChanging = false;
   let allNotifications;
@@ -23,42 +24,56 @@
   function toggleNotification(event) {
     return function(instance) {
       if (allNotificationsChanging) return;
-      console.log(event + (instance.checked ? ' on' : ' off'));
+      settingsService.setNotificationSetting(event, instance.checked);
     };
   }
 
   function toggleAllNotifications(instance) {
-    console.log('all notifications ' + (instance.checked ? 'on' : 'off'));
+    settingsService.setAllNotificationSettings(instance.checked);
   }
 
   onMount(() => {
-    const notifications = [
-      newEventInvite,
-      eventRespondedTo,
-      eventCommentedOn,
-      eventAttendanceChanged,
-      messageReceived,
-      groupMessageReceived,
-      newFollowRequest,
-      newFollower,
-      followRequestApproved,
-    ];
-    allNotifications.instance().on('change', inst => {
-      allNotificationsChanging = true;
-      toggleAllNotifications(inst);
-      notifications.forEach(item => item.instance().checked = inst.checked);
-      allNotificationsChanging = false;
-    });
+    settingsService.getNotificationSettings().then(settings => {
+      allNotifications.instance().checked = Object.keys(settings).some(key => key);
 
-    newEventInvite.instance().on('change', toggleNotification('event_added'));
-    eventRespondedTo.instance().on('change', toggleNotification('event_responded'));
-    eventCommentedOn.instance().on('change', toggleNotification('event_commented'));
-    eventAttendanceChanged.instance().on('change', toggleNotification('event_attendance_changed'));
-    messageReceived.instance().on('change', toggleNotification('chat'));
-    groupMessageReceived.instance().on('change', toggleNotification('groupchat'));
-    newFollowRequest.instance().on('change', toggleNotification('contact_requested'));
-    newFollower.instance().on('change', toggleNotification('contact_added'));
-    followRequestApproved.instance().on('change', toggleNotification('contact_request_approved'));
+      newEventInvite.instance().checked = settings.event_added;
+      eventRespondedTo.instance().checked = settings.event_responded;
+      eventCommentedOn.instance().checked = settings.event_commented;
+      eventAttendanceChanged.instance().checked = settings.event_attendance_changed;
+      messageReceived.instance().checked = settings.chat;
+      groupMessageReceived.instance().checked = settings.groupchat;
+      newFollowRequest.instance().checked = settings.contact_requested;
+      newFollower.instance().checked = settings.contact_added;
+      followRequestApproved.instance().checked = settings.contact_request_approved;
+
+      const notifications = [
+        newEventInvite,
+        eventRespondedTo,
+        eventCommentedOn,
+        eventAttendanceChanged,
+        messageReceived,
+        groupMessageReceived,
+        newFollowRequest,
+        newFollower,
+        followRequestApproved,
+      ];
+      allNotifications.instance().on('change', inst => {
+        allNotificationsChanging = true;
+        toggleAllNotifications(inst);
+        notifications.forEach(item => item.instance().checked = inst.checked);
+        allNotificationsChanging = false;
+      });
+
+      newEventInvite.instance().on('change', toggleNotification('event_added'));
+      eventRespondedTo.instance().on('change', toggleNotification('event_responded'));
+      eventCommentedOn.instance().on('change', toggleNotification('event_commented'));
+      eventAttendanceChanged.instance().on('change', toggleNotification('event_attendance_changed'));
+      messageReceived.instance().on('change', toggleNotification('chat'));
+      groupMessageReceived.instance().on('change', toggleNotification('groupchat'));
+      newFollowRequest.instance().on('change', toggleNotification('contact_requested'));
+      newFollower.instance().on('change', toggleNotification('contact_added'));
+      followRequestApproved.instance().on('change', toggleNotification('contact_request_approved'));
+    });
   });
 </script>
 
@@ -85,7 +100,7 @@
       <Toggle checked bind:this={eventCommentedOn} />
     </ListItem>
     <ListItem>
-      <span>Event attendance changed (made host)</span>
+      <span>Event attendance changed</span>
       <Toggle checked bind:this={eventAttendanceChanged} />
     </ListItem>
     <ListItem groupTitle>Messages</ListItem>

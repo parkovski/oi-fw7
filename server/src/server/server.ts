@@ -31,6 +31,9 @@ import {
   getGroupEvents, getGroupEventInfo, newGroupEvent, setGroupEventAttendance,
 } from '../entity/groupevent.js';
 import { getHomeSummary, storePushEndpoint } from '../entity/home.js';
+import {
+  getNotificationSettings, setNotificationSetting, setAllNotificationSettings
+} from '../entity/settings.js';
 
 export default async function serve(port: number) {
   const dbHost = process.env.DB_HOST || 'localhost';
@@ -107,6 +110,9 @@ export default async function serve(port: number) {
   app.post('/authorize', authorize);
   app.post('/logout', logout);
   app.post('/register', register);
+  app.get('/settings/notifications', getNotificationSettings);
+  app.put('/settings/notifications', setNotificationSetting);
+  app.put('/settings/notifications/all', setAllNotificationSettings);
 
   app.get('/groups', getGroups);
   app.get('/groups/:gid', getGroupInfo);
