@@ -8,24 +8,24 @@ function getNotificationOptions(message) {
   switch (message.m) {
   case 'event_added':
     return {
-      body: `You're invited to ${message.name}.`,
+      body: `You're invited to ${message.title}.`,
     };
 
   case 'event_responded':
     return {
-      body: `${message.name} responded to your event.`,
+      body: `${message.name} responded to your event ${message.title}.`,
     };
 
   case 'event_commented':
     return {
-      body: `${message.name} commented on your event.`,
+      body: `${message.name} commented on your event ${message.title}.`,
     };
 
   case 'event_attendance_changed':
     // This message is sent via websocket whenever the user changes their
     // attendance but only sent via push when someone makes them a host.
     return {
-      body: `You\ve been invited to host ${message.name}.`
+      body: `You've been invited to host ${message.title}.`
     };
 
   case 'chat':

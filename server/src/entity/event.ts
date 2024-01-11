@@ -139,24 +139,30 @@ export async function setEventAttendance(req: Request, res: Response) {
       });
       res.write('' + kind);
 
-      const myName = await client.query(
-        `SELECT name FROM users WHERE id = $1`, [myUid]
-      );
+      const [myName, hosts, title] = await Promise.all([
+        client.query(
+          `SELECT name FROM users WHERE id = $1`, [myUid]
+        ),
+        client.query(
+          `
+          SELECT users.id
+          FROM attendance
+          INNER JOIN users ON attendance.uid = users.id
+          WHERE attendance.eid = $1 AND attendance.kind = 3
+          `,
+          [eid]
+        ),
+        client.query(
+          `SELECT title FROM events WHERE id = $1`, [eid]
+        ),
+      ]);
       // Notify the hosts.
-      const hosts = await client.query(
-        `
-        SELECT users.id
-        FROM attendance
-        INNER JOIN users ON attendance.uid = users.id
-        WHERE attendance.eid = $1 AND attendance.kind = 3
-        `,
-        [eid]
-      );
       const message: EventRespondedMessage = {
         m: 'event_responded',
         id: eid,
         name: myName.rows[0].name,
         kind,
+        title: title.rows[0].title,
       };
       hosts.rows.forEach(row => {
         wsclients.sendPush(row.id, message);
@@ -231,7 +237,7 @@ export async function inviteToEvent(req: Request, res: Response) {
     const msg: EventAddedMessage = {
       m: 'event_added',
       id: eid,
-      name: memberResult.rows[0].title
+      title: memberResult.rows[0].title
     }
     for (let i = 0; i < insertResult.rowCount!; ++i) {
       wsclients.sendWsOrPush(
@@ -299,7 +305,7 @@ export async function makeEventHost(req: Request, res: Response) {
         m: 'event_attendance_changed',
         id: eid,
         kind: AttendanceKind.Hosting,
-        name: titleResult.rows[0].title,
+        title: titleResult.rows[0].title,
       };
       const wantsPush = await client.query<{ event_attendance_changed: boolean }>(
         `
@@ -353,7 +359,7 @@ export async function newEvent(req: Request, res: Response) {
       INSERT INTO events
       (title, description, created_by, place, start_time, end_time, public)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, title
+      RETURNING id
       `,
       [title, description, uid, place, startTime, endTime, isPublic]
     );
@@ -362,7 +368,6 @@ export async function newEvent(req: Request, res: Response) {
       return;
     }
     const eid = newEventResult.rows[0].id;
-    const name = newEventResult.rows[0].title;
 
     // Add myself as a host (kind 3).
     await client.query(
@@ -376,7 +381,7 @@ export async function newEvent(req: Request, res: Response) {
     const eventAddedMessage: EventAddedMessage = {
       m: 'event_added',
       id: eid,
-      name,
+      title,
     };
     wsclients.sendWs(uid, eventAddedMessage);
 

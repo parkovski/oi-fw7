@@ -10,7 +10,7 @@ export interface Message {
 export interface EventAddedMessage {
   m: 'event_added';
   id: string;
-  name: string;
+  title: string;
 }
 
 export interface EventRemovedMessage {
@@ -23,12 +23,14 @@ export interface EventAttendanceChangedMessage {
   id: string;
   kind: number;
   // Must be defined when this message is sent via push.
-  name?: string;
+  title?: string;
 }
 
 export interface EventCommented {
   m: 'event_commented';
   id: string;
+  name: string;
+  title: string;
   text: string;
 }
 
@@ -37,6 +39,7 @@ export interface EventRespondedMessage {
   id: string;
   name: string;
   kind: AttendanceKind;
+  title: string;
 }
 
 // }}}
