@@ -153,3 +153,23 @@ export function validateOneOf<T>(obj: T, arr: T[]): T {
   }
   throw new StatusError(400, 'Invalid set item');
 }
+
+export function validateIf<T>(
+  item: T,
+  cond: (item: T) => boolean,
+  validate: (item: T) => T
+): T | undefined {
+  if (cond(item)) {
+    return validate(item);
+  }
+}
+
+export function validateIfDefined<T>(
+  item: T | undefined,
+  validate: (item: T) => void
+): T | undefined {
+  if (item !== undefined) {
+    validate(item);
+  }
+  return item;
+}

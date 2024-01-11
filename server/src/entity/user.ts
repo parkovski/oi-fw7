@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { getPool } from '../util/db.js';
 import { handleError, StatusError } from '../util/error.js';
 import {
-  validateUuid, validateMinMaxLength, validateBoolean,
+  validateUuid, validateMinMaxLength, validateBoolean, validateIfDefined,
 } from '../util/validation.js';
 import { User, Profile, MinUser, AuthInfo } from 'oi-types/user';
 
@@ -76,25 +76,13 @@ export async function updateProfile(req: Request, res: Response) {
 
   try {
     const session = validateUuid(req.cookies.session, 401);
-    const username = req.body.username;
-    const name = req.body.name;
-    const email = req.body.email;
-    const phone = req.body.phone;
+    const username = validateIfDefined<string>(
+      req.body.username, x => validateMinMaxLength(x, 1, 64)
+    );
+    const name = validateIfDefined<string>(req.body.name, x => validateMinMaxLength(x, 1, 255));
+    const email = validateIfDefined<string>(req.body.email, x => validateMinMaxLength(x, 1, 255));
+    const phone = validateIfDefined<string>(req.body.phone, x => validateMinMaxLength(x, 5, 20));
     const isPublic = validateBoolean(req.body.public);
-
-    if (username) {
-      validateMinMaxLength(username, 1, 64);
-    }
-    if (name) {
-      validateMinMaxLength(name, 1, 255);
-    }
-    if (email) {
-      validateMinMaxLength(email, 1, 255);
-    }
-    if (phone) {
-      // Rough guess...
-      validateMinMaxLength(phone, 5, 20);
-    }
 
     client = await getPool().connect();
 
@@ -116,19 +104,26 @@ export async function updateProfile(req: Request, res: Response) {
     const myUid = userResult.rows[0].id;
 
     if (username && username.length && username !== userInfo.username) {
-      validateMinMaxLength(username, 1, 64);
-      const usernameResult = await client.query(
-        `SELECT id FROM users WHERE lower(username) = lower($1)`,
-        [username]
-      );
-      if (usernameResult.rowCount) {
-        res.status(409);
-        return;
-      } else {
+      if (username.toLowerCase() === userInfo.username.toLowerCase()) {
+        // We're just changing the case here.
         await client.query(
           `UPDATE users SET username = $1 WHERE id = $2`,
           [username, myUid]
         );
+      } else {
+        const usernameResult = await client.query(
+          `SELECT id FROM users WHERE lower(username) = lower($1)`,
+          [username]
+        );
+        if (usernameResult.rowCount) {
+          res.status(409);
+          return;
+        } else {
+          await client.query(
+            `UPDATE users SET username = $1 WHERE id = $2`,
+            [username, myUid]
+          );
+        }
       }
     }
 

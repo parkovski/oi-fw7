@@ -14,17 +14,16 @@ class ProfileService {
   }
 
   async updateProfile(
-    name?: string, username?: string, email?: string, phone?: string,
-    isPublic?: string
+    name: string, username: string, email: string, phone: string, isPublic: string
   ) {
     await fetchAny(`/profile/update`, {
       method: 'POST',
       body: new URLSearchParams({
-        name: name ?? '',
-        username: username ?? '',
-        email: email ?? '',
-        phone: phone ?? '',
-        public: isPublic ?? 'true',
+        name,
+        username,
+        email,
+        phone,
+        public: isPublic,
       }),
     });
     this._profile.refresh();
