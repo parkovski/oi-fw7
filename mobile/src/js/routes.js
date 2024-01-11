@@ -1,30 +1,11 @@
 import HomePage from '../pages/home/home.svelte';
 import HomePanelPage from '../pages/home/homepanel.svelte';
-import ProfilePage from '../pages/home/profile.svelte';
-import AboutPage from '../pages/home/about.svelte';
-import QRCodePage from '../pages/home/scanqrcode.svelte';
-import SettingsPage from '../pages/home/settings.svelte';
-import DeveloperPage from '../pages/home/developer.svelte';
 import GroupPanelPage from '../pages/groups/grouppanel.svelte';
 import GroupsPage from '../pages/groups/groups.svelte';
-import ViewGroupPage from '../pages/groups/viewgroup.svelte';
-import NewGroupPage from '../pages/groups/newgroup.svelte';
-import GroupInvitePage from '../pages/groups/viewinvite.svelte';
-import GroupRequestsPage from '../pages/groups/viewrequests.svelte';
-import GroupInviteUsersPage from '../pages/groups/inviteusers.svelte';
-import NewGroupEventPage from '../pages/groups/newevent.svelte';
-import ViewGroupEventPage from '../pages/groups/viewevent.svelte';
 import EventPanelPage from '../pages/events/eventpanel.svelte';
 import EventsPage from '../pages/events/events.svelte';
-import NewEventPage from '../pages/events/newevent.svelte';
-import ViewEventPage from '../pages/events/viewevent.svelte';
-import EventInviteUsersPage from '../pages/events/inviteusers.svelte';
-import EventAddHostsPage from '../pages/events/addhosts.svelte';
 import ContactsPage from '../pages/contacts/contacts.svelte';
-import ViewContactPage from '../pages/contacts/viewcontact.svelte';
 import MessagesPage from '../pages/messages/messages.svelte';
-import ViewMessagePage from '../pages/messages/viewmessage.svelte';
-import NewMessagePage from '../pages/messages/newmessage.svelte';
 import NotFoundPage from '../pages/404.svelte';
 
 var routes = [
@@ -38,23 +19,23 @@ var routes = [
   },
   {
     path: '/profile/',
-    component: ProfilePage,
+    asyncComponent: () => import('../pages/home/profile.svelte'),
   },
   {
     path: '/about/',
-    component: AboutPage,
+    asyncComponent: () => import('../pages/home/about.svelte'),
   },
   {
     path: '/qrcode/',
-    component: QRCodePage,
+    asyncComponent: () => import('../pages/home/scanqrcode.svelte'),
   },
   {
     path: '/settings/',
-    component: SettingsPage,
+    asyncComponent: () => import('../pages/home/settings.svelte'),
   },
   {
     path: '/developer/',
-    component: DeveloperPage,
+    asyncComponent: () => import('../pages/home/developer.svelte'),
   },
   {
     path: '/panels/group/:id/',
@@ -66,31 +47,31 @@ var routes = [
   },
   {
     path: '/groups/view/:id/',
-    component: ViewGroupPage,
+    asyncComponent: () => import('../pages/groups/viewgroup.svelte'),
   },
   {
     path: '/groups/new/',
-    component: NewGroupPage,
+    asyncComponent: () => import('../pages/groups/newgroup.svelte'),
   },
   {
     path: '/groups/viewinvite/:id/',
-    component: GroupInvitePage,
+    asyncComponent: () => import('../pages/groups/viewinvite.svelte'),
   },
   {
     path: '/groups/requests/:id/',
-    component: GroupRequestsPage,
+    asynComponent: () => import('../pages/groups/viewrequests.svelte'),
   },
   {
     path: '/groups/invite/:id/',
-    component: GroupInviteUsersPage,
+    asyncComponent: () => import('../pages/groups/inviteusers.svelte'),
   },
   {
     path: '/groups/newevent/:id/',
-    component: NewGroupEventPage,
+    asyncComponent: () => import('../pages/groups/newevent.svelte'),
   },
   {
     path: '/groups/viewevent/:id/',
-    component: ViewGroupEventPage,
+    asyncComponent: () => import('../pages/groups/viewevent.svelte'),
   },
   {
     path: '/panels/event/:id/',
@@ -102,19 +83,19 @@ var routes = [
   },
   {
     path: '/events/new/',
-    component: NewEventPage,
+    asyncComponent: () => import('../pages/events/newevent.svelte'),
   },
   {
     path: '/events/view/:id/',
-    component: ViewEventPage,
+    asyncComponent: () => import('../pages/events/viewevent.svelte'),
   },
   {
     path: '/events/invite/:id/',
-    component: EventInviteUsersPage,
+    asyncComponent: () => import('../pages/events/inviteusers.svelte'),
   },
   {
     path: '/events/addhosts/:id/',
-    component: EventAddHostsPage,
+    asyncComponent: () => import('../pages/events/addhosts.svelte'),
   },
   {
     path: '/contacts/',
@@ -122,7 +103,7 @@ var routes = [
   },
   {
     path: '/contacts/view/:id/',
-    component: ViewContactPage,
+    asyncComponent: () => import('../pages/contacts/viewcontact.svelte'),
   },
   {
     path: '/messages/',
@@ -130,11 +111,11 @@ var routes = [
   },
   {
     path: '/messages/view/:id/',
-    component: ViewMessagePage,
+    asyncComponent: () => import('../pages/messages/viewmessage.svelte'),
   },
   {
     path: '/messages/new/',
-    component: NewMessagePage,
+    asyncComponent: () => import('../pages/messages/newmessage.svelte'),
   },
   {
     path: '(.*)',
