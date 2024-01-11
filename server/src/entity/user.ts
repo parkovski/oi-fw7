@@ -2,7 +2,9 @@ import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { getPool } from '../util/db.js';
 import { handleError, StatusError } from '../util/error.js';
-import { validateUuid, validateMinMaxLength, } from '../util/validation.js';
+import {
+  validateUuid, validateMinMaxLength, validateBoolean,
+} from '../util/validation.js';
 import { User, Profile, MinUser, AuthInfo } from 'oi-types/user';
 
 interface HelloResult {
@@ -51,7 +53,7 @@ export async function getMyProfile(req: Request, res: Response) {
 
     const profileResult = await getPool().query<Profile>(
       `
-      SELECT id, name, username, email, phone, verified
+      SELECT id, name, username, email, phone, verified, public
       FROM users
       WHERE id = (SELECT uid FROM sessions WHERE sesskey = $1)
       `,
@@ -78,6 +80,7 @@ export async function updateProfile(req: Request, res: Response) {
     const name = req.body.name;
     const email = req.body.email;
     const phone = req.body.phone;
+    const isPublic = validateBoolean(req.body.public);
 
     if (username) {
       validateMinMaxLength(username, 1, 64);
@@ -97,7 +100,7 @@ export async function updateProfile(req: Request, res: Response) {
 
     const userResult = await client.query(
       `
-      SELECT id, name, username, email, phone
+      SELECT id, name, username, email, phone, public
       FROM users
       INNER JOIN sessions ON users.id = sessions.uid
       WHERE sessions.sesskey = $1
@@ -147,6 +150,13 @@ export async function updateProfile(req: Request, res: Response) {
       await client.query(
         `UPDATE users SET phone = $1 WHERE id = $2`,
         [phone, myUid]
+      );
+    }
+
+    if (isPublic !== userInfo.public) {
+      await client.query(
+        `UPDATE users SET public = $1 WHERE id = $2`,
+        [isPublic, myUid]
       );
     }
   } catch (e) {

@@ -29,6 +29,7 @@ export interface Profile {
   email?: string;
   phone?: string;
   verified: boolean;
+  public: boolean;
 }
 
 export interface AuthInfo {
