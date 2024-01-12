@@ -14,7 +14,9 @@
     List,
     ListInput,
     ListButton,
-    BlockFooter
+    BlockFooter,
+    Icon,
+    Badge,
   } from 'framework7-svelte';
   import { getDevice }  from 'framework7/lite-bundle';
   import { onMount } from 'svelte';
@@ -23,8 +25,10 @@
   import capacitorApp from '../js/capacitor-app';
   import routes from '../js/routes';
   import { postLoginEvent, onLogin } from '../js/onlogin';
+  import chatService from '../services/chat';
 
   const device = getDevice();
+  let unreadChats = 0;
 
   // Framework7 Parameters
   let f7params = {
@@ -113,6 +117,8 @@
   }
 
   onMount(() => {
+    let chatSubscription;
+
     f7ready(() => {
       // Init capacitor APIs (see capacitor-app.js)
       if (f7.device.capacitor) {
@@ -142,30 +148,40 @@
             !('PushManager' in window)) {
           console.warn('Push notifications not supported in this browser.');
           return;
-        }
-        const permission = Notification.permission;
-        if (permission === 'granted') {
-          const registration = await navigator.serviceWorker.ready;
-          let subscription = await registration.pushManager.getSubscription();
-          if (!subscription) {
-            subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_SERVER_KEY),
-            });
-            const keyP256dh = subscription.getKey('p256dh');
-            const keyAuth = subscription.getKey('auth');
-            await fetchText('/push-endpoint', {
-              method: 'PUT',
-              body: new URLSearchParams({
-                endpoint: subscription.endpoint,
-                p256dh: base64ArrayBuffer(keyP256dh),
-                auth: base64ArrayBuffer(keyAuth),
-              }),
-            });
+        } else {
+          const permission = Notification.permission;
+          if (permission === 'granted') {
+            const registration = await navigator.serviceWorker.ready;
+            let subscription = await registration.pushManager.getSubscription();
+            if (!subscription) {
+              subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_SERVER_KEY),
+              });
+              const keyP256dh = subscription.getKey('p256dh');
+              const keyAuth = subscription.getKey('auth');
+              await fetchText('/push-endpoint', {
+                method: 'PUT',
+                body: new URLSearchParams({
+                  endpoint: subscription.endpoint,
+                  p256dh: base64ArrayBuffer(keyP256dh),
+                  auth: base64ArrayBuffer(keyAuth),
+                }),
+              });
+            }
           }
         }
-      })
+
+        // Subscribe to messages
+        chatSubscription = chatService.getChatSummary().subscribe(summary => {
+          unreadChats = summary.reduce((a, c) => a + +(c.unread ?? 0), 0);
+        });
+      });
     });
+
+    return () => {
+      chatSubscription && chatSubscription.unsubscribe();
+    };
   });
 
   function urlBase64ToUint8Array(base64String) {
@@ -261,10 +277,15 @@
         onClick={() => tabClick('contacts')}
       />
       <Link tabLink="#view-messages"
-        iconIos="f7:chat_bubble_text_fill" iconMd="material:chat"
         text="Messages"
         onClick={() => tabClick('messages')}
-      />
+      >
+        <Icon ios="f7:chat_bubble_text_fill" md="material:chat">
+          {#if unreadChats}
+            <Badge slot="top-right" color="red">{unreadChats}</Badge>
+          {/if}
+        </Icon>
+      </Link>
     </Toolbar>
 
     <!-- Your main view/tab, should have "view-main" class. It also has "tabActive" prop -->
