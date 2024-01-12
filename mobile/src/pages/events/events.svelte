@@ -47,19 +47,17 @@
     let eventsSubscription;
     onLogin(() => {
       eventsSubscription = eventService.getEvents().subscribe(es => {
-        events = es.map(e => {
-          return {
-            id: e.id,
-            title: e.title,
-            // The calendar seems to only show events with 0hr 0min.
-            date: new Date(
-              e.startTime.getFullYear(), e.startTime.getMonth(), e.startTime.getDate()),
-            startTime: e.startTime,
-            endTime: e.endTime,
-            kind: e.kind,
-            color: getColorForKind(e.kind),
-          };
-        });
+        events = es.map(e => ({
+          id: e.id,
+          title: e.title,
+          // The calendar seems to only show events with 0hr 0min.
+          date: new Date(
+            e.startTime.getFullYear(), e.startTime.getMonth(), e.startTime.getDate()),
+          startTime: e.startTime,
+          endTime: e.endTime,
+          kind: e.kind,
+          color: getColorForKind(e.kind),
+        }));
       });
     });
 

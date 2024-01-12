@@ -12,15 +12,17 @@
   let pastEvents = [];
 
   function sortEvents(events) {
+    let upcoming = [];
+    let past = [];
     events.sort((a, b) => a.startTime - b.startTime).forEach(e => {
       if (e.startTime > new Date) {
-        upcomingEvents.push(e);
+        upcoming.push(e);
       } else {
-        pastEvents.push(e);
+        past.push(e);
       }
     });
-    upcomingEvents = upcomingEvents;
-    pastEvents = pastEvents.reverse();
+    upcomingEvents = upcoming;
+    pastEvents = past.reverse();
   }
 
   $: sortEvents(events);
