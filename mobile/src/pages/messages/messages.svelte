@@ -12,6 +12,11 @@
 
   let messages = [];
 
+  async function onRefresh(done) {
+    await chatService.getChatSummary().refresh();
+    done();
+  }
+
   onMount(() => {
     let chatSubscription;
     onLogin(() => {
@@ -25,7 +30,8 @@
     };
   });
 </script>
-<Page>
+
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar title="Messages" />
   <Fab position="right-bottom" href="/messages/new/">
     <Icon ios="f7:plus" md="material:add" />

@@ -45,6 +45,11 @@
     }
   }
 
+  async function onRefresh(done) {
+    await summaryService.getItems().refresh();
+    done();
+  }
+
   onMount(() => {
     let summarySubscription;
 
@@ -59,7 +64,7 @@
   });
 </script>
 
-<Page name="home">
+<Page name="home" ptr onPtrRefresh={onRefresh}>
   <!-- Top Navbar -->
   <Navbar>
     <NavTitle>OpenInvite</NavTitle>

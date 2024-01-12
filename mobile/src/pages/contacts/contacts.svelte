@@ -18,6 +18,14 @@
   let requests = [];
   let currentButton = 'following';
 
+  async function onRefresh(done) {
+    await Promise.all([
+      userService.getContacts().refresh(),
+      userService.getContactRequests().refresh(),
+    ]);
+    done();
+  }
+
   onMount(() => {
     const contactsSubscription = userService.getContacts().subscribe(value => {
       contacts = value.contacts.concat(value.pending);
@@ -56,7 +64,7 @@
   }
 </script>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar title="Contacts" />
   <Block class="no-margin"
     style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">

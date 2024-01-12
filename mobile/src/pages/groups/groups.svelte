@@ -14,6 +14,11 @@
 
   let groups = [];
 
+  async function onRefresh(done) {
+    await groupService.getGroups().refresh();
+    done();
+  }
+
   onMount(() => {
     let groupsSubscription;
     onLogin(() => {
@@ -44,7 +49,7 @@
   }
 </script>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar title="Groups" />
   <List style="margin: 0" strongIos outlineIos dividers>
     {#each groups as group (group.id)}

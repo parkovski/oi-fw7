@@ -138,6 +138,11 @@
     f7router.navigate(`/groups/newevent/${f7route.params.id}/`, { props });
   }
 
+  async function onRefresh(done) {
+    await groupService.getGroup(f7route.params.id).refresh();
+    done();
+  }
+
   onMount(() => {
     const myUid = localStorage.getItem('uid');
 
@@ -215,7 +220,7 @@
   }
 </style>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar backLink="Back">
     <NavTitle>{group.name}</NavTitle>
     {#if group.memberKind !== null && group.memberKind > 0}

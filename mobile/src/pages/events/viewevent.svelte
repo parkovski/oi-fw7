@@ -75,6 +75,11 @@
     }
   }
 
+  async function onRefresh(done) {
+    await eventService.getEvent(f7route.params.id).refresh();
+    done();
+  }
+
   onMount(() => {
     const eventSubscription =
       eventService.getEvent(f7route.params.id).subscribe(e => {
@@ -88,7 +93,7 @@
   });
 </script>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar backLink="Back">
     <NavTitle>{event.title}</NavTitle>
     <NavRight>

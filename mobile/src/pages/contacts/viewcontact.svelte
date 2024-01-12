@@ -26,6 +26,11 @@
   let cancelRequestActions;
   let removeContactActions;
 
+  async function onRefresh(done) {
+    await userService.getUser(contact.id).refresh();
+    done();
+  }
+
   onMount(() => {
     const subscription = userService.getUser(contact.id).subscribe(user => contact = user);
     return () => {
@@ -94,7 +99,7 @@
   }
 </script>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar title="Contact" backLink="Back" />
   <Card>
     <CardHeader>

@@ -13,8 +13,14 @@
   export let f7route;
 
   let requests = [];
+
+  async function onRefresh(done) {
+    requests = await groupService.getGroupRequests(f7route.params.id);
+    done();
+  }
+
   onMount(() => {
-    groupService.getGroupRequests(f7route.params.id).then(reqs => requests = reqs);
+    onRefresh(function(){});
   })
 
   function approve(uid) {
@@ -30,7 +36,7 @@
   }
 </script>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar title="Group requests" backLink="Back" />
   <List>
     {#if requests.length === 0}

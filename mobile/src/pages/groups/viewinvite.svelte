@@ -13,6 +13,11 @@
 
   let name = '(undefined)';
 
+  async function onRefresh(done) {
+    await groupService.getGroup(f7route.params.id).refresh();
+    done();
+  }
+
   onMount(() => {
     const groupSubscription =
       groupService.getGroup(f7route.params.id).subscribe(group => {
@@ -35,7 +40,7 @@
   }
 </script>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar title="Group Invitation" backLink="Back" />
   <Block>
     You have been invited to join the group {name}.

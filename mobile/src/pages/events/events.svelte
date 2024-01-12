@@ -38,6 +38,11 @@
     }
   }
 
+  async function onRefresh(done) {
+    await eventService.getEvents().refresh();
+    done();
+  }
+
   onMount(() => {
     let eventsSubscription;
     onLogin(() => {
@@ -102,7 +107,7 @@
   }
 </script>
 
-<Page>
+<Page ptr onPtrRefresh={onRefresh}>
   <Navbar title="Events">
     <NavRight>
       <Button on:click={showViewActions}>
