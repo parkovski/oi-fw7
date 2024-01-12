@@ -70,6 +70,8 @@
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
+        e.target.blur();
+        e.target.focus();
       }
     });
 

@@ -171,6 +171,7 @@
         chats = [...chats, {
           id: msg.id,
           to: msg.to,
+          from: myUid,
           text: msg.text,
         }];
       }
