@@ -9,7 +9,7 @@
   import { onMount } from 'svelte';
   import settingsService from '../../services/settings';
 
-  let allNotificationsChanging = false;
+  let notificationChanging = false;
   let allNotifications;
   let newEventInvite;
   let eventRespondedTo;
@@ -21,20 +21,42 @@
   let newFollowRequest;
   let followRequestApproved;
 
+  function getAllNotificationToggles() {
+    return [
+      newEventInvite,
+      eventRespondedTo,
+      eventCommentedOn,
+      eventAttendanceChanged,
+      messageReceived,
+      groupMessageReceived,
+      newFollowRequest,
+      newFollower,
+      followRequestApproved,
+    ];
+  }
+
   function toggleNotification(event) {
     return function(instance) {
-      if (allNotificationsChanging) return;
+      if (notificationChanging) return;
+      notificationChanging = true;
       settingsService.setNotificationSetting(event, instance.checked);
+      allNotifications.instance().checked =
+        getAllNotificationToggles().every(item => item.instance().checked);
+      notificationChanging = false;
     };
   }
 
   function toggleAllNotifications(instance) {
+    if (notificationChanging) return;
+    notificationChanging = true;
     settingsService.setAllNotificationSettings(instance.checked);
+    getAllNotificationToggles().forEach(item => item.instance().checked = instance.checked);
+    notificationChanging = false;
   }
 
   onMount(() => {
     settingsService.getNotificationSettings().then(settings => {
-      allNotifications.instance().checked = Object.keys(settings).some(key => key);
+      allNotifications.instance().checked = Object.keys(settings).every(key => settings[key]);
 
       newEventInvite.instance().checked = settings.event_added;
       eventRespondedTo.instance().checked = settings.event_responded;
@@ -46,23 +68,7 @@
       newFollower.instance().checked = settings.contact_added;
       followRequestApproved.instance().checked = settings.contact_request_approved;
 
-      const notifications = [
-        newEventInvite,
-        eventRespondedTo,
-        eventCommentedOn,
-        eventAttendanceChanged,
-        messageReceived,
-        groupMessageReceived,
-        newFollowRequest,
-        newFollower,
-        followRequestApproved,
-      ];
-      allNotifications.instance().on('change', inst => {
-        allNotificationsChanging = true;
-        toggleAllNotifications(inst);
-        notifications.forEach(item => item.instance().checked = inst.checked);
-        allNotificationsChanging = false;
-      });
+      allNotifications.instance().on('change', inst => toggleAllNotifications(inst));
 
       newEventInvite.instance().on('change', toggleNotification('event_added'));
       eventRespondedTo.instance().on('change', toggleNotification('event_responded'));
