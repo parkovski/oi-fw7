@@ -26,9 +26,11 @@
   import routes from '../js/routes';
   import { postLoginEvent, onLogin } from '../js/onlogin';
   import chatService from '../services/chat';
+  import groupService from '../services/group';
 
   const device = getDevice();
   let unreadChats = 0;
+  let groupUnreadChats = 0;
 
   // Framework7 Parameters
   let f7params = {
@@ -118,6 +120,7 @@
 
   onMount(() => {
     let chatSubscription;
+    let groupSubscription;
 
     f7ready(() => {
       // Init capacitor APIs (see capacitor-app.js)
@@ -176,11 +179,15 @@
         chatSubscription = chatService.getChatSummary().subscribe(summary => {
           unreadChats = summary.reduce((a, c) => a + +(c.unread ?? 0), 0);
         });
+        groupSubscription = groupService.getGroups().subscribe(groups => {
+          groupUnreadChats = groups.reduce((a, c) => a + +(c.unreadMessages ?? 0), 0);
+        });
       });
     });
 
     return () => {
       chatSubscription && chatSubscription.unsubscribe();
+      groupSubscription && groupSubscription.unsubscribe();
     };
   });
 
@@ -262,10 +269,15 @@
         onClick={() => tabClick('home')}
       />
       <Link tabLink="#view-groups"
-        iconIos="f7:person_3_fill" iconMd="material:groups"
         text="Groups"
         onClick={() => tabClick('groups')}
-      />
+      >
+        <Icon ios="f7:person_3_fill" md="material:groups">
+          {#if groupUnreadChats}
+            <Badge color="red">{groupUnreadChats}</Badge>
+          {/if}
+        </Icon>
+      </Link>
       <Link tabLink="#view-events"
         iconIos="f7:calendar" iconMd="material:event"
         text="Events"
