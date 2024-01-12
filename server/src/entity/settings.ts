@@ -27,7 +27,6 @@ export async function getNotificationSettings(req: Request, res: Response) {
       `,
       [session]
     );
-    console.log(settings.rows[0]);
     res.json(settings.rows[0]);
   } catch (e) {
     handleError(e, res);
@@ -89,7 +88,7 @@ export async function setAllNotificationSettings(req: Request, res: Response) {
         (SELECT uid FROM sessions WHERE sesskey = $1),
         $2, $2, $2, $2, $2, $2, $2, $2, $2
       )
-      ON CONFLICT (notification_settings.uid) DO UPDATE SET
+      ON CONFLICT (uid) DO UPDATE SET
         event_added = $2,
         event_responded = $2,
         event_commented = $2,
