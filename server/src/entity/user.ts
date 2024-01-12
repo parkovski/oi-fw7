@@ -103,13 +103,15 @@ export async function updateProfile(req: Request, res: Response) {
 
     const myUid = userResult.rows[0].id;
 
+    const promises: Promise<any>[] = [];
+
     if (username && username.length && username !== userInfo.username) {
       if (username.toLowerCase() === userInfo.username.toLowerCase()) {
         // We're just changing the case here.
-        await client.query(
+        promises.push(client.query(
           `UPDATE users SET username = $1 WHERE id = $2`,
           [username, myUid]
-        );
+        ));
       } else {
         const usernameResult = await client.query(
           `SELECT id FROM users WHERE lower(username) = lower($1)`,
@@ -119,41 +121,43 @@ export async function updateProfile(req: Request, res: Response) {
           res.status(409);
           return;
         } else {
-          await client.query(
+          promises.push(client.query(
             `UPDATE users SET username = $1 WHERE id = $2`,
             [username, myUid]
-          );
+          ));
         }
       }
     }
 
     if (name && name.length && name !== userInfo.name) {
-      await client.query(
+      promises.push(client.query(
         `UPDATE users SET name = $1 WHERE id = $2`,
         [name, myUid]
-      );
+      ));
     }
 
     if (email && email.length && email !== userInfo.email) {
-      await client.query(
+      promises.push(client.query(
         `UPDATE users SET email = $1 WHERE id = $2`,
         [email, myUid]
-      );
+      ));
     }
 
     if (phone && phone.length && phone !== userInfo.phone) {
-      await client.query(
+      promises.push(client.query(
         `UPDATE users SET phone = $1 WHERE id = $2`,
         [phone, myUid]
-      );
+      ));
     }
 
     if (isPublic !== userInfo.public) {
-      await client.query(
+      promises.push(client.query(
         `UPDATE users SET public = $1 WHERE id = $2`,
         [isPublic, myUid]
-      );
+      ));
     }
+
+    await Promise.all(promises);
   } catch (e) {
     handleError(e, res);
   } finally {

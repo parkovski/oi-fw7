@@ -24,27 +24,38 @@ export async function getGroups(req: Request, res: Response) {
 
     const myUid = await getUserId(client, session);
 
-    const summary = await client.query<GroupSummary>(
-      `
-      SELECT groups.id, groups.name, groupmems.kind AS "memberKind"
-      FROM groupmems
-      INNER JOIN groups ON groupmems.gid = groups.id
-      WHERE groupmems.uid = $1
-      `,
-      [myUid]
-    );
+    const [summary, unreadMessages, upcomingEvents] = await Promise.all([
+      client.query<GroupSummary>(
+        `
+        SELECT groups.id, groups.name, groupmems.kind AS "memberKind"
+        FROM groupmems
+        INNER JOIN groups ON groupmems.gid = groups.id
+        WHERE groupmems.uid = $1
+        `,
+        [myUid]
+      ),
+      client.query<Unread>(
+        `
+        SELECT count(*), group_messages.gid_to AS gid
+        FROM group_messages
+        LEFT JOIN group_messages_read ON group_messages.id = group_messages_read.mid
+          AND group_messages_read.uid = $1
+        WHERE group_messages.uid_from != $1 AND group_messages_read.uid IS NULL
+        GROUP BY group_messages.gid_to
+        `,
+        [myUid]
+      ),
+      client.query<Unread>(
+        `
+        SELECT count(*), group_events.gid FROM group_events
+        INNER JOIN groupmems ON group_events.gid = groupmems.gid
+        WHERE groupmems.uid = $1 AND start_time > NOW()
+        GROUP BY group_events.gid
+        `,
+        [myUid]
+      ),
+    ]);
 
-    const unreadMessages = await client.query<Unread>(
-      `
-      SELECT count(*), group_messages.gid_to AS gid
-      FROM group_messages
-      LEFT JOIN group_messages_read ON group_messages.id = group_messages_read.mid
-        AND group_messages_read.uid = $1
-      WHERE group_messages.uid_from != $1 AND group_messages_read.uid IS NULL
-      GROUP BY group_messages.gid_to
-      `,
-      [myUid]
-    );
     const unreadMap = new Map<string, Unread>();
     unreadMessages.rows.forEach(row => {
       unreadMap.set(row.gid, row);
@@ -53,15 +64,6 @@ export async function getGroups(req: Request, res: Response) {
       row.unreadMessages = unreadMap.get(row.id)?.count;
     });
 
-    const upcomingEvents = await client.query<Unread>(
-      `
-      SELECT count(*), group_events.gid FROM group_events
-      INNER JOIN groupmems ON group_events.gid = groupmems.gid
-      WHERE groupmems.uid = $1 AND start_time > NOW()
-      GROUP BY group_events.gid
-      `,
-      [myUid]
-    );
     unreadMap.clear();
     upcomingEvents.rows.forEach(row => {
       unreadMap.set(row.gid, row);
@@ -127,30 +129,33 @@ export async function getGroupInfo(req: Request, res: Response) {
       groupInfo.memberKind = myMembership.rows[0].kind;
     }
 
-    // Get the member list for the group.
-    const members = await client.query<GroupMember>(
-      `
-      SELECT users.id, users.name, users.username, groupmems.kind
-      FROM groupmems
-      INNER JOIN users ON groupmems.uid = users.id
-      WHERE groupmems.gid = $1
-      `,
-      [gid]
-    );
+    // Get the member list and unread messages for the group.
+    const [members, unreadMessages] = await Promise.all([
+      client.query<GroupMember>(
+        `
+        SELECT users.id, users.name, users.username, groupmems.kind
+        FROM groupmems
+        INNER JOIN users ON groupmems.uid = users.id
+        WHERE groupmems.gid = $1
+        `,
+        [gid]
+      ),
+      client.query<{ count: number }>(
+        `
+        SELECT count(*), group_messages.gid_to AS gid
+        FROM group_messages
+        LEFT JOIN group_messages_read ON group_messages.id = group_messages_read.mid
+          AND group_messages_read.uid = $1
+        WHERE group_messages.uid_from != $1 AND group_messages_read.uid IS NULL
+          AND group_messages.gid_to = $2
+        GROUP BY group_messages.gid_to
+        `,
+        [myUid, gid]
+      )
+    ]);
+
     groupInfo.members = members.rows;
 
-    const unreadMessages = await client.query<{ count: number }>(
-      `
-      SELECT count(*), group_messages.gid_to AS gid
-      FROM group_messages
-      LEFT JOIN group_messages_read ON group_messages.id = group_messages_read.mid
-        AND group_messages_read.uid = $1
-      WHERE group_messages.uid_from != $1 AND group_messages_read.uid IS NULL
-        AND group_messages.gid_to = $2
-      GROUP BY group_messages.gid_to
-      `,
-      [myUid, gid]
-    );
     if (unreadMessages.rowCount) {
       groupInfo.unreadMessages = unreadMessages.rows[0].count;
     }
@@ -217,7 +222,7 @@ export async function inviteToGroup(req: Request, res: Response) {
     };
     for (let row of updatedUids.rows) {
       const uid = row.uid;
-      wsclients.getSender(uid).sendJson(invitedMsg);
+      wsclients.sendWs(uid, invitedMsg);
     }
   } catch (e) {
     handleError(e, res);
@@ -263,7 +268,7 @@ export async function makeGroupAdmin(req: Request, res: Response) {
       res.status(400);
       return;
     }
-    wsclients.getSender(requestedUid).sendJson({
+    wsclients.sendWs(requestedUid, {
       m: 'group_membership_changed',
       id: gid,
       kind: Membership.Admin,

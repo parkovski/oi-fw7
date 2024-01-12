@@ -22,46 +22,14 @@ type BufferLike =
     | { valueOf(): string }
     | { [Symbol.toPrimitive](hint: string): string };
 
-export class ClientSender {
-  _webSockets: WebSocket[] | undefined;
-  static _emptySender = new ClientSender();
-
-  constructor(webSockets?: WebSocket[] | undefined) {
-    this._webSockets = webSockets;
-  }
-
-  send(message: BufferLike) {
-    if (this._webSockets) {
-      this._webSockets.forEach(ws => ws.send(message));
-    }
-  }
-
-  sendJson<T extends Message>(message: T) {
-    if (this._webSockets) {
-      const json = JSON.stringify(message);
-      this._webSockets.forEach(ws => ws.send(json));
-    }
-  }
-
-  hasReceiver(): boolean {
-    return this._webSockets !== undefined;
-  }
-}
-
-export class PushSender {
-  _uid: string;
-
-  constructor(uid: string) {
-    this._uid = uid;
-  }
-
-  async send(message: string) {
+class WebPushSender {
+  static async send(uid: string, message: string) {
     let client;
     try {
       client = await getPool().connect();
       const q = await client.query(
         `SELECT push_endpoint, key_p256dh, key_auth FROM sessions WHERE uid = $1`,
-        [this._uid]
+        [uid]
       );
       await Promise.all(q.rows.map(row => {
         if (row.push_endpoint === null) {
@@ -81,8 +49,8 @@ export class PushSender {
     }
   }
 
-  sendJson<T extends Message>(message: T) {
-    return this.send(JSON.stringify(message));
+  static sendJson<T extends Message>(uid: string, message: T) {
+    return WebPushSender.send(uid, JSON.stringify(message));
   }
 }
 
@@ -118,38 +86,36 @@ export class ClientManager {
     return this.uidToWs.get(uid);
   }
 
-  getSender(uid: string): ClientSender {
-    const sockets = this.uidToWs.get(uid);
-    if (!sockets) {
-      return ClientSender._emptySender;
-    }
-    return new ClientSender(sockets);
-  }
-
   sendWs<T extends Message>(uid: string, message: T) {
-    this.getSender(uid).sendJson(message);
+    const sockets = this.uidToWs.get(uid);
+    if (sockets) {
+      const json = JSON.stringify(message);
+      sockets.forEach(socket => socket.send(json));
+    }
   }
 
   sendPush<T extends Message>(uid: string, message: T) {
-    new PushSender(uid).sendJson(message);
+    WebPushSender.sendJson(uid, message);
   }
 
   sendWsOrPush<T extends Message>(uid: string, message: T, pushOk: boolean) {
-    const sender = this.getSender(uid);
-    if (sender.hasReceiver()) {
-      sender.sendJson(message);
+    const sockets = this.uidToWs.get(uid);
+    const json = JSON.stringify(message);
+    if (sockets) {
+      sockets.forEach(socket => socket.send(json));
     } else if (pushOk) {
-      new PushSender(uid).sendJson(message);
+      WebPushSender.send(uid, json);
     }
   }
 
   sendWsAndPush<T extends Message>(uid: string, message: T, pushOk: boolean) {
-    const sender = this.getSender(uid);
-    if (sender.hasReceiver()) {
-      sender.sendJson(message);
+    const sockets = this.uidToWs.get(uid);
+    const json = JSON.stringify(message);
+    if (sockets) {
+      sockets.forEach(socket => socket.send(json));
     }
     if (pushOk) {
-      new PushSender(uid).sendJson(message);
+      WebPushSender.send(uid, json);
     }
   }
 

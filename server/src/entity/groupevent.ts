@@ -186,7 +186,7 @@ export async function newGroupEvent(req: Request, res: Response) {
       eid,
     };
     membersResult.rows.forEach(row => {
-      wsclients.getSender(row.uid).sendJson(newEventMsg);
+      wsclients.sendWs(row.uid, newEventMsg);
     });
 
     res.write(eid);

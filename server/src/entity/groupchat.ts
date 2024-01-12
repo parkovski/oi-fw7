@@ -72,7 +72,7 @@ export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) 
       text: msg.text,
     };
     uidResult.rows.forEach(row => {
-      clients.getSender(row.uid).sendJson(groupmsg);
+      clients.sendWs(row.uid, groupmsg);
     })
   } catch {
     // Ignore
