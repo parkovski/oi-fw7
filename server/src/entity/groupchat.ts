@@ -71,9 +71,7 @@ export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) 
       time: messageRow.sent,
       text: msg.text,
     };
-    uidResult.rows.forEach(row => {
-      clients.sendWs(row.uid, groupmsg);
-    })
+    clients.sendWs(uidResult.rows.map(row => row.uid), groupmsg);
   } catch {
     // Ignore
   } finally {

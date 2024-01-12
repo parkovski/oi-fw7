@@ -22,7 +22,7 @@ type BufferLike =
     | { valueOf(): string }
     | { [Symbol.toPrimitive](hint: string): string };
 
-class WebPushSender {
+class PushSender {
   static async send(uid: string, message: string) {
     let client;
     try {
@@ -50,7 +50,7 @@ class WebPushSender {
   }
 
   static sendJson<T extends Message>(uid: string, message: T) {
-    return WebPushSender.send(uid, JSON.stringify(message));
+    return PushSender.send(uid, JSON.stringify(message));
   }
 }
 
@@ -86,36 +86,52 @@ export class ClientManager {
     return this.uidToWs.get(uid);
   }
 
-  sendWs<T extends Message>(uid: string, message: T) {
+  sendWsString(uid: string | string[], message: string) {
+    if (Array.isArray(uid)) {
+      uid.forEach(u => this.sendWsString(u, message));
+      return;
+    }
     const sockets = this.uidToWs.get(uid);
     if (sockets) {
-      const json = JSON.stringify(message);
-      sockets.forEach(socket => socket.send(json));
+      sockets.forEach(socket => socket.send(message));
     }
   }
 
-  sendPush<T extends Message>(uid: string, message: T) {
-    WebPushSender.sendJson(uid, message);
+  sendWs<T extends Message>(uid: string | string[], message: T) {
+    this.sendWsString(uid, JSON.stringify(message));
   }
 
-  sendWsOrPush<T extends Message>(uid: string, message: T, pushOk: boolean) {
+  sendPushString(uid: string | string[], message: string) {
+    if (Array.isArray(uid)) {
+      uid.forEach(u => this.sendPushString(u, message));
+      return;
+    }
+    PushSender.send(uid, message);
+  }
+
+  sendPush<T extends Message>(uid: string | string[], message: T) {
+    this.sendPushString(uid, JSON.stringify(message));
+  }
+
+  sendWsOrPush<T extends Message>(uid: string | string[], message: T, pushOk: boolean) {
+    if (Array.isArray(uid)) {
+      uid.forEach(u => this.sendWsOrPush(u, message, pushOk));
+      return;
+    }
     const sockets = this.uidToWs.get(uid);
     const json = JSON.stringify(message);
     if (sockets) {
       sockets.forEach(socket => socket.send(json));
     } else if (pushOk) {
-      WebPushSender.send(uid, json);
+      this.sendPushString(uid, json);
     }
   }
 
-  sendWsAndPush<T extends Message>(uid: string, message: T, pushOk: boolean) {
-    const sockets = this.uidToWs.get(uid);
+  sendWsAndPush<T extends Message>(uid: string | string[], message: T, pushOk: boolean) {
     const json = JSON.stringify(message);
-    if (sockets) {
-      sockets.forEach(socket => socket.send(json));
-    }
+    this.sendWsString(uid, json);
     if (pushOk) {
-      WebPushSender.send(uid, json);
+      this.sendPushString(uid, json);
     }
   }
 

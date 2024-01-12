@@ -164,9 +164,7 @@ export async function setEventAttendance(req: Request, res: Response) {
         kind,
         title: title.rows[0].title,
       };
-      hosts.rows.forEach(row => {
-        wsclients.sendPush(row.id, message);
-      })
+      wsclients.sendPush(hosts.rows.map(row => row.id), message);
     }
   } catch (e) {
     handleError(e, res);

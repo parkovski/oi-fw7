@@ -220,10 +220,7 @@ export async function inviteToGroup(req: Request, res: Response) {
       id: gid,
       kind: Membership.Invited,
     };
-    for (let row of updatedUids.rows) {
-      const uid = row.uid;
-      wsclients.sendWs(uid, invitedMsg);
-    }
+    wsclients.sendWs(updatedUids.rows.map(row => row.uid), invitedMsg);
   } catch (e) {
     handleError(e, res);
   } finally {
