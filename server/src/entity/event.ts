@@ -139,7 +139,7 @@ export async function setEventAttendance(req: Request, res: Response) {
       });
       res.write('' + kind);
 
-      const [myName, hosts, title] = await Promise.all([
+      const [myName, hosts, title, wantsNotification] = await Promise.all([
         client.query(
           `SELECT name FROM users WHERE id = $1`, [myUid]
         ),
@@ -155,6 +155,10 @@ export async function setEventAttendance(req: Request, res: Response) {
         client.query(
           `SELECT title FROM events WHERE id = $1`, [eid]
         ),
+        client.query(
+          `SELECT event_responded FROM notification_settings WHERE uid = $1`,
+          [myUid]
+        ),
       ]);
       // Notify the hosts.
       const message: EventRespondedMessage = {
@@ -164,7 +168,9 @@ export async function setEventAttendance(req: Request, res: Response) {
         kind,
         title: title.rows[0].title,
       };
-      wsclients.sendPush(hosts.rows.map(row => row.id), message);
+      wsclients.sendWsAndPush(
+        hosts.rows.map(row => row.id), message, wantsNotification.rows[0].event_responded
+      );
     }
   } catch (e) {
     handleError(e, res);
