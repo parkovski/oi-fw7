@@ -187,7 +187,8 @@
         });
         eventSubscription = eventService.getEvents().subscribe(events => {
           upcomingEvents = events.reduce((a, c) => {
-            if (c.startTime > new Date()) {
+            // Don't include events we responded "Not attending".
+            if (c.startTime > new Date() && c.kind >= 0) {
               ++a;
             }
             return a;
