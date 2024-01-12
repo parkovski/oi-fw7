@@ -100,7 +100,7 @@
       <Toggle checked bind:this={eventCommentedOn} />
     </ListItem>
     <ListItem>
-      <span>Event attendance changed</span>
+      <span>Invited to host</span>
       <Toggle checked bind:this={eventAttendanceChanged} />
     </ListItem>
     <ListItem groupTitle>Messages</ListItem>
