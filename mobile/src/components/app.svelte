@@ -27,10 +27,12 @@
   import { postLoginEvent, onLogin } from '../js/onlogin';
   import chatService from '../services/chat';
   import groupService from '../services/group';
+  import eventService from '../services/event';
 
   const device = getDevice();
   let unreadChats = 0;
   let groupUnreadChats = 0;
+  let upcomingEvents = 0;
 
   // Framework7 Parameters
   let f7params = {
@@ -121,6 +123,7 @@
   onMount(() => {
     let chatSubscription;
     let groupSubscription;
+    let eventSubscription;
 
     f7ready(() => {
       // Init capacitor APIs (see capacitor-app.js)
@@ -176,11 +179,19 @@
         }
 
         // Subscribe to messages
-        chatSubscription = chatService.getChatSummary().subscribe(summary => {
-          unreadChats = summary.reduce((a, c) => a + +(c.unread ?? 0), 0);
+        chatSubscription = chatService.getChatSummary().subscribe(chats => {
+          unreadChats = chats.reduce((a, c) => a + +(c.unread ?? 0), 0);
         });
         groupSubscription = groupService.getGroups().subscribe(groups => {
           groupUnreadChats = groups.reduce((a, c) => a + +(c.unreadMessages ?? 0), 0);
+        });
+        eventSubscription = eventService.getEvents().subscribe(events => {
+          upcomingEvents = events.reduce((a, c) => {
+            if (c.startTime > new Date()) {
+              ++a;
+            }
+            return a;
+          }, 0);
         });
       });
     });
@@ -188,6 +199,7 @@
     return () => {
       chatSubscription && chatSubscription.unsubscribe();
       groupSubscription && groupSubscription.unsubscribe();
+      eventSubscription && eventSubscription.unsubscribe();
     };
   });
 
@@ -279,10 +291,15 @@
         </Icon>
       </Link>
       <Link tabLink="#view-events"
-        iconIos="f7:calendar" iconMd="material:event"
         text="Events"
         onClick={() => tabClick('events')}
-      />
+      >
+        <Icon ios="f7:calendar" md="material:event">
+          {#if upcomingEvents}
+            <Badge color="blue">{upcomingEvents}</Badge>
+          {/if}
+        </Icon>
+      </Link>
       <Link tabLink="#view-contacts"
         iconIos="f7:person_fill" iconMd="material:person"
         text="Contacts"

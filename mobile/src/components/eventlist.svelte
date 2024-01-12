@@ -7,7 +7,23 @@
 
   export let events = [];
   export let groupEvents = false;
-  $: events = events.sort((a, b) => a.startTime - b.startTime);
+
+  let upcomingEvents = [];
+  let pastEvents = [];
+
+  function sortEvents(events) {
+    events.sort((a, b) => a.startTime - b.startTime).forEach(e => {
+      if (e.startTime > new Date) {
+        upcomingEvents.push(e);
+      } else {
+        pastEvents.push(e);
+      }
+    });
+    upcomingEvents = upcomingEvents;
+    pastEvents = pastEvents.reverse();
+  }
+
+  $: sortEvents(events);
 
   function getFooterText(event) {
     switch (event.kind) {
@@ -53,7 +69,23 @@
 </style>
 
 <List style="margin-top: 0">
-  {#each events as event (event.id)}
+  <ListItem groupTitle>
+    Upcoming Events
+  </ListItem>
+  {#each upcomingEvents as event (event.id)}
+    <ListItem class="no-padding" href={getViewLink(event.id)}>
+      <div class="event-color" style='background-color: {event.color}'></div>
+      <div class="item-title">
+        {event.title}
+        <div class="item-footer">{getFooterText(event)}</div>
+      </div>
+      <div class="item-after">{formatDateTime(event.startTime)}</div>
+    </ListItem>
+  {/each}
+  <ListItem groupTitle>
+    Past Events
+  </ListItem>
+  {#each pastEvents as event (event.id)}
     <ListItem class="no-padding" href={getViewLink(event.id)}>
       <div class="event-color" style='background-color: {event.color}'></div>
       <div class="item-title">
