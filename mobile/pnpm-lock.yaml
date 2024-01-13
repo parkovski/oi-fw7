@@ -14,6 +14,9 @@ dependencies:
   '@capacitor/browser':
     specifier: ^5.1.0
     version: 5.1.0(@capacitor/core@5.6.0)
+  '@capacitor/camera':
+    specifier: ^5.0.8
+    version: 5.0.8(@capacitor/core@5.6.0)
   '@capacitor/core':
     specifier: ^5.6.0
     version: 5.6.0
@@ -29,6 +32,9 @@ dependencies:
   '@capacitor/status-bar':
     specifier: ^5.0.6
     version: 5.0.6(@capacitor/core@5.6.0)
+  '@ionic/pwa-elements':
+    specifier: ^3.2.2
+    version: 3.2.2
   cookie:
     specifier: ^0.6.0
     version: 0.6.0
@@ -1318,6 +1324,14 @@ packages:
       '@capacitor/core': 5.6.0
     dev: false
 
+  /@capacitor/camera@5.0.8(@capacitor/core@5.6.0):
+    resolution: {integrity: sha512-V9kuBJV4s2AEFMiUiB5vpPD1qdfKRq/iFQ9euntuUYP+bOHQwGnwuERsQd48PoLUPV1up/08J8tJwGxMkDvPTQ==}
+    peerDependencies:
+      '@capacitor/core': ^5.0.0
+    dependencies:
+      '@capacitor/core': 5.6.0
+    dev: false
+
   /@capacitor/cli@5.6.0:
     resolution: {integrity: sha512-h2HLkjPn+hd95F0iOlSWROW15kxj/0qNuzXgktSNQ55Z3dCeWmelgfkbYwjo0eqiunv5zNa31H0YvrpnIVdKEA==}
     engines: {node: '>=16.0.0'}
@@ -1999,6 +2013,11 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@ionic/pwa-elements@3.2.2:
+    resolution: {integrity: sha512-gCQsHdvkaWa83T3ToKsr6FOtzSmLIYFWy+zZisXVDqU3ry4Hv581dFSxDUgokgoWSxIERe/nvYnhoN8zIIEKQQ==}
+    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
+    dev: false
 
   /@ionic/utils-array@2.1.6:
     resolution: {integrity: sha512-0JZ1Zkp3wURnv8oq6Qt7fMPo5MpjbLoUoa9Bu2Q4PJuSDWM8H8gwF3dQO7VTeUj3/0o1IB1wGkFWZZYgUXZMUg==}
