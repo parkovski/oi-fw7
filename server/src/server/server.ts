@@ -2,11 +2,13 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import webpush from 'web-push';
 import { rateLimit } from 'express-rate-limit';
+import fileupload from 'express-fileupload';
 import { WebSocketServer } from 'ws';
 import { onWebSocketConnected, listen as wslisten } from './wsserver.js';
 import { initPool } from '../util/db.js';
 import {
   hello, getMyProfile, getUserInfo, authorize, logout, register, updateProfile,
+  uploadProfilePhoto,
 } from '../entity/user.js';
 import {
   getGroups, getGroupInfo, inviteToGroup, makeGroupAdmin, joinGroup,
@@ -67,18 +69,30 @@ export default async function serve(port: number) {
   console.log('>> ' + res.rows[0].message);
 
   const app = express();
-  if (process.env.NODE_ENV === 'production') {
-    // Rate limit to 30 reqs per minute in production.
-    app.use(rateLimit({
-      windowMs: 1 * 60 * 1000,
-      limit: 30,
-      standardHeaders: true,
-      legacyHeaders: false,
-    }));
-  }
+  // Rate limit to 30 reqs per minute
+  app.use(rateLimit({
+    windowMs: 1 * 60 * 1000,
+    limit: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }));
   app.use(cookieParser(process.env.COOKIE_SECRET));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  if (process.env.UPLOAD_DIR) {
+    app.use(fileupload({
+      limits: { fileSize: 16 * 1024 * 1024 },
+      /*useTempFiles: true,
+      tempFileDir: '/tmp/',*/
+      //safeFileNames: true,
+      abortOnLimit: true,
+    }));
+    app.use('/uploads', express.static(process.env.UPLOAD_DIR, {
+      fallthrough: false,
+    }));
+  } else {
+    console.warn('UPLOAD_DIR not set; file uploading disabled.');
+  }
   if (process.env.NODE_ENV === 'production') {
     app.use((_req, res, next) => {
       res.header('Access-Control-Allow-Origin', 'https://oi.parkovski.com');
@@ -106,6 +120,7 @@ export default async function serve(port: number) {
   app.put('/push-endpoint', storePushEndpoint);
   app.get('/profile', getMyProfile);
   app.post('/profile/update', updateProfile);
+  app.put('/profile/photo', uploadProfilePhoto);
   app.get('/user/:uid', getUserInfo);
   app.post('/authorize', authorize);
   app.post('/logout', logout);

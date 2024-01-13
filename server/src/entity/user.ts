@@ -1,6 +1,10 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { getPool } from '../util/db.js';
+import crypto from 'node:crypto';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import type { UploadedFile } from 'express-fileupload';
+import { getPool, getUserId } from '../util/db.js';
 import { handleError, StatusError } from '../util/error.js';
 import {
   validateUuid, validateMinMaxLength, validateBoolean, validateIfDefined,
@@ -205,6 +209,74 @@ export async function getUserInfo(req: Request, res: Response) {
   } finally {
     res.end();
   }
+}
+
+const allowedExtensions = new Set(['.png', '.jpg', '.jpeg']);
+export async function uploadProfilePhoto(req: Request, res: Response) {
+  let session: string;
+  try {
+    session = validateUuid(req.cookies.session, 401);
+  } catch (e) {
+    handleError(e, res);
+    res.end();
+    return;
+  }
+
+  if (!req.files || !req.files.photo || !(req.files.photo as UploadedFile).name) {
+    res.status(400).end('No file specified');
+    return;
+  }
+  const file = req.files.photo as UploadedFile;
+  crypto.randomBytes(32, async (err, buf) => {
+    if (err) {
+      res.status(500).end('Generate random bytes failed');
+      return;
+    }
+    const ext = path.extname(file.name);
+    if (!allowedExtensions.has(ext)) {
+      res.status(400).end(`File type '${ext}' not allowed`);
+      return;
+    }
+    const namePart = buf.toString('base64').replaceAll(/\//g, '_');
+    const filename = `${namePart}${ext}`;
+    const uploadPath = `${process.env.UPLOAD_DIR}/${filename}`;
+    const webPath = `/uploads/${filename}`;
+    let client;
+    try {
+      client = await getPool().connect();
+      const user = await client.query<{ id: string; avatar_url: string | null}>(
+        `
+        SELECT id, avatar_url
+        FROM users
+        INNER JOIN sessions ON users.id = sessions.uid WHERE sesskey = $1
+        `,
+        [session]
+      );
+      if (user.rowCount === 0) {
+        res.status(404);
+        return;
+      }
+      const myUid = user.rows[0].id;
+      const avatar = user.rows[0].avatar_url;
+      const promises = [
+        file.mv(uploadPath),
+        client.query(
+          `UPDATE users SET avatar_url = $1 WHERE id = $2`,
+          [filename, myUid]
+        ),
+      ];
+      if (avatar) {
+        promises.push(fs.unlink(`${process.env.UPLOAD_DIR}/${avatar}`));
+      }
+      await Promise.all(promises);
+      res.end(webPath);
+    } catch (e) {
+      handleError(e, res);
+    } finally {
+      client && client.release();
+      res.end();
+    }
+  });
 }
 
 export async function authorize(req: Request, res: Response) {
