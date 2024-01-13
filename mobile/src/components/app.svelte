@@ -21,6 +21,7 @@
   import { getDevice }  from 'framework7/lite-bundle';
   import { onMount } from 'svelte';
   import { fetchText } from '../js/fetch';
+  import { defineCustomElements } from '@ionic/pwa-elements/loader';
 
   import capacitorApp from '../js/capacitor-app';
   import routes from '../js/routes';
@@ -28,6 +29,8 @@
   import chatService from '../services/chat';
   import groupService from '../services/group';
   import eventService from '../services/event';
+
+  defineCustomElements(window);
 
   const device = getDevice();
   let unreadChats = 0;

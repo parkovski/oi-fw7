@@ -10,11 +10,12 @@
     List,
     ListInput,
     ListItem,
-    ListButton,
     Toggle,
+    f7,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
+  import { Camera, CameraResultType, CameraDirection, CameraSource } from '@capacitor/camera';
   import profileService from '../../services/profile';
 
   let qrcodeUrl;
@@ -25,6 +26,8 @@
   let email;
   let phone;
   let isPublic;
+  let editPicActions;
+  let profilePhoto;
 
   onMount(() => {
     const profileSubscription = profileService.getProfile().subscribe(p => {
@@ -53,6 +56,7 @@
     return () => {
       profileSubscription.unsubscribe();
       qrcodeUrl && URL.revokeObjectURL(qrcodeUrl);
+      editPicActions && editPicActions.destroy();
     };
   });
 
@@ -69,6 +73,57 @@
     profileService.getProfile().refresh();
     editing = false;
   }
+
+  async function takePicture() {
+    try {
+      const photo = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: true,
+        resultType: CameraResultType.Uri,
+        direction: CameraDirection.Front,
+      });
+      profilePhoto = photo.webPath;
+    } catch {
+    }
+  }
+
+  async function uploadPicture() {
+    try {
+      const photo = (await Camera.pickImages({
+        quality: 90,
+        limit: 1,
+      })).photos[0];
+      profilePhoto = photo.webPath;
+    } catch {
+    }
+  }
+
+  function editPicture() {
+    if (!editPicActions) {
+      editPicActions = f7.actions.create({
+        buttons: [
+          {
+            text: 'Edit profile photo',
+            label: true,
+          },
+          {
+            text: 'Take picture',
+            onClick: takePicture,
+          },
+          {
+            text: 'From gallery',
+            onClick: uploadPicture,
+          },
+          {
+            text: 'Cancel',
+            color: 'red',
+          },
+        ],
+        targetEl: document.getElementById('edit-profile-pic-button'),
+      });
+    }
+    editPicActions.open();
+  }
 </script>
 
 <style>
@@ -84,8 +139,17 @@
   <Card>
     <CardHeader>
       <div>
-        <Icon ios="f7:person_fill" md="material:person"
-          /><span style="margin-left: 8px">{name}</span>
+        {#if profilePhoto}<img
+          src={profilePhoto} alt="Profile" width="48" height="48"
+          style="border-radius: 100px; vertical-align: middle"
+        >{:else}<Icon ios="f7:person_fill" md="material:person"
+        />{/if}{#if editing}<Button
+          id="edit-profile-pic-button"
+          style="display: inline-block"
+          onClick={editPicture}
+        >
+          Edit picture
+        </Button>{:else}<span style="margin-left: 8px">{name}</span>{/if}
       </div>
       <div style="flex: 0 0 auto">
         {#if editing}
