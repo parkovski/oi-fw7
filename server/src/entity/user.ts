@@ -57,7 +57,8 @@ export async function getMyProfile(req: Request, res: Response) {
 
     const profileResult = await getPool().query<Profile>(
       `
-      SELECT id, name, username, email, phone, verified, public
+      SELECT id, name, username, avatar_url AS "avatarUrl", email, phone,
+        verified, public
       FROM users
       WHERE id = (SELECT uid FROM sessions WHERE sesskey = $1)
       `,
@@ -237,10 +238,9 @@ export async function uploadProfilePhoto(req: Request, res: Response) {
       res.status(400).end(`File type '${ext}' not allowed`);
       return;
     }
-    const namePart = buf.toString('base64').replaceAll(/\//g, '_');
+    const namePart = buf.toString('base64').replaceAll(/\//g, '_').replaceAll(/\+/g, '-');
     const filename = `${namePart}${ext}`;
     const uploadPath = `${process.env.UPLOAD_DIR}/${filename}`;
-    const webPath = `/uploads/${filename}`;
     let client;
     try {
       client = await getPool().connect();
@@ -269,7 +269,7 @@ export async function uploadProfilePhoto(req: Request, res: Response) {
         promises.push(fs.unlink(`${process.env.UPLOAD_DIR}/${avatar}`));
       }
       await Promise.all(promises);
-      res.end(webPath);
+      res.end(filename);
     } catch (e) {
       handleError(e, res);
     } finally {

@@ -16,6 +16,7 @@
   import { onMount } from 'svelte';
   import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
   import { Camera, CameraResultType, CameraDirection, CameraSource } from '@capacitor/camera';
+  import { fetchText } from '../../js/fetch';
   import profileService from '../../services/profile';
 
   let qrcodeUrl;
@@ -37,6 +38,8 @@
       email = p.email;
       phone = p.phone;
       isPublic = p.public;
+      profilePhoto = p.avatarUrl ? `https://api.oi.parkovski.com/uploads/${p.avatarUrl}` : null;
+      console.log(p.avatarUrl);
     });
     profileService.getProfile().then(async profile => {
       const qrcode = await writeBarcodeToImageFile(
@@ -79,22 +82,54 @@
       const photo = await Camera.getPhoto({
         quality: 90,
         allowEditing: true,
-        resultType: CameraResultType.Uri,
+        resultType: CameraResultType.Base64,
         direction: CameraDirection.Front,
       });
-      profilePhoto = photo.webPath;
+      // TODO Upload the file with capacitor filesystem.
+      //profilePhoto = photo.webPath;
+    } catch {
+    }
+  }
+
+  async function uploadPictureCapacitor() {
+    try {
+      const photo = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: true,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Photos,
+      });
+      // TODO Upload the file with capacitor filesystem.
+      //profilePhoto = photo.webPath;
     } catch {
     }
   }
 
   async function uploadPicture() {
-    try {
-      const photo = (await Camera.pickImages({
-        quality: 90,
-        limit: 1,
-      })).photos[0];
-      profilePhoto = photo.webPath;
-    } catch {
+    if (f7.device.capacitor) {
+      return uploadPictureCapacitor();
+    } else {
+      const input = document.createElement('input');
+      input.id = 'upload-photo-input';
+      input.type = 'file';
+      input.hidden = true;
+      document.body.appendChild(input);
+      input.addEventListener('change', async () => {
+        const file = input.files[0];
+        const formData = new FormData;
+        formData.append('photo', file);
+        try {
+          const filename = await fetchText('/profile/photo', {
+            method: 'PUT',
+            body: formData,
+          });
+          profilePhoto = `https://api.oi.parkovski.com/uploads/${filename}`;
+        } finally {
+          input.parentNode.removeChild(input);
+        }
+      });
+      input.addEventListener('cancel', () => input.parentNode.removeChild(input));
+      input.click();
     }
   }
 
