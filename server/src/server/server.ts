@@ -81,7 +81,7 @@ export default async function serve(port: number) {
   app.use(express.urlencoded({ extended: true }));
   if (process.env.UPLOAD_DIR) {
     app.use(fileupload({
-      limits: { fileSize: 16 * 1024 * 1024 },
+      limits: { fileSize: 16 * 1024 * 1024 * 1024 },
       /*useTempFiles: true,
       tempFileDir: '/tmp/',*/
       //safeFileNames: true,

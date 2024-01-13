@@ -248,7 +248,8 @@ export async function uploadProfilePhoto(req: Request, res: Response) {
         `
         SELECT id, avatar_url
         FROM users
-        INNER JOIN sessions ON users.id = sessions.uid WHERE sesskey = $1
+        INNER JOIN sessions ON users.id = sessions.uid
+        WHERE sesskey = $1
         `,
         [session]
       );
