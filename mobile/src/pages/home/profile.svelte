@@ -10,6 +10,7 @@
     List,
     ListInput,
     ListItem,
+    ListButton,
     Toggle,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
@@ -63,6 +64,11 @@
       editing = false;
     }
   }
+
+  async function onCancelClick() {
+    profileService.getProfile().refresh();
+    editing = false;
+  }
 </script>
 
 <style>
@@ -81,7 +87,12 @@
         <Icon ios="f7:person_fill" md="material:person"
           /><span style="margin-left: 8px">{name}</span>
       </div>
-      <Button onClick={onEditClick}>{#if editing}Save{:else}Edit{/if}</Button>
+      <div style="flex: 0 0 auto">
+        {#if editing}
+          <Button style="display: inline-block" onClick={onCancelClick}>Cancel</Button>
+        {/if}
+        <Button style="display: inline-block" onClick={onEditClick}>{#if editing}Save{:else}Edit{/if}</Button>
+      </div>
     </CardHeader>
     <CardContent>
       {#if editing}
@@ -96,16 +107,27 @@
           </ListItem>
         </List>
       {:else}
-        {#if verified}
-          <p>Verified, {#if isPublic}public{:else}private{/if}</p>
-        {/if}
-        <p>Username: {username}</p>
-        {#if phone}
-          <p>Phone: {phone}</p>
-        {/if}
-        {#if email}
-          <p>Email: {email}</p>
-        {/if}
+        <List>
+          <ListItem>
+            <span></span>
+            <span>
+              {#if verified}Verified, {/if}{#if isPublic}Public{:else}Private{/if}
+            </span>
+          </ListItem>
+          <ListItem>
+            <span>Username:</span><span>{username}</span>
+          </ListItem>
+          {#if phone}
+            <ListItem>
+              <span>Phone:</span><span>{phone}</span>
+            </ListItem>
+          {/if}
+          {#if email}
+            <ListItem>
+              <span>Email:</span><span>{email}</span>
+            </ListItem>
+          {/if}
+        </List>
       {/if}
       <div id="qr-container">
         <img id="qr-code" alt="Profile QR code">
