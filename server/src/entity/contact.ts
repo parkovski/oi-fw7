@@ -20,7 +20,8 @@ export async function getContacts(req: Request, res: Response) {
 
     const contactResult = await client.query<User>(
       `
-      SELECT users.id, users.name, users.username, contacts.kind
+      SELECT users.id, users.name, users.username,
+        users.avatar_url AS "avatarUrl", contacts.kind
       FROM contacts
       INNER JOIN users ON contacts.uid_contact = users.id
       WHERE contacts.uid_owner = $1
@@ -42,7 +43,8 @@ export async function getContacts(req: Request, res: Response) {
 
     const followersResult = await client.query<User>(
       `
-      SELECT users.id, users.name, users.username
+      SELECT users.id, users.name, users.username,
+        users.avatar_url AS "avatarUrl"
       FROM contacts
       INNER JOIN users ON contacts.uid_owner = users.id
       WHERE contacts.uid_contact = $1
@@ -70,7 +72,8 @@ export async function getContactRequests(req: Request, res: Response) {
 
     const contactResult = await client.query<User>(
       `
-      SELECT users.id, users.name, users.username
+      SELECT users.id, users.name, users.username,
+        users.avatar_url AS "avatarUrl"
       FROM contacts
       INNER JOIN users ON contacts.uid_owner = users.id
       WHERE contacts.uid_contact = (SELECT uid FROM sessions WHERE sesskey = $1)

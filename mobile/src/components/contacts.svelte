@@ -35,7 +35,16 @@
     {#each contactsByFirstLetter[firstLetter] as contact (contact.id)}
       <ListItem title={contact.name} href={`/contacts/view/${contact.id}/`}
         footer={contact.kind === 0 ? 'Requested' : undefined}>
-        <Icon slot="media" ios="f7:person_fill" md="material:person" />
+        <div slot="media">
+          {#if contact.avatarUrl}
+            <img src={`https://api.oi.parkovski.com/uploads/${contact.avatarUrl}`}
+              alt="Profile" width="24" height="24"
+              style="border-radius: 100px; vertical-align: middle"
+            >
+          {:else}
+            <Icon ios="f7:person_fill" md="material:person" />
+          {/if}
+        </div>
       </ListItem>
     {/each}
   {/each}

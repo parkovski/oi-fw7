@@ -7,12 +7,14 @@ export interface MinUser {
   id: string;
   name: string;
   username: string;
+  avatarUrl: string | null;
 }
 
 export interface User {
   id: string;
   name: string;
   username: string;
+  avatarUrl: string | null;
   kind?: ContactKind;
 }
 

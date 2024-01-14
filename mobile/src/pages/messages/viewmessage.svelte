@@ -2,6 +2,7 @@
   import {
     Page,
     Navbar,
+    NavTitle,
     Block,
     Link,
   } from 'framework7-svelte';
@@ -14,6 +15,7 @@
 
   let hasContact = false;
   let userName = null;
+  let avatarUrl = null;
   let chats = [];
   let pendingChats = [];
 
@@ -31,7 +33,10 @@
     let messageSentSubscription;
     let messageReceivedSubscription;
 
-    userService.getUser(f7route.params.id).then(u => userName = u.name);
+    userService.getUser(f7route.params.id).then(u => {
+      userName = u.name
+      avatarUrl = u.avatarUrl;
+    });
 
     userService.hasContact(f7route.params.id).then(hc => {
       hasContact = hc;
@@ -82,7 +87,17 @@
 </script>
 
 <Page>
-  <Navbar title="{userName}" backLink="Back" />
+  <Navbar backLink="Back">
+    <NavTitle>
+      {#if avatarUrl}
+        <img src={`https://api.oi.parkovski.com/uploads/${avatarUrl}`}
+          alt="Profile" width="24" height="24"
+          style="border-radius: 100px; vertical-align: middle"
+        >
+      {/if}
+      {userName}
+    </NavTitle>
+  </Navbar>
   {#if hasContact}
     <div style="height: 100%">
       <Chat {chats} {pendingChats} {onSend} />

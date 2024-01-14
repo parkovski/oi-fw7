@@ -181,7 +181,8 @@ export async function getUserInfo(req: Request, res: Response) {
 
       const userResult = await getPool().query<User>(
         `
-        SELECT users.id, users.name, users.username, contacts.kind
+        SELECT users.id, users.name, users.username, users.avatar_url AS "avatarUrl",
+          contacts.kind
         FROM users
         LEFT JOIN contacts ON users.id = contacts.uid_contact
           AND contacts.uid_owner = (SELECT uid FROM sessions WHERE sesskey = $2)
@@ -196,7 +197,7 @@ export async function getUserInfo(req: Request, res: Response) {
       }
     } else {
       const userResult = await getPool().query<MinUser>(
-        `SELECT id, name, username FROM users WHERE id = $1`,
+        `SELECT id, name, username, avatar_url AS "avatarUrl" FROM users WHERE id = $1`,
         [uid]
       );
       if (userResult.rowCount === 0) {

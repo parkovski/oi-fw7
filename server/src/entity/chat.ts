@@ -152,13 +152,15 @@ export async function getUserChatSummary(req: Request, res: Response) {
     const summaryResult = await client.query<ChatSummary>(
       `
       SELECT DISTINCT ON (user_messages.uid_from)
-        user_messages.uid_from AS uid, users.name, users.username
+        user_messages.uid_from AS uid, users.name, users.username,
+        users.avatar_url AS "avatarUrl"
       FROM user_messages
       INNER JOIN users ON user_messages.uid_from = users.id
       WHERE user_messages.uid_to = $1
       UNION
       SELECT DISTINCT ON (user_messages.uid_to)
-        user_messages.uid_to AS uid, users.name, users.username
+        user_messages.uid_to AS uid, users.name, users.username,
+        users.avatar_url AS "avatarUrl"
       FROM user_messages
       INNER JOIN users ON user_messages.uid_to = users.id
       WHERE user_messages.uid_from = $1

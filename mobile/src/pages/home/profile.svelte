@@ -39,7 +39,6 @@
       phone = p.phone;
       isPublic = p.public;
       profilePhoto = p.avatarUrl ? `https://api.oi.parkovski.com/uploads/${p.avatarUrl}` : null;
-      console.log(p.avatarUrl);
     });
     profileService.getProfile().then(async profile => {
       const qrcode = await writeBarcodeToImageFile(

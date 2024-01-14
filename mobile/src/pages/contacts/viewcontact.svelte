@@ -104,8 +104,13 @@
   <Card>
     <CardHeader>
       <div>
-        <Icon ios="f7:person_fill" md="material:person"
-          /><span style="margin-left: 8px">{contact.name}</span>
+        {#if contact.avatarUrl}
+          <img
+            src={`https://api.oi.parkovski.com/uploads/${contact.avatarUrl}`}
+            alt="Profile" width="48" height="48"
+            style="border-radius: 100px; vertical-align: middle"
+          >{:else}<Icon ios="f7:person_fill" md="material:person"
+          />{/if}<span style="margin-left: 8px">{contact.name}</span>
       </div>
       {#if contact.kind === 0}
         <Button id="cancel-request-button" on:click={confirmCancelRequest}>

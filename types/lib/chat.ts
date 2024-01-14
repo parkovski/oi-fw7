@@ -2,6 +2,7 @@ export interface ChatSummary {
   uid: string;
   name: string;
   username: string;
+  avatarUrl: string | null;
   unread?: number;
 }
 

@@ -8,29 +8,21 @@
 
   export let messages = [];
 
-  /*function getIosIcon(message) {
-    if (message.from.userId) return 'f7:person_fill';
-    if (message.from.groupId) return 'f7:person_3_fill';
-    if (message.from.eventId) return 'f7:calendar';
-  }
-
-  function getMdIcon(message) {
-    if (message.from.userId) return 'material:person';
-    if (message.from.groupId) return 'material:groups';
-    if (message.from.eventId) return 'material:event';
-  }*/
-  function getIosIcon(_message) {
-    return 'f7:person_fill';
-  }
-  function getMdIcon(_message) {
-    return 'material:person';
-  }
 </script>
 
 <List style="margin-top: 0" strongIos outlineIos dividers>
   {#each messages as message (message.uid)}
     <ListItem title={message.name} href={`/messages/view/${message.uid}/`}>
-      <Icon slot="media" ios={getIosIcon(message)} md={getMdIcon(message)} />
+      <div slot="media">
+        {#if message.avatarUrl}
+          <img src={`https://api.oi.parkovski.com/uploads/${message.avatarUrl}`}
+            alt="Profile" width="24" height="24"
+            style="border-radius: 100px; vertical-align: middle"
+          >
+        {:else}
+          <Icon ios="f7:person_fill" md="material:person" />
+        {/if}
+      </div>
       {#if message.unread}
         <Badge color="red">{message.unread}</Badge>
       {/if}
