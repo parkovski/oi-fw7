@@ -59,7 +59,7 @@ var routes = [
   },
   {
     path: '/groups/requests/:id/',
-    asynComponent: () => import('../pages/groups/viewrequests.svelte'),
+    asyncComponent: () => import('../pages/groups/viewrequests.svelte'),
   },
   {
     path: '/groups/invite/:id/',
