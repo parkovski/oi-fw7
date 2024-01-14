@@ -91,7 +91,7 @@
     <NavTitle>
       {#if avatarUrl}
         <img src={`https://api.oi.parkovski.com/uploads/${avatarUrl}`}
-          alt="Profile" width="24" height="24"
+          alt="Profile" width="32" height="32"
           style="border-radius: 100px; vertical-align: middle"
         >
       {/if}
