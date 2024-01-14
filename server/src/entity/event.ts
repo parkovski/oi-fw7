@@ -8,7 +8,7 @@ import {
 } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';
 import {
-  AttendanceKind, EventMember, Event, EventSummary,
+  AttendanceKind, EventMember, Event, EventSummary, EventComment,
 } from 'oi-types/event';
 import {
   EventAddedMessage, EventAttendanceChangedMessage, EventRespondedMessage,
@@ -99,7 +99,54 @@ export async function getEventInfo(req: Request, res: Response) {
     if (memberResult.rowCount) {
       eventInfo.members = memberResult.rows;
     }
+
+    // Get the comments list
+    const commentsResult = await client.query<EventComment>(
+      `
+      SELECT event_comments.id, users.id AS "from", users.name AS "fromName",
+        users.avatar_url AS "avatarUrl", event_comments.message
+      FROM event_comments
+      LEFT JOIN users ON event_comments.uid_from = users.id
+      WHERE event_comments.eid = $1
+      `,
+      [eid]
+    );
+    if (commentsResult.rowCount) {
+      eventInfo.comments = commentsResult.rows;
+    }
     res.json(eventInfo);
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    client && client.release();
+    res.end();
+  }
+}
+
+export async function postEventComment(req: Request, res: Response) {
+  let client;
+
+  try {
+    const session = validateUuid(req.cookies.session, 401);
+    const eid = validateNumeric(req.params.eid);
+    const text = validateMinMaxLength(req.body.text, 1, 2000);
+
+    client = await getPool().connect();
+
+    const result = await client.query<{ id: string }>(
+      `
+      INSERT INTO event_comments
+      (eid, uid_from, message)
+      VALUES ($1, (SELECT uid FROM sessions WHERE sesskey = $2), $3)
+      RETURNING id
+      `,
+      [eid, session, text]
+    );
+    if (!result.rowCount) {
+      res.status(500);
+      return;
+    }
+    res.write(result.rows[0].id);
   } catch (e) {
     handleError(e, res);
   } finally {

@@ -27,7 +27,7 @@ import {
 } from '../entity/groupchat.js';
 import {
   getEvents, getEventInfo, newEvent, setEventAttendance, inviteToEvent,
-  makeEventHost,
+  makeEventHost, postEventComment,
 } from '../entity/event.js';
 import {
   getGroupEvents, getGroupEventInfo, newGroupEvent, setGroupEventAttendance,
@@ -163,6 +163,7 @@ export default async function serve(port: number) {
   app.post('/events/:eid/setattendance', setEventAttendance);
   app.post('/events/:eid/invite', inviteToEvent);
   app.post('/events/:eid/makehost', makeEventHost);
+  app.post('/events/:eid/comment', postEventComment);
   app.post('/newevent', newEvent);
 
   const server = app.listen(port, () => {

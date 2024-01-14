@@ -36,6 +36,15 @@ CREATE TABLE IF NOT EXISTS events(
   public boolean NOT NULL DEFAULT FALSE
 );
 
+CREATE TABLE IF NOT EXISTS event_comments(
+  id bigserial PRIMARY KEY,
+  eid bigint NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  uid_from bigint REFERENCES users(id) ON DELETE SET NULL,
+  sent timestamp without time zone NOT NULL DEFAULT NOW(),
+  message text
+);
+CREATE INDEX IF NOT EXISTS event_comments_eid_idx ON event_comments(eid);
+
 CREATE TABLE IF NOT EXISTS contacts(
   uid_owner bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   uid_contact bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,

@@ -13,6 +13,15 @@ export interface EventMember {
   kind: AttendanceKind;
 }
 
+export interface EventComment {
+  id: string;
+  from: string;
+  fromName: string;
+  avatarUrl: string | null;
+  //sent: Date;
+  message: string;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -23,6 +32,7 @@ export interface Event {
   public: boolean;
   kind: AttendanceKind | null;
   members?: EventMember[];
+  comments?: EventComment[];
 }
 
 export interface EventSummary {

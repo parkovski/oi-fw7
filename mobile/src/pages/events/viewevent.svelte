@@ -10,10 +10,13 @@
     Segmented,
     List,
     ListItem,
+    Icon,
+    TextEditor,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import eventService from '../../services/event';
   import { formatTimeRange, formatDate } from '../../js/timeutils';
+  import innerTextPolyfill from '../../js/innertext';
 
   export let f7route;
 
@@ -25,6 +28,7 @@
     notAttending: [],
     invited: [],
   };
+  let textEditor;
 
   function sortAttendance(members) {
     attendance = {
@@ -75,6 +79,17 @@
     }
   }
 
+  async function postComment() {
+    const instance = textEditor.instance();
+    let text = instance.contentEl.innerText || innerTextPolyfill(instance.contentEl);
+    text = text.trim();
+    instance.clearValue();
+    if (text === '') {
+      return;
+    }
+    await eventService.postComment(f7route.params.id, text);
+  }
+
   async function onRefresh(done) {
     await eventService.getEvent(f7route.params.id).refresh();
     done();
@@ -92,6 +107,41 @@
     };
   });
 </script>
+
+<style>
+  .comments-section, .editor-section {
+    padding: .5em calc(var(--f7-list-item-padding-horizontal) + var(--f7-safe-area-left)) 0;
+  }
+  .editor-section {
+    display: flex;
+    flex-flow: row;
+    align-items: flex-end;
+    padding-top: 1em;
+    padding-bottom: .5em;
+  }
+  :global(.ios .comments-send-button) {
+    padding-bottom: .75em;
+  }
+  .comment-box {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+  }
+  :global(.comment-box > i, .comment-box img) {
+    margin-right: 16px;
+  }
+  .author {
+    font-size: 75%;
+    margin-bottom: 0;
+  }
+  .comment-box .author {
+    margin-top: 0;
+  }
+  .comment {
+    margin-top: 0;
+    margin-bottom: .5em;
+  }
+</style>
 
 <Page ptr onPtrRefresh={onRefresh}>
   <Navbar backLink="Back">
@@ -136,6 +186,43 @@
         <ListItem>
           {formatDate(event.startTime)} {formatTimeRange(event.startTime, event.endTime)}
         </ListItem>
+        <ListItem groupTitle>Comments</ListItem>
+        <div class="editor-section">
+          <TextEditor
+            bind:this={textEditor}
+            placeholder="Say something..."
+            mode=""
+            resizable
+            style="flex: 1 1 auto; margin: 0"
+          />
+          <Button class="comments-send-button" onClick={postComment}>
+            Send
+          </Button>
+        </div>
+        {#if event.comments}
+          <div class="comments-section">
+            {#each event.comments as comment (comment.id) }
+              <div class="comment-box">
+                {#if comment.avatarUrl}
+                  <img src={`https://api.oi.parkovski.com/uploads/${comment.avatarUrl}`}
+                    alt="Profile" width="32" height="32"
+                    style="border-radius: 100px; vertical-align: middle"
+                  >
+                {:else}
+                  <Icon ios="f7:person_fill" md="material:person" style="width: 32px; height: 32px"/>
+                {/if}
+                <div>
+                  <p class="author">
+                    {comment.fromName}
+                  </p>
+                  <p class="comment">
+                    {comment.message}
+                  </p>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
       </List>
     {:else if currentButton === 'attendance'}
       <List style="margin-top: 0">
