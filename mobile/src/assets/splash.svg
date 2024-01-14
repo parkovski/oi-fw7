@@ -2,16 +2,16 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="512"
-   height="512"
-   viewBox="0 0 512 512"
+   width="2732"
+   height="2732"
+   viewBox="0 0 2732 2732"
    version="1.1"
    id="svg1"
    inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
-   sodipodi:docname="oi-logo.svg"
-   inkscape:export-filename="L:\home\parker\Documents\dev\openinvite\mobile\resources\icon.png"
-   inkscape:export-xdpi="192"
-   inkscape:export-ydpi="192"
+   sodipodi:docname="splash.svg"
+   inkscape:export-filename="..\..\resources\splash.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -23,12 +23,12 @@
      borderopacity="0.25"
      inkscape:showpageshadow="2"
      inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
+     inkscape:pagecheckerboard="false"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.4485269"
-     inkscape:cx="276.1426"
-     inkscape:cy="226.78211"
+     inkscape:zoom="0.2560658"
+     inkscape:cx="1968.2441"
+     inkscape:cy="1419.557"
      inkscape:window-width="1920"
      inkscape:window-height="1009"
      inkscape:window-x="1912"
@@ -44,33 +44,33 @@
     <ellipse
        style="display:inline;fill:#031a2b;fill-opacity:1;stroke:#1a1a1a;stroke-width:4.95164"
        id="path3"
-       cx="256"
-       cy="256"
+       cx="1366"
+       cy="1366"
        rx="253.52417"
        ry="253.52419" />
     <rect
-       style="display:none;fill:#031a2b;fill-opacity:1;stroke:none;stroke-width:5"
+       style="display:inline;fill:#031a2b;fill-opacity:1;stroke:none;stroke-width:26.6797"
        id="rect3"
-       width="512"
-       height="512"
+       width="2732"
+       height="2732"
        x="0"
        y="0" />
     <text
        xml:space="preserve"
-       style="font-size:400px;font-family:Geoffrey;-inkscape-font-specification:Geoffrey;letter-spacing:-18px;word-spacing:-0.7px;fill:#000000;stroke:#1a1a1a;stroke-width:5"
-       x="42.802097"
-       y="372.79254"
+       style="font-size:1002.12px;font-family:Geoffrey;-inkscape-font-specification:Geoffrey;letter-spacing:-45.0954px;word-spacing:-1.75371px;fill:#000000;stroke:#1a1a1a;stroke-width:12.5265"
+       x="879.73859"
+       y="1714.8628"
        id="text1"><tspan
          sodipodi:role="line"
          id="tspan1"
-         x="42.802097"
-         y="372.79254"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:400px;font-family:Geoffrey;-inkscape-font-specification:Geoffrey;fill:#309bee;fill-opacity:1">o<tspan
-   style="font-size:293.333px;fill:#309bee;fill-opacity:1"
+         x="879.73859"
+         y="1714.8628"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1002.12px;font-family:Geoffrey;-inkscape-font-specification:Geoffrey;fill:#309bee;fill-opacity:1;stroke-width:12.5265">o<tspan
+   style="font-size:734.887px;fill:#309bee;fill-opacity:1;stroke-width:12.5265"
    id="tspan2"> </tspan>i</tspan></text>
     <path
-       style="fill:none;fill-opacity:1;stroke:#59db70;stroke-width:32;stroke-dasharray:none;stroke-opacity:1"
-       d="m 157.43598,207.06383 c 0,0 71.4903,18.8924 69.97727,82.52214 -0.67367,28.33042 18.82657,-168.61325 158.27859,-168.61325"
+       style="fill:none;fill-opacity:1;stroke:#59db70;stroke-width:80.1695;stroke-dasharray:none;stroke-opacity:1"
+       d="m 1169.4197,1304.0761 c 0,0 179.1048,47.3311 175.3143,206.7427 -1.6878,70.9761 47.166,-422.4266 396.5348,-422.4266"
        id="path1"
        sodipodi:nodetypes="csc" />
   </g>
