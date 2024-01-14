@@ -65,8 +65,7 @@ class WebSocketService {
     this._webSocket.addEventListener('message', this._onMessage_listener);
   }
 
-  _onError(event: Event) {
-    console.error(event);
+  _onError(_event: Event) {
   }
 
   _onClose(_event: CloseEvent) {
