@@ -84,7 +84,7 @@ class EventService {
         const event = await fetchJson(`/events/${id}`);
         event.startTime = new Date(event.startTime);
         event.endTime = new Date(event.endTime);
-        event.comments.reverse();
+        event.comments && event.comments.reverse();
         return event;
       });
       this._eventMap.set(id, event);
