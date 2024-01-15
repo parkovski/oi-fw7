@@ -8,12 +8,15 @@
     Card,
     CardHeader,
     CardContent,
+    Button,
+    Icon,
   } from 'framework7-svelte';
   import summaryService from '../../services/summary';
   import { onMount } from 'svelte';
   import { onLogin } from '../../js/onlogin';
 
   let items = [];
+  let searchInput;
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -45,6 +48,13 @@
     }
   }
 
+  function clearSearch() {
+    searchInput.value = '';
+  }
+
+  function search() {
+  }
+
   async function onRefresh(done) {
     await summaryService.getItems().refresh();
     done();
@@ -64,6 +74,15 @@
   });
 </script>
 
+<style>
+  .search-container {
+    display: flex;
+    flex-flow: row;
+    /*margin: 16px 0 16px 16px;*/
+    align-items: center;
+  }
+</style>
+
 <Page name="home" ptr onPtrRefresh={onRefresh}>
   <!-- Top Navbar -->
   <Navbar>
@@ -72,6 +91,22 @@
       <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="right" />
     </NavRight>
   </Navbar>
+
+  <Card>
+    <CardContent style="padding-right: 4px">
+      <div class="search-container">
+        <input type="text" placeholder="Search"
+          style="flex: 1 0 auto; font-size: 110%"
+          bind:this={searchInput} />
+        <Button style="flex: 0 0 auto; padding: 0 4px" onClick={clearSearch}>
+          <Icon ios="f7:xmark" md="material:clear" />
+        </Button>
+        <Button style="flex: 0 0 auto;" onClick={search}>
+          <Icon ios="f7:search" md="material:search" />
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
 
   <!-- Page content -->
   {#each items as item (item.id)}
@@ -82,10 +117,6 @@
       <CardContent>
         {item.textBefore}<Link href={item.link}>{item.name}</Link>{item.textAfter}
       </CardContent>
-    </Card>
-  {:else}
-    <Card>
-      <CardContent>Nothing here</CardContent>
     </Card>
   {/each}
 </Page>

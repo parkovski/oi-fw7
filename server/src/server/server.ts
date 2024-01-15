@@ -36,6 +36,7 @@ import { getHomeSummary, storePushEndpoint } from '../entity/home.js';
 import {
   getNotificationSettings, setNotificationSetting, setAllNotificationSettings
 } from '../entity/settings.js';
+import { search } from '../entity/search.js';
 
 export default async function serve(port: number) {
   const dbHost = process.env.DB_HOST || 'localhost';
@@ -146,7 +147,6 @@ export default async function serve(port: number) {
   app.post('/groups/:gid/newevent', newGroupEvent);
   app.post('/newgroup', newGroup);
 
-
   app.get('/contacts', getContacts);
   app.get('/contactrequests', getContactRequests);
   app.get('/contacts/:uid/exists', hasContact);
@@ -165,6 +165,8 @@ export default async function serve(port: number) {
   app.post('/events/:eid/makehost', makeEventHost);
   app.post('/events/:eid/comment', postEventComment);
   app.post('/newevent', newEvent);
+
+  app.get('/search', search);
 
   const server = app.listen(port, () => {
     console.log('>> Server is listening on port ' + port);
