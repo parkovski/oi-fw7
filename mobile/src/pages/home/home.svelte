@@ -14,9 +14,11 @@
   import summaryService from '../../services/summary';
   import { onMount } from 'svelte';
   import { onLogin } from '../../js/onlogin';
+  import { fetchJson } from '../../js/fetch';
 
   let items = [];
   let searchInput;
+  let searchResults = null;
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -48,15 +50,32 @@
     }
   }
 
-  function clearSearch() {
-    searchInput.value = '';
+  function getSearchResultLink(result) {
+    switch (result.kind) {
+    case 1:
+      return `/events/view/${result.id}/`;
+    case 2:
+      return `/groups/view/${result.id}/`;
+    }
   }
 
-  function search() {
+  function clearSearch() {
+    searchInput.value = '';
+    searchResults = null;
+  }
+
+  async function search() {
+    const results = await fetchJson('/search?q=' + encodeURIComponent(searchInput.value));
+    results.forEach(result => result.uniqueId = `${result.kind}:${result.id}`);
+    searchResults = results;
   }
 
   async function onRefresh(done) {
-    await summaryService.getItems().refresh();
+    if (searchResults) {
+      await search();
+    } else {
+      await summaryService.getItems().refresh();
+    }
     done();
   }
 
@@ -108,15 +127,37 @@
     </CardContent>
   </Card>
 
-  <!-- Page content -->
-  {#each items as item (item.id)}
-    <Card>
-      <CardHeader>
-        {item.title}
-      </CardHeader>
-      <CardContent>
-        {item.textBefore}<Link href={item.link}>{item.name}</Link>{item.textAfter}
-      </CardContent>
-    </Card>
-  {/each}
+  {#if searchResults}
+    {#each searchResults as result (result.uniqueId)}
+      <Link href={getSearchResultLink(result)} style="display: block">
+        <Card>
+          <CardHeader>
+            {result.title}
+          </CardHeader>
+          {#if result.description}
+            <CardContent>
+              {result.description}
+            </CardContent>
+          {/if}
+        </Card>
+      </Link>
+    {:else}
+      <Card>
+        <CardContent>
+          No results were found.
+        </CardContent>
+      </Card>
+    {/each}
+  {:else}
+    {#each items as item (item.id)}
+      <Card>
+        <CardHeader>
+          {item.title}
+        </CardHeader>
+        <CardContent>
+          {item.textBefore}<Link href={item.link}>{item.name}</Link>{item.textAfter}
+        </CardContent>
+      </Card>
+    {/each}
+  {/if}
 </Page>

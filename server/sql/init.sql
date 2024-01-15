@@ -33,8 +33,13 @@ CREATE TABLE IF NOT EXISTS events(
   start_time timestamp without time zone NOT NULL,
   end_time timestamp without time zone NOT NULL,
   capacity integer,
-  public boolean NOT NULL DEFAULT FALSE
+  public boolean NOT NULL DEFAULT FALSE,
+  ts tsvector GENERATED ALWAYS AS (
+    to_tsvector('english', title || ' ' || coalesce(place, '') || ' ' ||
+      coalesce(description, ''))
+  ) STORED
 );
+CREATE INDEX IF NOT EXISTS events_ts_idx ON events USING GIN (ts);
 
 CREATE TABLE IF NOT EXISTS event_comments(
   id bigserial PRIMARY KEY,
@@ -66,8 +71,13 @@ CREATE INDEX IF NOT EXISTS attendance_eid_idx ON attendance(eid);
 CREATE TABLE IF NOT EXISTS groups(
   id bigserial PRIMARY KEY,
   name text NOT NULL,
-  public boolean NOT NULL DEFAULT FALSE
+  description text,
+  public boolean NOT NULL DEFAULT FALSE,
+  ts tsvector GENERATED ALWAYS AS (
+    to_tsvector('english', name || ' ' || coalesce(description, ''))
+  ) STORED
 );
+CREATE INDEX IF NOT EXISTS groups_ts_idx ON groups USING GIN (ts);
 
 CREATE TABLE IF NOT EXISTS groupmems(
   uid bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,

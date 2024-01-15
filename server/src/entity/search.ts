@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { getPool } from '../util/db.js';
 import { handleError } from '../util/error.js';
 import { validateMinMaxLength } from '../util/validation.js';
+import { SearchResult } from 'oi-types/search';
 
 export async function search(req: Request, res: Response) {
   let client;
@@ -11,14 +12,20 @@ export async function search(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const message = await client.query(
+    const message = await client.query<SearchResult>(
       `
-      SELECT $1::text AS message
+      SELECT id, title, description, 1::smallint AS kind
+      FROM events
+      WHERE public = TRUE AND ts @@ to_tsquery('english', $1::text)
+      UNION
+      SELECT id, name, description, 2::smallint AS kind
+      FROM groups
+      WHERE public = TRUE AND ts @@ to_tsquery('english', $1::text)
       `,
       [text]
     );
 
-    res.write(message.rows[0].message);
+    res.json(message.rows);
   } catch (e) {
     handleError(e, res);
   } finally {
