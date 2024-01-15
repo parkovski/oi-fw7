@@ -261,7 +261,7 @@
           bind:value={calendarValue} />
       {:else if currentButton === 'members'}
         <div class="contacts-container">
-          <Contacts contacts={group.members} />
+          <Contacts contacts={group.members} requestedText="Invited" />
         </div>
       {/if}
     </div>

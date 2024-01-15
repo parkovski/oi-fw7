@@ -8,6 +8,7 @@
   import { beforeUpdate } from 'svelte';
 
   export let contacts = [];
+  export let requestedText = 'Requested';
 
   let firstLetters = [];
   let contactsByFirstLetter = {};
@@ -34,7 +35,7 @@
     <ListItem title={firstLetter} groupTitle />
     {#each contactsByFirstLetter[firstLetter] as contact (contact.id)}
       <ListItem title={contact.name} href={`/contacts/view/${contact.id}/`}
-        footer={contact.kind === 0 ? 'Requested' : undefined}>
+        footer={contact.kind === 0 ? requestedText : undefined}>
         <div slot="media">
           {#if contact.avatarUrl}
             <img src={`https://api.oi.parkovski.com/uploads/${contact.avatarUrl}`}
