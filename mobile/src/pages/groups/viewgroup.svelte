@@ -269,6 +269,9 @@
             <p>{group.description}</p>
           </div>
         {/if}
+        <div class="group-description">
+          <p>This group is {#if group.public}public{:else}private{/if}.</p>
+        </div>
         <div class="contacts-container">
           <Contacts contacts={group.members} requestedText="Invited" />
         </div>
