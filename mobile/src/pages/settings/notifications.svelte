@@ -83,8 +83,8 @@
   });
 </script>
 
-<Page name="settings">
-  <Navbar title="Settings" backLink="Back"/>
+<Page name="notification-settings">
+  <Navbar title="Notification settings" backLink="Back"/>
 
   <List strongIos style="margin-top: 0">
     <ListItem groupTitle>Notifications</ListItem>

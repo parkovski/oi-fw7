@@ -31,7 +31,23 @@ var routes = [
   },
   {
     path: '/settings/',
-    asyncComponent: () => import('../pages/home/settings.svelte'),
+    asyncComponent: () => import('../pages/settings/settings.svelte'),
+  },
+  {
+    path: '/settings/account/',
+    asyncComponent: () => import('../pages/settings/account.svelte'),
+  },
+  {
+    path: '/settings/password/',
+    asyncComponent: () => import('../pages/settings/password.svelte'),
+  },
+  {
+    path: '/settings/link-account/',
+    asyncComponent: () => import('../pages/settings/link-account.svelte'),
+  },
+  {
+    path: '/settings/notifications/',
+    asyncComponent: () => import('../pages/settings/notifications.svelte'),
   },
   {
     path: '/developer/',
