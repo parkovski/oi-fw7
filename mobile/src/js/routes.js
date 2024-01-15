@@ -1,4 +1,12 @@
 import HomePage from '../pages/home/home.svelte';
+import HomePanelPage from '../pages/home/homepanel.svelte';
+import GroupPanelPage from '../pages/groups/grouppanel.svelte';
+import GroupsPage from '../pages/groups/groups.svelte';
+import EventPanelPage from '../pages/events/eventpanel.svelte';
+import EventsPage from '../pages/events/events.svelte';
+import ContactsPage from '../pages/contacts/contacts.svelte';
+import MessagesPage from '../pages/messages/messages.svelte';
+import NotFoundPage from '../pages/404.svelte';
 
 var routes = [
   {
@@ -7,7 +15,7 @@ var routes = [
   },
   {
     path: '/panels/home/',
-    asyncComponent: () => import('../pages/home/homepanel.svelte'),
+    component: HomePanelPage,
   },
   {
     path: '/profile/',
@@ -31,11 +39,11 @@ var routes = [
   },
   {
     path: '/panels/group/:id/',
-    asyncComponent: () => import('../pages/groups/grouppanel.svelte'),
+    component: GroupPanelPage,
   },
   {
     path: '/groups/',
-    asyncComponent: () => import('../pages/groups/groups.svelte'),
+    component: GroupsPage,
   },
   {
     path: '/groups/view/:id/',
@@ -67,11 +75,11 @@ var routes = [
   },
   {
     path: '/panels/event/:id/',
-    asyncComponent: () => import('../pages/events/eventpanel.svelte'),
+    component: EventPanelPage,
   },
   {
     path: '/events/',
-    asyncComponent: () => import('../pages/events/events.svelte'),
+    component: EventsPage,
   },
   {
     path: '/events/new/',
@@ -91,7 +99,7 @@ var routes = [
   },
   {
     path: '/contacts/',
-    asyncComponent: () => import('../pages/contacts/contacts.svelte'),
+    component: ContactsPage,
   },
   {
     path: '/contacts/view/:id/',
@@ -99,7 +107,7 @@ var routes = [
   },
   {
     path: '/messages/',
-    asyncComponent: () => import('../pages/messages/messages.svelte'),
+    component: MessagesPage,
   },
   {
     path: '/messages/view/:id/',
@@ -111,7 +119,7 @@ var routes = [
   },
   {
     path: '(.*)',
-    asyncComponent: () => import('../pages/404.svelte'),
+    component: NotFoundPage,
   },
 ];
 
