@@ -150,13 +150,16 @@ class GroupService {
     return fetchJson(`/groups/${id}/chat`);
   }
 
-  async newGroup(name: string, invited: string[] | undefined, isPublic: boolean) {
+  async newGroup(
+    name: string, invited: string[] | undefined, isPublic: boolean, description: string | null
+  ) {
     const group: Group = JSON.parse(await fetchText(`/newgroup`, {
       method: 'POST',
       body: new URLSearchParams({
         name,
         invited: invited && JSON.stringify(invited) || '[]',
         public: ''+isPublic,
+        description: description ?? '',
       }),
     }));
     const groups = await this._groups.get();

@@ -4,7 +4,7 @@ import wsclients from '../server/wsclients.js';
 import { handleError, StatusError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateArrayEach, validateMinMaxLength,
-  validateBoolean,
+  validateBoolean, validateIfDefined,
 } from '../util/validation.js';
 import {
   Membership, GroupSummary, GroupMember, Group,
@@ -91,7 +91,7 @@ export async function getGroupInfo(req: Request, res: Response) {
     client = await getPool().connect();
 
     const basicInfo = await client.query<Group>(
-      `SELECT id, name, public FROM groups WHERE id = $1`,
+      `SELECT id, name, description, public FROM groups WHERE id = $1`,
       [gid]
     );
     if (basicInfo.rowCount === 0) {
@@ -481,6 +481,8 @@ export async function newGroup(req: Request, res: Response) {
   try {
     const session = validateUuid(req.cookies.session, 401);
     const name = validateMinMaxLength(req.body.name, 1, 255);
+    const description: string | null =
+      req.body.description && validateMinMaxLength(req.body.description, 1, 1000) || null;
     const isPublic = validateBoolean(req.body.public);
     const invited = validateArrayEach(req.body.invited || [], validateNumeric);
 
@@ -489,8 +491,8 @@ export async function newGroup(req: Request, res: Response) {
     const myUid = await getUserId(client, session);
 
     let newGroupResult = await client.query<{ id: string }>(
-      `INSERT INTO groups (name, public) VALUES ($1, $2) RETURNING id`,
-      [name, isPublic]
+      `INSERT INTO groups (name, public, description) VALUES ($1, $2, $3) RETURNING id`,
+      [name, isPublic, description]
     );
     const gid = newGroupResult.rows[0].id;
 

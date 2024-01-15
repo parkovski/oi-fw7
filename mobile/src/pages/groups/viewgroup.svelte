@@ -218,6 +218,10 @@
   .contacts-container {
     overflow-y: scroll;
   }
+
+  .group-description {
+    padding: 0 16px;
+  }
 </style>
 
 <Page ptr onPtrRefresh={onRefresh}>
@@ -246,7 +250,7 @@
                 <Badge color="blue" style="margin-left: 8px">{upcomingEvents.length}</Badge>
               {/if}
             </Button>
-            <Button small id="membersButton" on:click={changeView('members')}>Members</Button>
+            <Button small id="membersButton" on:click={changeView('members')}>Summary</Button>
           </Segmented>
         </Block>
       {#if currentButton === 'chat'}
@@ -260,6 +264,11 @@
         <Calendar groupEvents {events} elementId="group-calendar"
           bind:value={calendarValue} />
       {:else if currentButton === 'members'}
+        {#if group.description}
+          <div class="group-description">
+            <p>{group.description}</p>
+          </div>
+        {/if}
         <div class="contacts-container">
           <Contacts contacts={group.members} requestedText="Invited" />
         </div>

@@ -17,6 +17,7 @@
   let items = [];
   let value;
   let name;
+  let description;
   let isPublic = false;
 
   let validationErrorName = null;
@@ -48,7 +49,8 @@
       return;
     }
     const invited = value && value.map(v => v.value);
-    const gid = await groupService.newGroup(name.trim(), invited, isPublic);
+    const desc = description && description.length && description || null;
+    const gid = await groupService.newGroup(name.trim(), invited, isPublic, desc);
     f7router.navigate(`/groups/view/${gid}/`, { reloadCurrent: true });
   }
 </script>
@@ -62,6 +64,8 @@
         {validationErrorName}
       </ListItem>
     {/if}
+    <ListInput type="textarea" name="description" placeholder="Description"
+      bind:value={description} />
     <ListItem>
       <Select {items} searchable multiple bind:value placeholder="Select contacts" />
     </ListItem>

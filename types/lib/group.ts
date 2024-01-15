@@ -29,6 +29,7 @@ export interface Group {
   id: string;
   name: string;
   public: boolean;
+  description: string | null;
   memberKind: Membership | null;
   members?: GroupMember[];
   unreadMessages?: number;
