@@ -1,12 +1,4 @@
 import HomePage from '../pages/home/home.svelte';
-import HomePanelPage from '../pages/home/homepanel.svelte';
-import GroupPanelPage from '../pages/groups/grouppanel.svelte';
-import GroupsPage from '../pages/groups/groups.svelte';
-import EventPanelPage from '../pages/events/eventpanel.svelte';
-import EventsPage from '../pages/events/events.svelte';
-import ContactsPage from '../pages/contacts/contacts.svelte';
-import MessagesPage from '../pages/messages/messages.svelte';
-import NotFoundPage from '../pages/404.svelte';
 
 var routes = [
   {
@@ -15,7 +7,7 @@ var routes = [
   },
   {
     path: '/panels/home/',
-    component: HomePanelPage,
+    asyncComponent: () => import('../pages/home/homepanel.svelte'),
   },
   {
     path: '/profile/',
@@ -39,11 +31,11 @@ var routes = [
   },
   {
     path: '/panels/group/:id/',
-    component: GroupPanelPage,
+    asyncComponent: () => import('../pages/groups/grouppanel.svelte'),
   },
   {
     path: '/groups/',
-    component: GroupsPage,
+    asyncComponent: () => import('../pages/groups/groups.svelte'),
   },
   {
     path: '/groups/view/:id/',
@@ -75,11 +67,11 @@ var routes = [
   },
   {
     path: '/panels/event/:id/',
-    component: EventPanelPage,
+    asyncComponent: () => import('../pages/events/eventpanel.svelte'),
   },
   {
     path: '/events/',
-    component: EventsPage,
+    asyncComponent: () => import('../pages/events/events.svelte'),
   },
   {
     path: '/events/new/',
@@ -99,7 +91,7 @@ var routes = [
   },
   {
     path: '/contacts/',
-    component: ContactsPage,
+    asyncComponent: () => import('../pages/contacts/contacts.svelte'),
   },
   {
     path: '/contacts/view/:id/',
@@ -107,7 +99,7 @@ var routes = [
   },
   {
     path: '/messages/',
-    component: MessagesPage,
+    asyncComponent: () => import('../pages/messages/messages.svelte'),
   },
   {
     path: '/messages/view/:id/',
@@ -119,7 +111,7 @@ var routes = [
   },
   {
     path: '(.*)',
-    component: NotFoundPage,
+    asyncComponent: () => import('../pages/404.svelte'),
   },
 ];
 
