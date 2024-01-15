@@ -8,7 +8,7 @@ import { onWebSocketConnected, listen as wslisten } from './wsserver.js';
 import { initPool } from '../util/db.js';
 import {
   hello, getMyProfile, getUserInfo, authorize, logout, register, updateProfile,
-  uploadProfilePhoto,
+  uploadProfilePhoto, changePassword,
 } from '../entity/user.js';
 import {
   getGroups, getGroupInfo, inviteToGroup, makeGroupAdmin, joinGroup,
@@ -126,9 +126,11 @@ export default async function serve(port: number) {
   app.post('/authorize', authorize);
   app.post('/logout', logout);
   app.post('/register', register);
+
   app.get('/settings/notifications', getNotificationSettings);
   app.put('/settings/notifications', setNotificationSetting);
   app.put('/settings/notifications/all', setAllNotificationSettings);
+  app.post('/settings/password', changePassword);
 
   app.get('/groups', getGroups);
   app.get('/groups/:gid', getGroupInfo);

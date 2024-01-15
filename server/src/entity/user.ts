@@ -396,3 +396,42 @@ export async function register(req: Request, res: Response) {
     res.end();
   }
 }
+
+export async function changePassword(req: Request, res: Response) {
+  let client;
+  try {
+    const session = validateUuid(req.cookies.session, 401);
+    const currentPassword = validateMinMaxLength(req.body.currentPassword, 1, 255);
+    const newPassword = validateMinMaxLength(req.body.newPassword, 6, 255);
+    const confirmPassword = req.body.confirmPassword;
+
+    if (confirmPassword !== newPassword) {
+      throw new StatusError(400, 'Passwords not equal');
+    }
+
+    client = await getPool().connect();
+
+    const myUid = await getUserId(client, session);
+    let q = await client.query(
+      `SELECT pwhash FROM users WHERE id = $1`,
+      [myUid]
+    );
+    if (!await bcrypt.compare(currentPassword, q.rows[0].pwhash)) {
+      throw new StatusError(403, 'Current password did not match');
+    }
+
+    const pwhash = await bcrypt.hash(newPassword, 10);
+    q = await client.query(
+      `UPDATE users SET pwhash = $1 WHERE id = $2`,
+      [pwhash, myUid]
+    );
+    if (q.rowCount === 0) {
+      throw new StatusError(404);
+    }
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    client && client.release();
+    res.end();
+  }
+}
