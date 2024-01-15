@@ -59,6 +59,13 @@
     }
   }
 
+  function getSearchResultIcon(result, ios) {
+    switch (result.kind) {
+    case 1: return ios ? 'f7:calendar' : 'material:event';
+    case 2: return ios ? 'f7:person_3_fill' : 'material:groups';
+    }
+  }
+
   function clearSearch() {
     searchInput.value = '';
     searchResults = null;
@@ -132,7 +139,13 @@
       <Link href={getSearchResultLink(result)} style="display: block">
         <Card>
           <CardHeader>
-            {result.title}
+            <div>
+              <Icon
+                ios={getSearchResultIcon(result, true)}
+                md={getSearchResultIcon(result, false)}
+              />
+              {result.title}
+            </div>
           </CardHeader>
           {#if result.description}
             <CardContent>
