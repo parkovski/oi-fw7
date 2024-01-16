@@ -46,6 +46,18 @@ var routes = [
     asyncComponent: () => import('../pages/settings/link-account.svelte'),
   },
   {
+    path: '/settings/link-account/microsoft/',
+    asyncComponent: () => import('../pages/settings/account-microsoft.svelte'),
+  },
+  {
+    path: '/settings/link-account/google/',
+    asyncComponent: () => import('../pages/settings/account-google.svelte'),
+  },
+  {
+    path: '/settings/link-account/apple/',
+    asyncComponent: () => import('../pages/settings/account-apple.svelte'),
+  },
+  {
     path: '/settings/notifications/',
     asyncComponent: () => import('../pages/settings/notifications.svelte'),
   },
