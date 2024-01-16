@@ -16,11 +16,11 @@ export async function search(req: Request, res: Response) {
       `
       SELECT id, title, description, 1::smallint AS kind
       FROM events
-      WHERE public = TRUE AND ts @@ to_tsquery('english', $1::text)
+      WHERE public = TRUE AND ts @@ plainto_tsquery('english', $1::text)
       UNION
       SELECT id, name, description, 2::smallint AS kind
       FROM groups
-      WHERE public = TRUE AND ts @@ to_tsquery('english', $1::text)
+      WHERE public = TRUE AND ts @@ plainto_tsquery('english', $1::text)
       `,
       [text]
     );
