@@ -68,6 +68,13 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:400px;font-family:Geoffrey;-inkscape-font-specification:Geoffrey;fill:#309bee;fill-opacity:1">o<tspan
    style="font-size:293.333px;fill:#309bee;fill-opacity:1"
    id="tspan2"> </tspan>i</tspan></text>
+    <ellipse
+       style="fill:#309bee;fill-opacity:1;stroke:none;stroke-width:32"
+       id="path2"
+       cx="157.18617"
+       cy="282.64221"
+       rx="45.886642"
+       ry="43.445866" />
     <path
        style="fill:none;fill-opacity:1;stroke:#59db70;stroke-width:32;stroke-dasharray:none;stroke-opacity:1"
        d="m 109.32758,240.0012 c 0,0 36.28212,9.91777 49.95693,72.85715 6.0167,27.69234 5.01944,-118.21722 129.97397,-168.61325"

@@ -26,9 +26,9 @@
      inkscape:pagecheckerboard="false"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="0.2560658"
-     inkscape:cx="1968.2441"
-     inkscape:cy="1419.557"
+     inkscape:zoom="0.18106586"
+     inkscape:cx="2137.3438"
+     inkscape:cy="1317.2002"
      inkscape:window-width="1920"
      inkscape:window-height="1009"
      inkscape:window-x="1912"
@@ -68,6 +68,13 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1002.12px;font-family:Geoffrey;-inkscape-font-specification:Geoffrey;fill:#309bee;fill-opacity:1;stroke-width:12.5265">o<tspan
    style="font-size:734.887px;fill:#309bee;fill-opacity:1;stroke-width:12.5265"
    id="tspan2"> </tspan>i</tspan></text>
+    <ellipse
+       style="fill:#309bee;stroke-width:32"
+       id="path2"
+       cx="1170.1543"
+       cy="1497.3833"
+       rx="129.09666"
+       ry="111.1474" />
     <path
        style="fill:none;fill-opacity:1;stroke:#59db70;stroke-width:80.9456;stroke-dasharray:none;stroke-opacity:1"
        d="m 1031.0627,1380.1608 c 0,0 99.6091,23.115 137.152,169.8056 16.5183,64.5415 13.7806,-275.5248 356.8316,-392.9809"
