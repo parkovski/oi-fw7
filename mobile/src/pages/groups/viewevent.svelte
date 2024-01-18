@@ -105,7 +105,7 @@
         <ListItem groupTitle>Attending?</ListItem>
         <ListItem>
           {#if event.kind === 3}
-            <span style="color: var(--f7-color-green)">You are hosting this event.</span>
+            <span style="color: var(--f7-color-blue)">You are hosting this event.</span>
           {:else}
             <div class="grid grid-cols-3 grid-gap" style="width: 100%">
               <Button small color="red" on:click={setAttendance(-1)}
