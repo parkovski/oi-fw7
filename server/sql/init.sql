@@ -1,5 +1,12 @@
 -- vim: set ft=pgsql:
 
+CREATE TABLE IF NOT EXISTS temp(
+  key text NOT NULL,
+  value text NOT NULL,
+  modified timestamp without time zone NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS temp_key_idx ON temp(key);
+
 CREATE TABLE IF NOT EXISTS users(
   id bigserial PRIMARY KEY,
   username text NOT NULL,
