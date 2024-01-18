@@ -1,7 +1,6 @@
 import BlankPage from '../pages/blank.svelte';
 import HomePage from '../pages/home/home.svelte';
 import HomePanelPage from '../pages/home/homepanel.svelte';
-import LoginPage from '../pages/account/login.svelte';
 import GroupPanelPage from '../pages/groups/grouppanel.svelte';
 import GroupsPage from '../pages/groups/groups.svelte';
 import EventPanelPage from '../pages/events/eventpanel.svelte';
@@ -37,7 +36,7 @@ var routes = [
   },
   {
     path: '/account/login/',
-    component: LoginPage,
+    asyncComponent: () => import('../pages/account/login.svelte'),
   },
   {
     path: '/account/register/',
@@ -58,18 +57,6 @@ var routes = [
   {
     path: '/settings/link-account/',
     asyncComponent: () => import('../pages/settings/link-account.svelte'),
-  },
-  {
-    path: '/settings/link-account/microsoft/',
-    asyncComponent: () => import('../pages/settings/account-microsoft.svelte'),
-  },
-  {
-    path: '/settings/link-account/google/',
-    asyncComponent: () => import('../pages/settings/account-google.svelte'),
-  },
-  {
-    path: '/settings/link-account/apple/',
-    asyncComponent: () => import('../pages/settings/account-apple.svelte'),
   },
   {
     path: '/settings/notifications/',

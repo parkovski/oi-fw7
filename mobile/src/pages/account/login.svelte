@@ -11,6 +11,7 @@
   import { onMount } from 'svelte';
   import { fetchText } from '../../js/fetch';
   import { postLoginEvent } from '../../js/onlogin';
+  import { importGooglePlatform, createMicrosoftButton } from '../../js/linkedaccounts';
 
   export let f7router;
 
@@ -41,91 +42,24 @@
     }
   }
 
-  function importGooglePlatform() {
-    if (document.getElementById('google-platform-script')) {
-      return;
-    }
-
-    const googlePlatformScript = document.createElement('script');
-    googlePlatformScript.id = 'google-platform-script';
-    googlePlatformScript.src = 'https://accounts.google.com/gsi/client';
-    googlePlatformScript.async = true;
-    googlePlatformScript.defer = true;
-    googlePlatformScript.onload = function() {
-      google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: function(response) {
-          console.log(response);
-        }
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('google_btn'), { theme: 'filled_blue' }
-      );
-    };
-    document.body.appendChild(googlePlatformScript);
-  }
-
-  function importApplePlatform() {
-    if (document.getElementById('apple-auth-script')) {
-      return;
-    }
-
-    // Note: This requires some meta tags set, see
-    // https://developer.apple.com/documentation/sign_in_with_apple/displaying_sign_in_with_apple_buttons_on_the_web
-    let metaTag = document.createElement('meta');
-    metaTag.name = 'appleid-signin-client-id';
-    metaTag.content = 'PUT_APPLE_CLIENT_ID_HERE';
-    document.head.appendChild(metaTag);
-
-    metaTag = document.createElement('meta');
-    metaTag.name = 'appleid-signin-scope'
-    metaTag.content = 'PUT_APPLE_SCOPE_HERE';
-    document.head.appendChild(metaTag);
-
-    metaTag = document.createElement('meta');
-    metaTag.name = 'appleid-signin-redirect-uri';
-    metaTag.content = 'PUT_APPLE_REDIRECT_URI_HERE';
-    document.head.appendChild(metaTag);
-
-    metaTag = document.createElement('meta');
-    metaTag.name = 'appleid-signin-state';
-    metaTag.content = 'PUT_APPLE_STATE_HERE';
-
-    const appleIdButton = document.getElementById('appleid-signin');
-    if (document.documentElement.classList.contains('dark')) {
-      appleIdButton.setAttribute('data-color', 'white');
-    } else {
-      appleIdButton.setAttribute('data-color', 'black');
-    }
-    const appleAuthScript = document.createElement('script');
-    appleAuthScript.id = 'apple-auth-script';
-    appleAuthScript.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
-    appleAuthScript.async = true;
-    appleAuthScript.defer = true;
-    appleAuthScript.onload = function() {
-    };
-    document.body.appendChild(appleAuthScript);
-  }
-
   function register() {
     f7router.navigate('/account/register/');
   }
 
   onMount(() => {
-    importGooglePlatform();
+    importGooglePlatform(response => {
+      console.log(response);
+    });
     //importApplePlatform();
+    createMicrosoftButton();
   });
 </script>
 
 <style>
-  :global(.login-button-item .item-inner) {
-    justify-content: center;
-  }
-
-  #appleid-signin {
-    width: 193px;
-    height: 44px;
-    /*cursor: pointer;*/
+  .buttons-container {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
   }
 </style>
 
@@ -149,12 +83,17 @@
       <ListButton title="Sign In" onClick={login} />
     </div>
   </List>
-  <List>
-    <ListItem class="login-button-item">
-      <div id="google_btn"></div>
-    </ListItem>
-    <ListItem class="login-button-item">
-      <div id="appleid-signin" data-border="true" data-type="sign-in"></div>
-    </ListItem>
-  </List>
+  <div class="buttons-container">
+    <List>
+      <ListItem class="login-button-item">
+        <div id="google_btn"></div>
+      </ListItem>
+      <!--ListItem class="login-button-item">
+        <div id="appleid-signin" data-border="true" data-type="sign-in"></div>
+      </ListItem-->
+      <ListItem class="login-button-item">
+        <div id="msft-button"></div>
+      </ListItem>
+    </List>
+  </div>
 </Page>

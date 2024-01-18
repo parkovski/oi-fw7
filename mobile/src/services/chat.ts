@@ -36,6 +36,7 @@ class ChatService {
         uid: msg.from,
         name: msg.fromName,
         username: 'undefined',
+        avatarUrl: null,
         unread: 1,
       });
     } else if (this._chatSummary.data[index].unread) {

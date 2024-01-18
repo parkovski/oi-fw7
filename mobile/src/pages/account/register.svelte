@@ -21,6 +21,13 @@
   }
 </script>
 
+<style>
+  .phantom-button {
+    /* Needs to match the height of the buttons on the login screen */
+    height: 44px;
+  }
+</style>
+
 <Page loginScreen>
   <LoginScreenTitle>Register</LoginScreenTitle>
   <List form>
@@ -34,10 +41,14 @@
   <!-- This empty list is to make the form be at the same height as the login form -->
   <List>
     <ListItem>
-      <div style="height: 44px"></div>
+      <div class="phantom-button"></div>
     </ListItem>
+    <!-- Uncomment this when the Apple signin button is added -->
+    <!--ListItem>
+      <div class="phantom-button"></div>
+    </ListItem-->
     <ListItem>
-      <div style="height: 44px"></div>
+      <div class="phantom-button"></div>
     </ListItem>
   </List>
 </Page>
