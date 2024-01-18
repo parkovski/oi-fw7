@@ -139,7 +139,10 @@
   }
 
   async function onRefresh(done) {
-    await groupService.getGroup(f7route.params.id).refresh();
+    await Promise.all([
+      groupService.getGroup(f7route.params.id).refresh(),
+      groupService.getEvents(f7route.params.id).refresh(),
+    ]);
     done();
   }
 
