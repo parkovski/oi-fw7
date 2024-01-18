@@ -18,12 +18,22 @@
   let username;
   let password;
 
+  function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+  }
+
+  function setupSession(uid) {
+    localStorage.setItem('uid', uid);
+    f7.loginScreen.close();
+    postLoginEvent();
+    f7router.navigate('/blank/');
+  }
+
   async function login() {
     try {
-      let permissionPromise;
-      if ('Notification' in window && Notification.permission !== 'granted') {
-        permissionPromise = Notification.requestPermission();
-      }
+      requestNotificationPermission();
       const uid = await fetchText('/authorize', {
         method: 'POST',
         body: new URLSearchParams({
@@ -31,11 +41,7 @@
           p: password,
         }),
       });
-      localStorage.setItem('uid', uid);
-      f7.loginScreen.close();
-      //permissionPromise && await permissionPromise;
-      postLoginEvent();
-      f7router.navigate('/blank/');
+      setupSession(uid);
     }
     catch (e) {
       console.error(e);
@@ -48,7 +54,13 @@
 
   onMount(() => {
     importGooglePlatform(response => {
-      console.log(response);
+      requestNotificationPermission();
+      fetchText('/auth/google', {
+        method: 'POST',
+        body: new URLSearchParams({ credential: response.credential }),
+      }).then(uid => {
+        setupSession(uid);
+      }).catch(console.error);
     });
     //importApplePlatform();
     createMicrosoftButton();

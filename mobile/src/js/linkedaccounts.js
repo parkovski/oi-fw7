@@ -1,4 +1,4 @@
-export function importGooglePlatform(onInitialize) {
+export function importGooglePlatform(onLogin) {
   if (document.getElementById('google-platform-script')) {
     return;
   }
@@ -11,7 +11,7 @@ export function importGooglePlatform(onInitialize) {
   googlePlatformScript.onload = function() {
     google.accounts.id.initialize({
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-      callback: onInitialize,
+      callback: onLogin,
     });
     google.accounts.id.renderButton(
       document.getElementById('google_btn'), { theme: 'filled_blue' }

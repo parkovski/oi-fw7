@@ -24,6 +24,13 @@ CREATE TABLE IF NOT EXISTS sessions(
 );
 CREATE INDEX IF NOT EXISTS sessions_uid_idx ON sessions(uid);
 
+CREATE TABLE IF NOT EXISTS google_accounts(
+  uid bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  google_id text NOT NULL,
+  token jsonb NOT NULL
+);
+CREATE INDEX IF NOT EXISTS google_accounts_google_id_idx ON google_accounts(google_id);
+
 CREATE TABLE IF NOT EXISTS events(
   id bigserial PRIMARY KEY,
   title text NOT NULL,

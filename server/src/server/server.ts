@@ -9,6 +9,7 @@ import { initPool } from '../util/db.js';
 import {
   hello, authorize, logout, register,
 } from '../auth/openinvite.js';
+import { setGoogleCredential, authorizeWithGoogle } from '../auth/google.js';
 import {
   getMyProfile, getUserInfo, updateProfile, uploadProfilePhoto, changePassword,
 } from '../entity/user.js';
@@ -122,6 +123,9 @@ export default async function serve(port: number) {
   app.post('/authorize', authorize);
   app.post('/logout', logout);
   app.post('/register', register);
+
+  app.post('/auth/google', authorizeWithGoogle);
+  app.put('/auth/google/credential', setGoogleCredential);
 
   app.get('/home', getHomeSummary);
   app.put('/push-endpoint', storePushEndpoint);

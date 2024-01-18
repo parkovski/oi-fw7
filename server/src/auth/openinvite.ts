@@ -48,56 +48,56 @@ export async function hello(req: Request, res: Response) {
 }
 
 export async function authorize(req: Request, res: Response) {
-    let client;
+  let client;
 
-    try {
-      const username = validateMinMaxLength(req.body.u, 1, 64);
-      const password = validateMinMaxLength(req.body.p, 1, 255);
-      const clientName = validateMinMaxLength(req.body.client || 'default', 1, 64);
+  try {
+    const username = validateMinMaxLength(req.body.u, 1, 64);
+    const password = validateMinMaxLength(req.body.p, 1, 255);
+    const clientName = validateMinMaxLength(req.body.client || 'default', 1, 64);
 
-      client = await getPool().connect();
+    client = await getPool().connect();
 
-      const userResult = await client.query<AuthInfo>(
-        `SELECT id, pwhash FROM users WHERE lower(username) = lower($1)`,
-        [username]
-      );
-      if (userResult.rowCount === 0) {
-        res.status(404).send('Unknown username');
-        return;
-      }
-
-      if (!await bcrypt.compare(password, userResult.rows[0].pwhash)) {
-        res.status(403).send('Invalid password');
-        return;
-      }
-
-      const uid = userResult.rows[0].id;
-
-      const sessionResult = await client.query<{ sesskey: string; }>(
-        `
-        INSERT INTO sessions
-        (uid, client, sesskey)
-        VALUES ($1, $2, gen_random_uuid())
-        RETURNING (sesskey)
-        `,
-        [uid, clientName]
-      );
-
-      // Expires in 30 days (1000ms/s * 3600s/hr * 24hr/day * 30days)
-      const expires = new Date(Date.now() + 1000 * 3600 * 24 * 30);
-      res.cookie('session', sessionResult.rows[0].sesskey, {
-        expires,
-        sameSite: 'none',
-        secure: true,
-        //signed: true,
-      });
-      res.write(uid);
-    } catch (e) {
-      handleError(e, res);
-    } finally {
-      client && client.release();
-      res.end();
+    const userResult = await client.query<AuthInfo>(
+      `SELECT id, pwhash FROM users WHERE lower(username) = lower($1)`,
+      [username]
+    );
+    if (userResult.rowCount === 0) {
+      res.status(404).send('Unknown username');
+      return;
     }
+
+    if (!await bcrypt.compare(password, userResult.rows[0].pwhash)) {
+      res.status(403).send('Invalid password');
+      return;
+    }
+
+    const uid = userResult.rows[0].id;
+
+    const sessionResult = await client.query<{ sesskey: string; }>(
+      `
+      INSERT INTO sessions
+      (uid, client, sesskey)
+      VALUES ($1, $2, gen_random_uuid())
+      RETURNING (sesskey)
+      `,
+      [uid, clientName]
+    );
+
+    // Expires in 30 days (1000ms/s * 3600s/hr * 24hr/day * 30days)
+    const expires = new Date(Date.now() + 1000 * 3600 * 24 * 30);
+    res.cookie('session', sessionResult.rows[0].sesskey, {
+      expires,
+      sameSite: 'none',
+      secure: true,
+      //signed: true,
+    });
+    res.write(uid);
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    client && client.release();
+    res.end();
+  }
 }
 
 export async function logout(req: Request, res: Response) {

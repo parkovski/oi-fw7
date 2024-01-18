@@ -1,5 +1,6 @@
 <script>
   import {
+    f7,
     Page,
     Navbar,
     List,
@@ -7,9 +8,17 @@
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import { importGooglePlatform, createMicrosoftButton } from '../../js/linkedaccounts';
+  import { fetchText } from '../../js/fetch';
 
   onMount(() => {
-    importGooglePlatform();
+    importGooglePlatform(response => {
+      fetchText('/auth/google/credential', {
+        method: 'PUT',
+        body: new URLSearchParams({ credential: response.credential }),
+      }).then(() => {
+        f7.dialog.alert('Google account linked.', 'OpenInvite');
+      });
+    });
     createMicrosoftButton();
   })
 </script>
