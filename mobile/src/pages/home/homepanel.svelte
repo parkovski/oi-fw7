@@ -20,6 +20,7 @@
       await fetchAny('/logout', { method: 'POST' });
       localStorage.removeItem('uid');
       f7.panel.close('#right-panel');
+      f7.views.loginScreen.router.navigate('/account/login/');
       f7.loginScreen.open(document.getElementById('login-screen'));
       postLogoutEvent();
     } catch (e) {

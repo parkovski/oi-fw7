@@ -1,5 +1,7 @@
+import BlankPage from '../pages/blank.svelte';
 import HomePage from '../pages/home/home.svelte';
 import HomePanelPage from '../pages/home/homepanel.svelte';
+import LoginPage from '../pages/account/login.svelte';
 import GroupPanelPage from '../pages/groups/grouppanel.svelte';
 import GroupsPage from '../pages/groups/groups.svelte';
 import EventPanelPage from '../pages/events/eventpanel.svelte';
@@ -9,6 +11,10 @@ import MessagesPage from '../pages/messages/messages.svelte';
 import NotFoundPage from '../pages/404.svelte';
 
 var routes = [
+  {
+    path: '/blank/',
+    component: BlankPage
+  },
   {
     path: '/',
     component: HomePage,
@@ -28,6 +34,14 @@ var routes = [
   {
     path: '/qrcode/',
     asyncComponent: () => import('../pages/home/scanqrcode.svelte'),
+  },
+  {
+    path: '/account/login/',
+    component: LoginPage,
+  },
+  {
+    path: '/account/register/',
+    asyncComponent: () => import('../pages/account/register.svelte'),
   },
   {
     path: '/settings/',

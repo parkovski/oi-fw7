@@ -27,18 +27,21 @@
   }
 
   onMount(() => {
-    const contactsSubscription = userService.getContacts().subscribe(value => {
-      contacts = value.contacts.concat(value.pending);
-      followers = value.followers;
+    let contactsSubscription;
+    let requestsSubscription;
+    onLogin(() => {
+      contactsSubscription = userService.getContacts().subscribe(value => {
+        contacts = value.contacts.concat(value.pending);
+        followers = value.followers;
+      });
+      requestsSubscription = userService.getContactRequests().subscribe(value =>
+        requests = value
+      );
     });
-    const requestsSubscription = userService.getContactRequests().subscribe(value =>
-      requests = value
-    );
-    onLogin(() => userService.getContacts().refresh());
 
     return () => {
-      contactsSubscription.unsubscribe();
-      requestsSubscription.unsubscribe();
+      contactsSubscription && contactsSubscription.unsubscribe();
+      requestsSubscription && requestsSubscription.unsubscribe();
     };
   });
 
