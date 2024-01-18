@@ -73,6 +73,9 @@
     flex-flow: column;
     align-items: center;
   }
+  :global(.login-button-item .item-inner) {
+    justify-content: center;
+  }
 </style>
 
 <Page loginScreen>

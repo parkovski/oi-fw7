@@ -80,6 +80,6 @@ export function createMicrosoftButton() {
     button.src = '/icons/ms-symbollockup_signin_dark.svg';
   }
   button.style.width = '193px';
-  button.style.height = '44px';
+  button.style.height = '41px';
   wrapper.appendChild(button);
 }

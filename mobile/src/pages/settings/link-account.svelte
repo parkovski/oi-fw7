@@ -31,6 +31,9 @@
     align-items: center;
     justify-content: center;
   }
+  :global(.login-button-item .item-inner) {
+    justify-content: center;
+  }
 </style>
 
 <Page name="link-account-settings">
