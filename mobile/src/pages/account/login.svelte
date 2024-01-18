@@ -59,7 +59,15 @@
         method: 'POST',
         body: new URLSearchParams({ credential: response.credential }),
       }).then(uid => {
-        setupSession(uid);
+        let re = /^google:([0-9]+)$/.exec(uid);
+        if (re) {
+          // New account flow
+          const provider = 'google';
+          const id = re[1];
+          f7router.navigate('/account/new-linked/', { props: { provider, id } });
+        } else {
+          setupSession(uid);
+        }
       }).catch(console.error);
     });
     //importApplePlatform();

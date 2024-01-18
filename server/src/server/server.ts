@@ -7,7 +7,7 @@ import { WebSocketServer } from 'ws';
 import { onWebSocketConnected, listen as wslisten } from './wsserver.js';
 import { initPool } from '../util/db.js';
 import {
-  hello, authorize, logout, register,
+  hello, authorize, logout, register, registerWithProvider,
 } from '../auth/openinvite.js';
 import { setGoogleCredential, authorizeWithGoogle } from '../auth/google.js';
 import {
@@ -123,6 +123,7 @@ export default async function serve(port: number) {
   app.post('/authorize', authorize);
   app.post('/logout', logout);
   app.post('/register', register);
+  app.post('/register/linked', registerWithProvider);
 
   app.post('/auth/google', authorizeWithGoogle);
   app.put('/auth/google/credential', setGoogleCredential);

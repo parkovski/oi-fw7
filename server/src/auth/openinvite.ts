@@ -123,6 +123,7 @@ export async function register(req: Request, res: Response) {
     const username = validateMinMaxLength(req.body.username, 1, 64);
     const password = validateMinMaxLength(req.body.password, 1, 255);
     const name = validateMinMaxLength(req.body.name, 1, 255);
+    const wantsSession = (req.body.wantsSession ?? 'false') === 'true';
     const email: string | null = req.body.email || null;
     if (email) {
       validateMinMaxLength(email, 1, 255);
@@ -138,17 +139,120 @@ export async function register(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const q = await client.query(
+    const userResult = await client.query(
       `
       INSERT INTO users
       (username, name, email, pwhash)
       VALUES ($1, $2, $3, $4)
+      RETURNING id
       `,
       [username, name, email, pwhash]
     );
-    if (q.rowCount !== 1) {
-      res.status(400).send('User creation failed');
+    if (!userResult.rowCount) {
+      throw new StatusError(400, 'User creation failed');
     }
+
+    if (wantsSession) {
+      const sessionResult = await client.query(
+        `
+        INSERT INTO sessions
+        (uid, client, sesskey)
+        VALUES ($1, $2, gen_random_uuid())
+        RETURNING sesskey
+        `,
+        [userResult.rows[0].id, 'default']
+      );
+      if (!sessionResult.rowCount) {
+        throw new StatusError(500, 'Session creation failed');
+      }
+      // Expires in 30 days (1000ms/s * 3600s/hr * 24hr/day * 30days)
+      const expires = new Date(Date.now() + 1000 * 3600 * 24 * 30);
+      res.cookie('session', sessionResult.rows[0].sesskey, {
+        expires,
+        sameSite: 'none',
+        secure: true,
+        //signed: true,
+      });
+    }
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    client && client.release();
+    res.end();
+  }
+}
+
+export async function registerWithProvider(req: Request, res: Response) {
+  let client;
+
+  try {
+    const username = validateMinMaxLength(req.body.username, 1, 64);
+    const provider = validateMinMaxLength(req.body.provider, 1, 255);
+    const providerName = provider.split(':')[0];
+
+    client = await getPool().connect();
+
+    const providerInfoResult = await client.query(
+      `DELETE FROM temp WHERE key = $1 RETURNING value`, [provider]
+    );
+    if (!providerInfoResult.rowCount) {
+      throw new StatusError(404, 'Linked account not found');
+    }
+
+    let providerInfo = null;
+    let email = null;
+    switch (providerName) {
+    case 'google':
+      providerInfo = JSON.parse(providerInfoResult.rows[0].value);
+      email = providerInfo.email;
+      break;
+    //case 'microsoft':
+    //case 'apple':
+    default:
+      throw new StatusError(400, 'Unsupported provider: ' + providerName);
+    }
+
+    const userResult = await client.query(
+      `INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id`,
+      [username, email]
+    );
+    if (userResult.rowCount === 0) {
+      throw new StatusError(400, 'Create new user failed');
+    }
+    const uid = userResult.rows[0].id;
+
+    switch (providerName) {
+    case 'google':
+      await client.query(
+        `INSERT INTO google_accounts (uid, google_id, token) VALUES ($1, $2, $3)`,
+        [uid, providerInfo.sub, providerInfo]
+      );
+      break;
+    //case 'microsoft':
+    //case 'apple':
+    }
+
+    const sessionResult = await client.query(
+      `
+      INSERT INTO sessions
+      (uid, client, sesskey)
+      VALUES ($1, $2, gen_random_uuid())
+      RETURNING sesskey
+      `,
+      [uid, 'default']
+    );
+    if (!sessionResult.rowCount) {
+      throw new StatusError(500, 'Session creation failed');
+    }
+    // Expires in 30 days (1000ms/s * 3600s/hr * 24hr/day * 30days)
+    const expires = new Date(Date.now() + 1000 * 3600 * 24 * 30);
+    res.cookie('session', sessionResult.rows[0].sesskey, {
+      expires,
+      sameSite: 'none',
+      secure: true,
+      //signed: true,
+    });
+    res.write(uid);
   } catch (e) {
     handleError(e, res);
   } finally {

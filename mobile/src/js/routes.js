@@ -43,6 +43,10 @@ var routes = [
     asyncComponent: () => import('../pages/account/register.svelte'),
   },
   {
+    path: '/account/new-linked/',
+    asyncComponent: () => import('../pages/account/new-linked.svelte'),
+  },
+  {
     path: '/settings/',
     asyncComponent: () => import('../pages/settings/settings.svelte'),
   },

@@ -64,8 +64,12 @@ export async function authorizeWithGoogle(req: Request, res: Response) {
       [googleUserId]
     );
     if (!uidResult.rowCount) {
-      // TODO: Should create a new account here? Need username though.
-      throw new StatusError(401, 'No matching uid for Google account');
+      await client.query(
+        `INSERT INTO temp (key, value) VALUES ($1, $2)`,
+        [`google:${googleUserId}`, JSON.stringify(payload)]
+      );
+      res.status(201).write(`google:${googleUserId}`);
+      return;
     }
     const uid = uidResult.rows[0].uid;
 

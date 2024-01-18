@@ -10,11 +10,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS temp_key_idx ON temp(key);
 CREATE TABLE IF NOT EXISTS users(
   id bigserial PRIMARY KEY,
   username text NOT NULL,
-  name text NOT NULL,
-  email text NOT NULL,
+  name text,
+  email text,
   phone text,
   avatar_url text,
-  pwhash text NOT NULL,
+  pwhash text,
   verified boolean NOT NULL DEFAULT FALSE,
   public boolean NOT NULL DEFAULT TRUE
 );
