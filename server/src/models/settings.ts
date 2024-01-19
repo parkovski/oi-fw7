@@ -28,6 +28,19 @@ export default class SettingsModel extends DataModel {
     return result.rows[0];
   }
 
+  async getNotificationSetting(uid: string, setting: keyof NotificationSettings):
+      Promise<boolean> {
+    const result = await this._dbclient.query<{ setting: boolean }>(
+      `SELECT "${setting}" AS setting FROM notification_settings WHERE uid = $1`,
+      [uid]
+    );
+    if (result.rowCount === 0) {
+      // Notifications default to on.
+      return true;
+    }
+    return result.rows[0].setting;
+  }
+
   async setNotificationSetting(session: string, settingName: string, value: boolean) {
     await this._dbclient.query(
       `

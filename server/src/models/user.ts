@@ -1,6 +1,7 @@
 import DataModel from './data.js';
 import { StatusError } from '../util/error.js';
 import { Profile, User, MinUser } from 'oi-types/user';
+import { ContactKind } from 'oi-types/user';
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 
@@ -37,6 +38,63 @@ export default class UserModel extends DataModel {
       throw new StatusError(404, 'User not found');
     }
     return result.rows[0];
+  }
+
+  async getContactsForUser(uid: string): Promise<User[]> {
+    const result = await this._dbclient.query<User>(
+      `
+      SELECT users.id, users.name, users.username,
+        users.avatar_url AS "avatarUrl", contacts.kind
+      FROM contacts
+      INNER JOIN users ON contacts.uid_contact = users.id
+      WHERE contacts.uid_owner = $1
+      `,
+      [uid]
+    );
+    return result.rows;
+  }
+
+  async getFollowersForUser(uid: string): Promise<User[]> {
+    const result = await this._dbclient.query<User>(
+      `
+      SELECT users.id, users.name, users.username,
+        users.avatar_url AS "avatarUrl"
+      FROM contacts
+      INNER JOIN users ON contacts.uid_owner = users.id
+      WHERE contacts.uid_contact = $1
+      `,
+      [uid]
+    );
+    return result.rows;
+  }
+
+  async getContactRequestsForSession(session: string): Promise<User[]> {
+    const result = await this._dbclient.query(
+      `
+      SELECT users.id, users.name, users.username,
+        users.avatar_url AS "avatarUrl"
+      FROM contacts
+      INNER JOIN users ON contacts.uid_owner = users.id
+      WHERE contacts.uid_contact = (SELECT uid FROM sessions WHERE sesskey = $1)
+        AND contacts.kind = 0
+      `,
+      [session]
+    );
+    return result.rows;
+  }
+
+  async sessionHasContact(session: string, uidContact: string): Promise<boolean> {
+    const result = await this._dbclient.query(
+      `
+      SELECT kind FROM contacts
+      WHERE (uid_owner, uid_contact) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
+      `,
+      [session, uidContact]
+    );
+    if (result.rowCount === 0 || result.rows[0].kind === ContactKind.Requested) {
+      return false;
+    }
+    return true;
   }
 
   async getMinUser(uid: string): Promise<MinUser> {
@@ -107,6 +165,80 @@ export default class UserModel extends DataModel {
     );
     if (!result.rowCount) {
       return null;
+    }
+    return result.rows[0];
+  }
+
+  async getNameAndPublic(uid: string): Promise<{ name: string; public: string }> {
+    const result = await this._dbclient.query<{ name: string; public: string }>(
+      `SELECT name, public FROM users WHERE id = $1`, [uid]
+    );
+    if (!result.rowCount) {
+      throw new StatusError(404, 'User not found');
+    }
+    return result.rows[0];
+  }
+
+  async addContact(myUid: string, contactUid: string, kind: ContactKind) {
+    const result = await this._dbclient.query(
+      `
+      INSERT INTO contacts (uid_owner, uid_contact, kind)
+      VALUES ($1, $2, $3)
+      `,
+      [myUid, contactUid, kind]
+    );
+    if (!result.rowCount) {
+      throw new StatusError(400, 'Contacts failed to update');
+    }
+  }
+
+  async deleteContact(session: string, contactUid: string) {
+    const result = await this._dbclient.query(
+      `
+      DELETE FROM contacts
+      WHERE uid_owner = (SELECT uid FROM sessions WHERE sesskey = $1)
+        AND uid_contact = $2
+      `,
+      [session, contactUid]
+    );
+    if (result.rowCount === 0) {
+      throw new StatusError(404, 'Contact not found');
+    }
+  }
+
+  async approveContact(session: string, uidOwner: string):
+      Promise<{ uid_contact: string; name: string}> {
+    const result = await this._dbclient.query<{ uid_contact: string; name: string }>(
+      `
+      UPDATE contacts SET contacts.kind = 1
+      FROM users
+      WHERE (contacts.uid_owner, contacts.uid_contact) =
+        ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
+        AND users.id = contacts.uid_contact
+      RETURNING contacts.uid_contact, users.name
+      `,
+      [uidOwner, session]
+    );
+    if (!result.rowCount) {
+      throw new StatusError(404, 'Contact not found');
+    }
+    return result.rows[0];
+  }
+
+  async denyContact(session: string, uidOwner: string):
+      Promise<{ uid_contact: string; name: string }> {
+    const result = await this._dbclient.query<{ uid_contact: string; name: string }>(
+      `
+      DELETE FROM contacts
+      USING users
+      WHERE (uid_owner, uid_contact) = ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
+        AND users.id = uid_contact
+      RETURNING uid_contact, users.name
+      `,
+      [uidOwner, session]
+    );
+    if (result.rowCount === 0) {
+      throw new StatusError(404, 'Contact not found');
     }
     return result.rows[0];
   }

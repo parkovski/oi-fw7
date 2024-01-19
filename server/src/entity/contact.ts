@@ -1,12 +1,15 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId, getNotificationSetting } from '../util/db.js';
+import { getPool, getNotificationSetting } from '../util/db.js';
 import { handleError } from '../util/error.js';
 import { validateUuid, validateNumeric } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';
-import { ContactKind, User, ContactData } from 'oi-types/user';
+import { ContactKind, ContactData } from 'oi-types/user';
 import {
   ContactRequestedMessage, ContactRequestApprovedMessage, ContactAddedMessage,
 } from 'oi-types/message';
+import UserModel from '../models/user.js';
+import SessionModel from '../models/session.js';
+import SettingsModel from '../models/settings.js';
 
 export async function getContacts(req: Request, res: Response) {
   let client;
@@ -16,42 +19,27 @@ export async function getContacts(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const myUid = await getUserId(client, session);
+    const myUid = await new SessionModel(client, session).getUserId();
 
-    const contactResult = await client.query<User>(
-      `
-      SELECT users.id, users.name, users.username,
-        users.avatar_url AS "avatarUrl", contacts.kind
-      FROM contacts
-      INNER JOIN users ON contacts.uid_contact = users.id
-      WHERE contacts.uid_owner = $1
-      `,
-      [myUid]
-    );
+    const user = new UserModel(client);
+    const [contacts, followers] = await Promise.all([
+      user.getContactsForUser(myUid),
+      user.getFollowersForUser(myUid),
+    ]);
+
     const response: ContactData = {
       contacts: [],
       followers: [],
       pending: [],
     };
-    contactResult.rows.forEach(row => {
-      if (row.kind === ContactKind.Requested) {
-        response.pending.push(row);
+    contacts.forEach(contact => {
+      if (contact.kind === ContactKind.Requested) {
+        response.pending.push(contact);
       } else {
-        response.contacts.push(row);
+        response.contacts.push(contact);
       }
     });
-
-    const followersResult = await client.query<User>(
-      `
-      SELECT users.id, users.name, users.username,
-        users.avatar_url AS "avatarUrl"
-      FROM contacts
-      INNER JOIN users ON contacts.uid_owner = users.id
-      WHERE contacts.uid_contact = $1
-      `,
-      [myUid]
-    );
-    followersResult.rows.forEach(row => response.followers.push(row));
+    followers.forEach(follower => response.followers.push(follower));
 
     res.json(response);
   } catch (e) {
@@ -70,18 +58,8 @@ export async function getContactRequests(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const contactResult = await client.query<User>(
-      `
-      SELECT users.id, users.name, users.username,
-        users.avatar_url AS "avatarUrl"
-      FROM contacts
-      INNER JOIN users ON contacts.uid_owner = users.id
-      WHERE contacts.uid_contact = (SELECT uid FROM sessions WHERE sesskey = $1)
-        AND contacts.kind = 0
-      `,
-      [session]
-    );
-    res.json(contactResult.rows);
+    const contacts = await new UserModel(client).getContactRequestsForSession(session);
+    res.json(contacts);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -91,24 +69,22 @@ export async function getContactRequests(req: Request, res: Response) {
 }
 
 export async function hasContact(req: Request, res: Response) {
+  let client;
   try {
     const session = validateUuid(req.cookies.session, 401);
-    const uidTo = validateNumeric(req.params.uid);
-    const contactResult = await getPool().query<{ kind: ContactKind }>(
-      `
-      SELECT kind FROM contacts
-      WHERE (uid_owner, uid_contact) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
-      `,
-      [session, uidTo]
-    );
-    if (contactResult.rowCount === 0 || contactResult.rows[0].kind === ContactKind.Requested) {
-      res.write('false');
-    } else {
+    const uidContact = validateNumeric(req.params.uid);
+
+    client = await getPool().connect();
+
+    if (await new UserModel(client).sessionHasContact(session, uidContact)) {
       res.write('true');
+    } else {
+      res.write('false');
     }
   } catch (e) {
     handleError(e, res);
   } finally {
+    client && client.release();
     res.end();
   }
 }
@@ -122,46 +98,36 @@ export async function addContact(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const myUid = await getUserId(client, session);
+    const myUid = await new SessionModel(client, session).getUserId();
     if (BigInt(contactUid) === BigInt(myUid)) {
       res.status(400).write('Can\'t add self as a contact');
       return;
     }
 
-    const userResult = await client.query<{ name: string; public: boolean }>(
-      `SELECT name, public FROM users WHERE id = $1`,
-      [contactUid]
-    );
-    if (userResult.rowCount === 0) {
-      res.status(404);
-      return;
-    }
-    const contactKind = userResult.rows[0].public
+    const user = new UserModel(client);
+    const { name, public: isPublic } = await user.getNameAndPublic(contactUid);
+    const contactKind = isPublic
       ? ContactKind.Approved
       : ContactKind.Requested;
 
-    await client.query(
-      `
-      INSERT INTO contacts (uid_owner, uid_contact, kind)
-      VALUES ($1, $2, $3)
-      `,
-      [myUid, contactUid, contactKind]
-    );
+    await user.addContact(myUid, contactUid, contactKind);
     if (contactKind === ContactKind.Requested) {
       res.end('requested');
-      const setting = await getNotificationSetting(client, contactUid, 'contact_requested');
+      const setting =
+        await new SettingsModel(client).getNotificationSetting(contactUid, 'contact_requested');
       wsclients.sendWsAndPush<ContactRequestedMessage>(contactUid, {
         m: 'contact_requested',
         id: myUid,
-        name: userResult.rows[0].name,
+        name,
       }, setting);
     } else {
       res.end('approved');
-      const setting = await getNotificationSetting(client, contactUid, 'contact_added');
+      const setting =
+        await new SettingsModel(client).getNotificationSetting(contactUid, 'contact_added');
       wsclients.sendWsAndPush<ContactAddedMessage>(contactUid, {
         m: 'contact_added',
         id: myUid,
-        name: userResult.rows[0].name,
+        name,
       }, setting);
     }
   } catch (e) {
@@ -181,17 +147,7 @@ export async function removeContact(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const deleteContactResult = await client.query(
-      `
-      DELETE FROM contacts
-      WHERE uid_owner = (SELECT uid FROM sessions WHERE sesskey = $1)
-        AND uid_contact = $2
-      `,
-      [session, contactUid]
-    );
-    if (deleteContactResult.rowCount === 0) {
-      res.status(404);
-    }
+    await new UserModel(client).deleteContact(session, contactUid);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -209,28 +165,14 @@ export async function approveContact(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const updateContactResult = await client.query<{ uid_contact: string; name: string }>(
-      `
-      UPDATE contacts SET contacts.kind = 1
-      FROM users
-      WHERE (contacts.uid_owner, contacts.uid_contact) =
-        ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
-        AND users.id = contacts.uid_contact
-      RETURNING contacts.uid_contact, users.name
-      `,
-      [uidOwner, session]
-    );
-    if (updateContactResult.rowCount === 0) {
-      res.status(404);
-    } else {
-      const setting = await getNotificationSetting(client, uidOwner, 'contact_request_approved');
-      const message: ContactRequestApprovedMessage = {
-        m: 'contact_request_approved',
-        id: updateContactResult.rows[0].uid_contact,
-        name: updateContactResult.rows[0].name,
-      };
-      wsclients.sendWsAndPush(uidOwner, message, setting);
-    }
+    const { uid_contact, name } = await new UserModel(client).approveContact(session, uidOwner);
+    const setting = await getNotificationSetting(client, uidOwner, 'contact_request_approved');
+    const message: ContactRequestApprovedMessage = {
+      m: 'contact_request_approved',
+      id: uid_contact,
+      name: name,
+    };
+    wsclients.sendWsAndPush(uidOwner, message, setting);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -248,19 +190,7 @@ export async function denyContact(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const deleteContactResult = await client.query<{ uid_contact: string; name: string }>(
-      `
-      DELETE FROM contacts
-      USING users
-      WHERE (uid_owner, uid_contact) = ($1, (SELECT uid FROM sessions WHERE sesskey = $2))
-        AND users.id = uid_contact
-      RETURNING uid_contact, users.name
-      `,
-      [uidOwner, session]
-    );
-    if (deleteContactResult.rowCount === 0) {
-      res.status(404);
-    }
+    await new UserModel(client).denyContact(session, uidOwner);
   } catch (e) {
     handleError(e, res);
   } finally {
