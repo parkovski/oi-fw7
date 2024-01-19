@@ -82,4 +82,16 @@ export default class SessionModel extends DataModel {
     await this._dbclient.query(`DELETE FROM sessions WHERE sesskey = $1`, [this._session]);
     res.clearCookie('session');
   }
+
+  async setPushEndpoint(endpoint: string, p256dh: string, auth: string): Promise<boolean> {
+    const result = await this._dbclient.query(
+      `
+      UPDATE sessions
+      SET push_endpoint = $1, key_p256dh = $2, key_auth = $3
+      WHERE sesskey = $4
+      `,
+      [endpoint, p256dh, auth, this._session]
+    );
+    return result.rowCount !== 0;
+  }
 }

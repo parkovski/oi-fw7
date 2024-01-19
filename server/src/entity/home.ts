@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from '../util/db.js';
+import { getPool } from '../util/db.js';
 import { handleError } from '../util/error.js';
-import { validateUuid } from '../util/validation.js';
 import { Summary } from 'oi-types/summary';
 import { AttendanceKind } from 'oi-types/event';
+import SessionModel from '../models/session.js';
 
 interface GroupInviteSummary {
   id: string;
@@ -21,11 +21,10 @@ export async function getHomeSummary(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
-
     client = await getPool().connect();
 
-    const myUid = await getUserId(client, session);
+    const session = new SessionModel(client, req.cookies.session);
+    const myUid = session.getUserId();
 
     const summary: Summary[] = [];
 
@@ -75,27 +74,24 @@ export async function getHomeSummary(req: Request, res: Response) {
 }
 
 export async function storePushEndpoint(req: Request, res: Response) {
+  let client;
   try {
-    const session = validateUuid(req.cookies.session);
     const endpoint = req.body.endpoint;
     const p256dh = req.body.p256dh;
     const auth = req.body.auth;
 
-    const q = await getPool().query(
-      `
-      UPDATE sessions
-      SET push_endpoint = $1, key_p256dh = $2, key_auth = $3
-      WHERE sesskey = $4
-      `,
-      [endpoint, p256dh, auth, session]
-    );
-    if (q.rowCount === 0) {
+    client = await getPool().connect();
+
+    const session = new SessionModel(client, req.cookies.session);
+    if (!await session.setPushEndpoint(endpoint, p256dh, auth)) {
       res.status(404).write('Set push endpoint failed');
+    } else {
+      res.write('ok');
     }
-    res.write('ok');
   } catch (e) {
     handleError(e, res);
   } finally {
+    client && client.release();
     res.end();
   }
 }
