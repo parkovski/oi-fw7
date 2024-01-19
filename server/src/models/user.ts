@@ -2,6 +2,7 @@ import DataModel from './data.js';
 import { StatusError } from '../util/error.js';
 import { Profile, User, MinUser } from 'oi-types/user';
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 
 export default class UserModel extends DataModel {
   async getProfileForSession(session: string): Promise<Profile> {
@@ -73,5 +74,51 @@ export default class UserModel extends DataModel {
     if (updateResult.rowCount === 0) {
       throw new StatusError(500, 'Failed to update password');
     }
+  }
+
+  async updateUserField(uid: string, field: string, value: any) {
+    await this._dbclient.query(
+      `UPDATE users SET "${field}" = $1 WHERE id = $2`,
+      [value, uid]
+    );
+  }
+
+  async getIdForUsername(username: string): Promise<string | null> {
+    const result = await this._dbclient.query<{ id: string }>(
+      `SELECT id FROM users WHERE lower(username) = lower($1)`,
+      [username]
+    )
+    if (!result.rowCount) {
+      return null;
+    }
+    return result.rows[0].id;
+  }
+
+  async getIdAndAvatarForSession(session: string):
+      Promise<{ id: string; avatar_url: string | null; } | null> {
+    const result = await this._dbclient.query<{ id: string; avatar_url: string | null; }>(
+      `
+      SELECT id, avatar_url
+      FROM users
+      INNER JOIN sessions ON users.id = sessions.uid
+      WHERE sesskey = $1
+      `,
+      [session]
+    );
+    if (!result.rowCount) {
+      return null;
+    }
+    return result.rows[0];
+  }
+
+  static async createAvatarFilename(): Promise<string> {
+    const promise = new Promise<string>((resolve, reject) => {
+      crypto.randomBytes(32, (err, buf) => {
+        if (err) reject(err);
+        const name = buf.toString('base64').replaceAll(/\//g, '_').replaceAll(/\+/g, '-');
+        resolve(name);
+      });
+    });
+    return promise;
   }
 }
