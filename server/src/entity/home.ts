@@ -24,7 +24,7 @@ export async function getHomeSummary(req: Request, res: Response) {
     client = await getPool().connect();
 
     const session = new SessionModel(client, req.cookies.session);
-    const myUid = session.getUserId();
+    const myUid = await session.getUserId();
 
     const summary: Summary[] = [];
 
