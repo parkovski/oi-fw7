@@ -84,7 +84,7 @@ class WebSocketService {
       setTimeout(reconnect, 5000);
       break;
     default:
-      console.error('WebSocket: Too many reconnect attempts.');
+      setTimeout(reconnect, 10000);
       break;
     }
   }

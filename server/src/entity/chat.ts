@@ -62,9 +62,9 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       text: row.message,
     });
 
-    const nameResult = await client.query<{ name: string; chat: boolean }>(
+    const nameResult = await client.query<{ name: string; username: string; chat: boolean }>(
       `
-      SELECT users.name, COALESCE(notification_settings.chat, TRUE) AS chat
+      SELECT users.name, users.username, COALESCE(notification_settings.chat, TRUE) AS chat
       FROM users
       LEFT JOIN notification_settings ON users.id = notification_settings.uid
       WHERE users.id = $1
@@ -76,6 +76,7 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       id: row.id,
       from: uid,
       fromName: nameResult.rows[0].name,
+      fromUsername: nameResult.rows[0].username,
       time: row.sent,
       text: msg.text,
     };
@@ -120,9 +121,9 @@ export async function getUserChat(req: Request, res: Response) {
     const messageResult = await client.query<ChatMessage>(
       `
       SELECT user_messages.id, user_messages.uid_from AS "from",
-        user_messages.uid_to AS "to", users.name as "fromName",
-        user_messages.message AS "text", user_messages.sent,
-        user_messages.received
+        user_messages.uid_to AS "to", users.name AS "fromName",
+        users.username AS "fromUsername", user_messages.message AS "text",
+        user_messages.sent, user_messages.received
       FROM user_messages
       INNER JOIN users ON user_messages.uid_from = users.id
       WHERE (uid_from = $1 AND uid_to = $2) OR (uid_to = $1 AND uid_from = $2)

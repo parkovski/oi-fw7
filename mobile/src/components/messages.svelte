@@ -12,7 +12,9 @@
 
 <List style="margin-top: 0" strongIos outlineIos dividers>
   {#each messages as message (message.uid)}
-    <ListItem title={message.name} href={`/messages/view/${message.uid}/`}>
+    <ListItem title={message.username} footer={message.name}
+      href={`/messages/view/${message.uid}/`}
+    >
       <div slot="media">
         {#if message.avatarUrl}
           <img src={`https://api.oi.parkovski.com/uploads/${message.avatarUrl}`}

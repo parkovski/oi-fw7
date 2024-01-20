@@ -10,6 +10,7 @@ export interface ChatMessage {
   id: string;
   from: string;
   fromName: string;
+  fromUsername: string;
   to: string;
   text: string;
   sent: Date; // Date???

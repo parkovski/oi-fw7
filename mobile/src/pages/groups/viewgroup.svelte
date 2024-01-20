@@ -109,6 +109,7 @@
       to: f7route.params.id,
       from: c.from,
       fromName: c.fromName,
+      fromUsername: c.fromUsername,
       text: c.message,
     }));
     const unread = cs.filter(c => c.from !== myUid && !c.received).map(c => c.id);

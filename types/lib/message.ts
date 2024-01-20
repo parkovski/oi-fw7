@@ -82,6 +82,7 @@ export interface ServerChatMessage extends Message {
   id: string;
   from: string;
   fromName: string;
+  fromUsername: string;
   time: string;
   text: string;
 }
@@ -117,6 +118,7 @@ export interface ServerGroupMessage extends Message {
   id: string;
   from: string;
   fromName: string;
+  fromUsername: string;
   to: string;
   time: string;
   text: string;

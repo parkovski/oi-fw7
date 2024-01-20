@@ -52,11 +52,12 @@ export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) 
       text: messageRow.message,
     } satisfies GroupMessageSentMessage));
 
-    const nameResult = await client.query<{ name: string }>(
-      `SELECT name FROM users WHERE id = $1`,
+    const nameResult = await client.query<{ name: string; username: string }>(
+      `SELECT name, username FROM users WHERE id = $1`,
       [uid]
     );
     const fromName = nameResult.rows[0].name;
+    const fromUsername = nameResult.rows[0].username;
 
     const uidResult = await client.query<{ uid: string }>(
       `SELECT uid FROM groupmems WHERE gid = $1`,
@@ -67,6 +68,7 @@ export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) 
       id: messageRow.id,
       from: uid,
       fromName,
+      fromUsername,
       to: msg.to,
       time: messageRow.sent,
       text: msg.text,

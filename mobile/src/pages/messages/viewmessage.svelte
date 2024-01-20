@@ -14,7 +14,7 @@
   export let f7route;
 
   let hasContact = false;
-  let userName = null;
+  let username = null;
   let avatarUrl = null;
   let chats = [];
   let pendingChats = [];
@@ -34,7 +34,7 @@
     let messageReceivedSubscription;
 
     userService.getUser(f7route.params.id).then(u => {
-      userName = u.name
+      username = u.username
       avatarUrl = u.avatarUrl;
     });
 
@@ -59,6 +59,7 @@
             id: msg.id,
             from: myUid,
             fromName: 'Me',
+            fromUsername: 'me',
             to: msg.to,
             text: msg.text,
           }];
@@ -71,6 +72,7 @@
             id: msg.id,
             from: msg.from,
             fromName: msg.fromName,
+            fromUsername: msg.fromUsername,
             to: myUid,
             text: msg.text,
           }];
@@ -95,7 +97,7 @@
           style="border-radius: 100px; vertical-align: middle"
         >
       {/if}
-      {userName}
+      {username}
     </NavTitle>
   </Navbar>
   {#if hasContact}
@@ -104,7 +106,7 @@
     </div>
   {:else}
     <Block>
-      <p>Add {userName} to your contacts to send messages.</p>
+      <p>Add {username} to your contacts to send messages.</p>
       <p><Link href="/contacts/view/{f7route.params.id}/">View user profile</Link></p>
     </Block>
   {/if}

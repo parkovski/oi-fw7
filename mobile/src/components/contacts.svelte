@@ -8,7 +8,7 @@
   import { beforeUpdate } from 'svelte';
 
   export let contacts = [];
-  export let requestedText = 'Requested';
+  export let requestedText = ' (Requested)';
 
   let firstLetters = [];
   let contactsByFirstLetter = {};
@@ -17,7 +17,7 @@
     const first = [];
     const contactsByFirst = {};
     contacts.forEach(contact => {
-      let firstLetter = contact.name.charAt(0);
+      let firstLetter = contact.username.charAt(0).toUpperCase();
       if (!(firstLetter in contactsByFirst)) {
         first.push(firstLetter);
         contactsByFirst[firstLetter] = [contact];
@@ -34,8 +34,10 @@
   {#each firstLetters as firstLetter (firstLetter)}
     <ListItem title={firstLetter} groupTitle />
     {#each contactsByFirstLetter[firstLetter] as contact (contact.id)}
-      <ListItem title={contact.name} href={`/contacts/view/${contact.id}/`}
-        footer={contact.kind === 0 ? requestedText : undefined}>
+      <ListItem title={contact.username}
+        footer={contact.name + (contact.kind === 0 ? requestedText : '')}
+        href={`/contacts/view/${contact.id}/`}
+      >
         <div slot="media">
           {#if contact.avatarUrl}
             <img src={`https://api.oi.parkovski.com/uploads/${contact.avatarUrl}`}

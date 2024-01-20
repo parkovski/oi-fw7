@@ -144,7 +144,7 @@
   <div bind:this={chat} class="chat">
     {#each aggregate as agg (agg.id)}
       {#if agg.chats[0].from !== myUid}
-        <p class="chat-from">{agg.chats[0].fromName}</p>
+        <p class="chat-from">{agg.chats[0].fromUsername}</p>
       {/if}
       {#each agg.chats as chat (chat.id)}
         {#if chat.from !== myUid}
