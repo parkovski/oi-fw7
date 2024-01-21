@@ -54,7 +54,7 @@ export async function logout(req: Request, res: Response) {
     client = await getPool().connect();
 
     const session = new SessionModel(client, req.cookies.session)
-    session.revokeSession(res);
+    await session.revokeSession(res);
   } catch (e) {
     handleError(e, res);
   } finally {
