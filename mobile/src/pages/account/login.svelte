@@ -52,41 +52,33 @@
     f7router.navigate('/account/register/');
   }
 
-  onMount(() => {
-    importGooglePlatform(response => {
+  function linkedAccountLogin(provider, idRegex, getCredential) {
+    return function(response) {
       requestNotificationPermission();
-      fetchText('/auth/google', {
+      fetchText(`/auth/${provider}`, {
         method: 'POST',
-        body: new URLSearchParams({ credential: response.credential }),
+        body: new URLSearchParams({ credential: getCredential(response) }),
       }).then(uid => {
-        let re = /^google:([0-9]+)$/.exec(uid);
+        let re = idRegex.exec(uid);
         if (re) {
           // New account flow
-          const provider = 'google';
           const id = re[1];
-          f7router.navigate('/account/new-linked/', { props: { provider, id } });
+          f7router.navigate('/account/new-linked', { props: { provider, id } });
         } else {
           setupSession(uid);
         }
       }).catch(console.error);
-    });
+    };
+  }
+
+  onMount(() => {
+    importGooglePlatform(
+      linkedAccountLogin('google', /^google:([0-9]+)$/, res => res.credential)
+    );
+    importMicrosoftPlatform(
+      linkedAccountLogin('microsoft', /^microsoft:([a-zA-Z0-9]+)$/, res => res.idToken)
+    );
     //importApplePlatform();
-    importMicrosoftPlatform(response => {
-      requestNotificationPermission();
-      fetchText('/auth/microsoft', {
-        method: 'POST',
-        body: new URLSearchParams({ credential: response.idToken }),
-      }).then(uid => {
-        let re = /^microsoft:([a-zA-Z0-9]+)$/.exec(uid);
-        if (re) {
-          const provider = 'microsoft';
-          const id = re[1];
-          f7router.navigate('/account/new-linked/', { props: { provider, id } });
-        } else {
-          setupSession(uid);
-        }
-      }).catch(console.error);
-    });
   });
 </script>
 
