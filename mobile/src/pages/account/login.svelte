@@ -11,7 +11,7 @@
   import { onMount } from 'svelte';
   import { fetchText } from '../../js/fetch';
   import { postLoginEvent } from '../../js/onlogin';
-  import { importGooglePlatform, createMicrosoftButton } from '../../js/linkedaccounts';
+  import { importGooglePlatform, importMicrosoftPlatform } from '../../js/linkedaccounts';
 
   export let f7router;
 
@@ -71,7 +71,22 @@
       }).catch(console.error);
     });
     //importApplePlatform();
-    createMicrosoftButton();
+    importMicrosoftPlatform(response => {
+      requestNotificationPermission();
+      fetchText('/auth/microsoft', {
+        method: 'POST',
+        body: new URLSearchParams({ credential: response.idToken }),
+      }).then(uid => {
+        let re = /^microsoft:([a-zA-Z0-9]+)$/.exec(uid);
+        if (re) {
+          const provider = 'microsoft';
+          const id = re[1];
+          f7router.navigate('/account/new-linked/', { props: { provider, id } });
+        } else {
+          setupSession(uid);
+        }
+      }).catch(console.error);
+    });
   });
 </script>
 

@@ -183,7 +183,7 @@
           onClick={editPicture}
         >
           Edit picture
-        </Button>{:else}<span style="margin-left: 8px">{name}</span>{/if}
+        </Button>{:else}<span style="margin-left: 8px">@{username}</span>{/if}
       </div>
       <div style="flex: 0 0 auto">
         {#if editing}
@@ -195,8 +195,8 @@
     <CardContent>
       {#if editing}
         <List>
-          <ListInput label="Name" type="text" bind:value={name}/>
           <ListInput label="Username" type="text" bind:value={username}/>
+          <ListInput label="Name" type="text" bind:value={name}/>
           <ListInput label="Email" type="text" bind:value={email}/>
           <ListInput label="Phone" type="text" bind:value={phone}/>
           <ListItem>
@@ -213,7 +213,7 @@
             </span>
           </ListItem>
           <ListItem>
-            <span>Username:</span><span>{username}</span>
+            <span>Name:</span><span>{name}</span>
           </ListItem>
           {#if phone}
             <ListItem>
