@@ -19,6 +19,17 @@ export default class AuthModel extends DataModel {
     return result.rows[0].uid;
   }
 
+  async getIdForMicrosoftId(microsoftId: string): Promise<string | null> {
+    const result = await this._dbclient.query<{ uid: string }>(
+      `SELECT uid FROM microsoft_accounts WHERE microsoft_id = $1`,
+      [microsoftId]
+    );
+    if (!result.rowCount) {
+      return null;
+    }
+    return result.rows[0].uid;
+  }
+
   async getIdAndCheckPassword(username: string, password: string): Promise<string> {
     const userResult = await this._dbclient.query<{ id: string, pwhash: string | null }>(
       `SELECT id, pwhash FROM users WHERE lower(username) = lower($1)`,
@@ -62,6 +73,13 @@ export default class AuthModel extends DataModel {
     await this._dbclient.query(
       `INSERT INTO google_accounts (uid, google_id, token) VALUES ($1, $2, $3)`,
       [uid, googleId, googleToken]
+    );
+  }
+
+  async linkMicrosoftAccount(uid: string, microsoftId: string, microsoftToken: object) {
+    await this._dbclient.query(
+      `INSERT INTO microsoft_accounts (uid, microsoft_id, token) VALUES ($1, $2, $3)`,
+      [uid, microsoftId, microsoftToken]
     );
   }
 }

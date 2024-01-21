@@ -38,6 +38,13 @@ CREATE TABLE IF NOT EXISTS google_accounts(
 );
 CREATE INDEX IF NOT EXISTS google_accounts_google_id_idx ON google_accounts(google_id);
 
+CREATE TABLE IF NOT EXISTS microsoft_accounts(
+  uid bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  microsoft_id text NOT NULL,
+  token jsonb NOT NULL
+);
+CREATE INDEX IF NOT EXISTS microsoft_accounts_microsoft_id_idx ON microsoft_accounts(microsoft_id);
+
 CREATE TABLE IF NOT EXISTS events(
   id bigserial PRIMARY KEY,
   title text NOT NULL,

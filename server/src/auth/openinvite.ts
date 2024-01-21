@@ -112,26 +112,35 @@ export async function registerWithProvider(req: Request, res: Response) {
 
     let providerInfo = null;
     let email = null;
+    let name = null;
     switch (providerName) {
     case 'google':
       providerInfo = JSON.parse(providerInfoString);
       email = providerInfo.email;
       break;
-    //case 'microsoft':
+    case 'microsoft':
+      providerInfo = JSON.parse(providerInfoString);
+      email = providerInfo.preferred_username;
+      name = providerInfo.name;
+      break;
     //case 'apple':
+      //break;
     default:
       throw new StatusError(400, 'Unsupported provider: ' + providerName);
     }
 
     const auth = new AuthModel(client);
-    const uid = await auth.createUser(username, null, null, email);
+    const uid = await auth.createUser(username, null, name, email);
 
     switch (providerName) {
     case 'google':
       await auth.linkGoogleAccount(uid, providerInfo.sub, providerInfo);
       break;
-    //case 'microsoft':
+    case 'microsoft':
+      await auth.linkMicrosoftAccount(uid, providerInfo.sub, providerInfo);
+      break;
     //case 'apple':
+      //break;
     }
 
     (await SessionModel.newSession(client, uid)).setSessionCookie(res);

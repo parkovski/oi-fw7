@@ -10,6 +10,7 @@ import {
   hello, authorize, logout, register, registerWithProvider,
 } from '../auth/openinvite.js';
 import { setGoogleCredential, authorizeWithGoogle } from '../auth/google.js';
+import { setMicrosoftCredential, authorizeWithMicrosoft } from '../auth/microsoft.js';
 import {
   getMyProfile, getUserInfo, updateProfile, uploadProfilePhoto, changePassword,
 } from '../entity/user.js';
@@ -127,6 +128,8 @@ export default async function serve(port: number) {
 
   app.post('/auth/google', authorizeWithGoogle);
   app.put('/auth/google/credential', setGoogleCredential);
+  app.post('/auth/microsoft', authorizeWithMicrosoft);
+  app.put('/auth/microsoft/credential', setMicrosoftCredential);
 
   app.get('/home', getHomeSummary);
   app.put('/push-endpoint', storePushEndpoint);

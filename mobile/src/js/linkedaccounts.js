@@ -66,10 +66,69 @@ export function importApplePlatform() {
   document.body.appendChild(appleAuthScript);
 }
 
-export function createMicrosoftButton() {
-  if (document.getElementById('msft-button-img')) {
+const msalConfig = {
+  auth: {
+    clientId: import.meta.env.VITE_MICROSOFT_CLIENT_ID,
+    authority: 'https://login.microsoftonline.com/consumers',
+    redirectUri: 'https://dev.oi.parkovski.com/',
+    navigateToLoginRequestUrl: true,
+  },
+  cache: {
+    cacheLocation: 'sessionStorage',
+    storeAuthStateInCookie: false,
+  },
+  system: {
+    loggerOptions: {
+      loggerCallback: (level, message, containsPii) => {
+        if (containsPii) {
+          return;
+        }
+        switch (level) {
+        case msal.LogLevel.Error:
+          console.error(message);
+          break;
+        case msal.LogLevel.Info:
+          console.info(message);
+          break;
+        case msal.LogLevel.Verbose:
+          console.debug(message);
+          break;
+        case msal.LogLevel.Warning:
+          console.warn(message);
+          break;
+        }
+      },
+    },
+  },
+};
+
+const msalLoginRequest = {
+  scopes: ['User.Read'],
+};
+
+export function importMicrosoftPlatform(onLogin) {
+  if (document.getElementById('msal-script')) {
     return;
   }
+
+  const msalScript = document.createElement('script');
+  msalScript.id = 'msal-script';
+  msalScript.src = 'https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.js';
+  msalScript.integrity = 'sha384-o4ufwq3oKqc7IoCcR08YtZXmgOljhTggRwxP2CLbSqeXGtitAxwYaUln/05nJjit';
+  msalScript.crossOrigin = 'anonymous';
+  msalScript.async = true;
+  msalScript.defer = true;
+  msalScript.onload = function() {
+    const msalObj = new msal.PublicClientApplication(msalConfig);
+    const button = document.getElementById('msft-button-img');
+    button.addEventListener('click', () => {
+      msalObj.loginPopup(msalLoginRequest)
+        .then(onLogin)
+        .catch(console.error);
+    });
+  };
+  document.body.appendChild(msalScript);
+
   const wrapper = document.getElementById('msft-button');
   const button = document.createElement('img');
   button.id = 'msft-button-img';
@@ -81,5 +140,6 @@ export function createMicrosoftButton() {
   }
   button.style.width = '193px';
   button.style.height = '41px';
+  button.style.cursor = 'pointer';
   wrapper.appendChild(button);
 }

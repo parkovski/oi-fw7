@@ -7,7 +7,7 @@
     ListItem,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
-  import { importGooglePlatform, createMicrosoftButton } from '../../js/linkedaccounts';
+  import { importGooglePlatform, importMicrosoftPlatform } from '../../js/linkedaccounts';
   import { fetchText } from '../../js/fetch';
 
   onMount(() => {
@@ -19,7 +19,14 @@
         f7.dialog.alert('Google account linked.', 'OpenInvite');
       });
     });
-    createMicrosoftButton();
+    importMicrosoftPlatform(response => {
+      fetchText('/auth/microsoft/credential', {
+        method: 'PUT',
+        body: new URLSearchParams({ credential: response.idToken }),
+      }).then(() => {
+        f7.dialog.alert('Microsoft account linked', 'OpenInvite');
+      });
+    });
   })
 </script>
 
