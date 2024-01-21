@@ -1,14 +1,5 @@
-export function importGooglePlatform(onLogin) {
-  if (document.getElementById('google-platform-script')) {
-    return;
-  }
-
-  const googlePlatformScript = document.createElement('script');
-  googlePlatformScript.id = 'google-platform-script';
-  googlePlatformScript.src = 'https://accounts.google.com/gsi/client';
-  googlePlatformScript.async = true;
-  googlePlatformScript.defer = true;
-  googlePlatformScript.onload = function() {
+function googleInit(onLogin) {
+  return function() {
     google.accounts.id.initialize({
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       callback: onLogin,
@@ -16,36 +7,30 @@ export function importGooglePlatform(onLogin) {
     google.accounts.id.renderButton(
       document.getElementById('google_btn'), { theme: 'filled_blue' }
     );
-  };
-  document.body.appendChild(googlePlatformScript);
+  }
 }
 
-export function importApplePlatform() {
-  if (document.getElementById('apple-auth-script')) {
-    return;
+export function importGooglePlatform(onLogin) {
+  if (!document.getElementById('google-platform-script')) {
+    const googlePlatformScript = document.createElement('script');
+    googlePlatformScript.id = 'google-platform-script';
+    googlePlatformScript.src = 'https://accounts.google.com/gsi/client';
+    googlePlatformScript.async = true;
+    googlePlatformScript.defer = true;
+    googlePlatformScript.onload = googleInit(onLogin);
+    document.body.appendChild(googlePlatformScript);
+  } else {
+    googleInit(onLogin)();
   }
+}
 
-  // Note: This requires some meta tags set, see
-  // https://developer.apple.com/documentation/sign_in_with_apple/displaying_sign_in_with_apple_buttons_on_the_web
-  let metaTag = document.createElement('meta');
-  metaTag.name = 'appleid-signin-client-id';
-  metaTag.content = 'PUT_APPLE_CLIENT_ID_HERE';
-  document.head.appendChild(metaTag);
+function appleInit(onLogin) {
+  return function() {
+    onLogin();
+  }
+}
 
-  metaTag = document.createElement('meta');
-  metaTag.name = 'appleid-signin-scope'
-  metaTag.content = 'PUT_APPLE_SCOPE_HERE';
-  document.head.appendChild(metaTag);
-
-  metaTag = document.createElement('meta');
-  metaTag.name = 'appleid-signin-redirect-uri';
-  metaTag.content = 'PUT_APPLE_REDIRECT_URI_HERE';
-  document.head.appendChild(metaTag);
-
-  metaTag = document.createElement('meta');
-  metaTag.name = 'appleid-signin-state';
-  metaTag.content = 'PUT_APPLE_STATE_HERE';
-
+export function importApplePlatform(onLogin) {
   const appleIdButton = document.getElementById('appleid-signin');
   // Make it the same size as the Google button.
   appleIdButton.style.width = '193px';
@@ -56,14 +41,40 @@ export function importApplePlatform() {
   } else {
     appleIdButton.setAttribute('data-color', 'black');
   }
-  const appleAuthScript = document.createElement('script');
-  appleAuthScript.id = 'apple-auth-script';
-  appleAuthScript.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
-  appleAuthScript.async = true;
-  appleAuthScript.defer = true;
-  appleAuthScript.onload = function() {
-  };
-  document.body.appendChild(appleAuthScript);
+
+  if (!document.getElementById('apple-auth-script')) {
+    // Note: This requires some meta tags set, see
+    // https://developer.apple.com/documentation/sign_in_with_apple/displaying_sign_in_with_apple_buttons_on_the_web
+    let metaTag = document.createElement('meta');
+    metaTag.name = 'appleid-signin-client-id';
+    metaTag.content = 'PUT_APPLE_CLIENT_ID_HERE';
+    document.head.appendChild(metaTag);
+
+    metaTag = document.createElement('meta');
+    metaTag.name = 'appleid-signin-scope'
+    metaTag.content = 'PUT_APPLE_SCOPE_HERE';
+    document.head.appendChild(metaTag);
+
+    metaTag = document.createElement('meta');
+    metaTag.name = 'appleid-signin-redirect-uri';
+    metaTag.content = 'PUT_APPLE_REDIRECT_URI_HERE';
+    document.head.appendChild(metaTag);
+
+    metaTag = document.createElement('meta');
+    metaTag.name = 'appleid-signin-state';
+    metaTag.content = 'PUT_APPLE_STATE_HERE';
+    document.head.appendChild(metaTag);
+
+    const appleAuthScript = document.createElement('script');
+    appleAuthScript.id = 'apple-auth-script';
+    appleAuthScript.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
+    appleAuthScript.async = true;
+    appleAuthScript.defer = true;
+    appleAuthScript.onload = appleInit(onLogin);
+    document.body.appendChild(appleAuthScript);
+  } else {
+    appleInit(onLogin)();
+  }
 }
 
 const msalConfig = {
@@ -106,19 +117,8 @@ const msalLoginRequest = {
   scopes: ['User.Read'],
 };
 
-export function importMicrosoftPlatform(onLogin) {
-  if (document.getElementById('msal-script')) {
-    return;
-  }
-
-  const msalScript = document.createElement('script');
-  msalScript.id = 'msal-script';
-  msalScript.src = 'https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.js';
-  msalScript.integrity = 'sha384-o4ufwq3oKqc7IoCcR08YtZXmgOljhTggRwxP2CLbSqeXGtitAxwYaUln/05nJjit';
-  msalScript.crossOrigin = 'anonymous';
-  msalScript.async = true;
-  msalScript.defer = true;
-  msalScript.onload = function() {
+function msftInit(onLogin) {
+  return function() {
     const msalObj = new msal.PublicClientApplication(msalConfig);
     const button = document.getElementById('msft-button-img');
     button.addEventListener('click', () => {
@@ -126,9 +126,10 @@ export function importMicrosoftPlatform(onLogin) {
         .then(onLogin)
         .catch(console.error);
     });
-  };
-  document.body.appendChild(msalScript);
+  }
+}
 
+export function importMicrosoftPlatform(onLogin) {
   const wrapper = document.getElementById('msft-button');
   const button = document.createElement('img');
   button.id = 'msft-button-img';
@@ -142,4 +143,18 @@ export function importMicrosoftPlatform(onLogin) {
   button.style.height = '41px';
   button.style.cursor = 'pointer';
   wrapper.appendChild(button);
+
+  if (!document.getElementById('msal-script')) {
+    const msalScript = document.createElement('script');
+    msalScript.id = 'msal-script';
+    msalScript.src = 'https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.js';
+    msalScript.integrity = 'sha384-o4ufwq3oKqc7IoCcR08YtZXmgOljhTggRwxP2CLbSqeXGtitAxwYaUln/05nJjit';
+    msalScript.crossOrigin = 'anonymous';
+    msalScript.async = true;
+    msalScript.defer = true;
+    msalScript.onload = msftInit(onLogin);
+    document.body.appendChild(msalScript);
+  } else {
+    msftInit(onLogin)();
+  }
 }
