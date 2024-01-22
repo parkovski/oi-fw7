@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS events(
   end_time timestamp without time zone NOT NULL,
   capacity integer,
   public boolean NOT NULL DEFAULT FALSE,
+  cover_photo text,
   ts tsvector GENERATED ALWAYS AS (
     to_tsvector('english', title || ' ' || coalesce(place, '') || ' ' ||
       coalesce(description, ''))

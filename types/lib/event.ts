@@ -33,6 +33,7 @@ export interface Event {
   kind: AttendanceKind | null;
   members?: EventMember[];
   comments?: EventComment[];
+  coverPhoto: string | null;
 }
 
 export interface EventSummary {

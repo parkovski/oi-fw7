@@ -10,6 +10,7 @@ import {
 import sharp from 'sharp';
 import UserModel from '../models/user.js';
 import SessionModel from '../models/session.js';
+import PhotoModel from '../models/photo.js';
 
 export async function getMyProfile(req: Request, res: Response) {
   let client;
@@ -135,9 +136,8 @@ export async function uploadProfilePhoto(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const namePart = await UserModel.createAvatarFilename();
-    const tmpPath = `${process.env.TEMP_DIR || process.env.UPLOAD_DIR}/${namePart}.tmp${ext}`
-    const filename = `${namePart}${ext}`;
+    const photo = new PhotoModel(file);
+    const {path: tmpPath, filename} = await photo.upload({ allowedExtensions, useTempDir: true });
     const uploadPath = `${process.env.UPLOAD_DIR}/${filename}`;
 
     const user = new UserModel(client);
@@ -149,7 +149,6 @@ export async function uploadProfilePhoto(req: Request, res: Response) {
     const myUid = avatarInfo.id;
     const oldAvatar = avatarInfo.avatar_url;
     const promises = [
-      file.mv(tmpPath),
       user.updateUserField(myUid, 'avatar_url', filename),
     ];
     if (oldAvatar) {

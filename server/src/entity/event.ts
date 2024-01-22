@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { getPool, getUserId } from '../util/db.js';
+import type { UploadedFile } from 'express-fileupload';
 import { handleError, StatusError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateMinMaxLength,
@@ -13,6 +14,7 @@ import {
 import {
   EventAddedMessage, EventAttendanceChangedMessage, EventRespondedMessage,
 } from 'oi-types/message';
+import PhotoModel from '../models/photo.js';
 
 export async function getEvents(req: Request, res: Response) {
   try {
@@ -48,7 +50,7 @@ export async function getEventInfo(req: Request, res: Response) {
     const eventResult = await client.query<Event>(
       `
       SELECT id, title, description, place, start_time AS "startTime",
-        end_time AS "endTime", public
+        end_time AS "endTime", public, cover_photo AS "coverPhoto"
       FROM events
       WHERE id = $1
       `,
@@ -391,6 +393,7 @@ export async function newEvent(req: Request, res: Response) {
     const endTime = validateFutureDate(req.body.endTime);
     const isPublic: boolean = validateBoolean(req.body.public);
     const invited = validateArrayEach(req.body.invited || [], validateNumeric);
+    const coverPhoto = req.files?.coverPhoto as UploadedFile | undefined;
 
     if (place) {
       validateMinMaxLength(place, 1, 255);
@@ -405,14 +408,25 @@ export async function newEvent(req: Request, res: Response) {
     client = await getPool().connect();
     const uid = await getUserId(client, session);
 
+    let coverPhotoFilename = null;
+    if (coverPhoto) {
+      const photo = new PhotoModel(coverPhoto);
+      const { filename } = await photo.upload({
+        allowedExtensions: ['.png', '.jpg', '.jpeg']
+      });
+      coverPhotoFilename = filename;
+      console.log('cover photo = ' + coverPhotoFilename);
+    }
+
     let newEventResult = await client.query<{ id: string; title: string }>(
       `
       INSERT INTO events
-      (title, description, created_by, place, start_time, end_time, public)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      (title, description, created_by, place, start_time, end_time, public,
+        cover_photo)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id
       `,
-      [title, description, uid, place, startTime, endTime, isPublic]
+      [title, description, uid, place, startTime, endTime, isPublic, coverPhotoFilename]
     );
     if (newEventResult.rowCount === 0) {
       res.status(400);

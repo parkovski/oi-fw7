@@ -131,18 +131,20 @@ class EventService {
   }
 
   newEvent(title: string, description: string | null, place: string | null,
-           startTime: Date, endTime: Date, isPublic: boolean, invited: string[] | undefined) {
+           startTime: Date, endTime: Date, isPublic: boolean, invited: string[] | undefined,
+           coverPhoto: File | undefined) {
+    const body = new FormData;
+    body.append('title', title);
+    description && body.append('description', description);
+    place && body.append('place', place);
+    body.append('startTime', startTime.toISOString());
+    body.append('endTime', endTime.toISOString());
+    body.append('public', ''+isPublic);
+    invited && body.append('invited', JSON.stringify(invited));
+    coverPhoto && body.append('coverPhoto', coverPhoto);
     return fetchText(`/newevent`, {
       method: 'POST',
-      body: new URLSearchParams({
-        title,
-        description: description || '',
-        place: place || '',
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        public: ''+isPublic,
-        invited: invited && JSON.stringify(invited) || '[]',
-      }),
+      body,
     });
   }
 

@@ -141,6 +141,13 @@
     margin-top: 0;
     margin-bottom: .5em;
   }
+
+  #cover-photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    background: no-repeat center / 100%;
+  }
 </style>
 
 <Page ptr onPtrRefresh={onRefresh}>
@@ -164,6 +171,13 @@
     </Block>
     {#if currentButton === 'event'}
       <List style="margin-top: 0">
+        {#if event.coverPhoto}
+          <li>
+            <div id="cover-photo"
+              style="background-image: url(https://api.oi.parkovski.com/uploads/{event.coverPhoto})">
+            </div>
+          </li>
+        {/if}
         <ListItem>{event.description}</ListItem>
         <ListItem groupTitle>Attending?</ListItem>
         <ListItem>

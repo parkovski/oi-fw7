@@ -6,10 +6,12 @@
     ListInput,
     ListButton,
     ListItem,
+    Button,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import Select from '../../components/select.svelte';
   import TimePicker from '../../components/timepicker.svelte';
+  import uploadPhoto from '../../js/uploadphoto';
   import userService from '../../services/user';
   import eventService from '../../services/event';
 
@@ -24,6 +26,8 @@
   let times;
   let description;
   let isPublic = false;
+  let coverPhotoFile;
+  let coverPhotoUrl;
 
   let validationErrorTitle = null;
   let validationErrorLocation = null;
@@ -40,7 +44,25 @@
     if (initialDate) {
       dates = [initialDate];
     }
+    const coverPhoto = document.getElementById('cover-photo');
+    coverPhoto.style.background = `no-repeat center/100%`;
+    coverPhoto.style.backgroundImage = `url(/images/cover-blank.png)`;
+
+    return () => {
+      coverPhotoUrl && URL.revokeObjectURL(coverPhotoUrl);
+    }
   });
+
+  function choosePhoto() {
+    uploadPhoto(function(file) {
+      const oldUrl = coverPhotoUrl;
+      const coverPhoto = document.getElementById('cover-photo');
+      coverPhotoFile = file;
+      coverPhotoUrl = URL.createObjectURL(file);
+      coverPhoto.style.backgroundImage = `url("${coverPhotoUrl}")`;
+      oldUrl && URL.revokeObjectURL(oldUrl);
+    });
+  }
 
   function getDates() {
     let startDate = new Date(dates[0]), endDate = new Date(dates[0]);
@@ -109,15 +131,36 @@
       dates[0],
       dates[1],
       isPublic,
-      contactsSelected?.map(c => c.value)
+      contactsSelected?.map(c => c.value),
+      coverPhotoFile,
     );
     f7router.navigate(`/events/view/${eid}/`, { reloadCurrent: true });
   }
 </script>
 
+<style>
+  #cover-photo {
+    position: relative;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  :global(#cover-photo > .button) {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+  }
+</style>
+
 <Page>
   <Navbar title="New Event" backLink="Back" />
   <List form style="margin-top: .5em">
+    <ListItem class="center">
+      <div id="cover-photo">
+        <Button fill onClick={choosePhoto}>Choose a photo</Button>
+      </div>
+    </ListItem>
     <ListInput type="text" name="title" placeholder="Event title" bind:value={title} />
     {#if validationErrorTitle}
       <ListItem style="color: var(--f7-color-red)">
@@ -153,7 +196,7 @@
       Public event?
     </ListItem>
     <ListInput type="textarea" name="description" placeholder="Description"
-      bind:value={description} />
+      bind:value={description} style="z-index: 1" />
     <ListButton on:click={createClicked}>Create event</ListButton>
   </List>
 </Page>

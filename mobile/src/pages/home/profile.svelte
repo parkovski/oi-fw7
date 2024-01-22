@@ -17,6 +17,7 @@
   import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
   import { Camera, CameraResultType, CameraDirection, CameraSource } from '@capacitor/camera';
   import { fetchText } from '../../js/fetch';
+  import uploadPhoto from '../../js/uploadphoto';
   import profileService from '../../services/profile';
 
   let qrcodeUrl;
@@ -108,13 +109,7 @@
     if (f7.device.capacitor) {
       return uploadPictureCapacitor();
     } else {
-      const input = document.createElement('input');
-      input.id = 'upload-photo-input';
-      input.type = 'file';
-      input.hidden = true;
-      document.body.appendChild(input);
-      input.addEventListener('change', async () => {
-        const file = input.files[0];
+      uploadPhoto(async function(file) {
         const formData = new FormData;
         formData.append('photo', file);
         try {
@@ -123,12 +118,9 @@
             body: formData,
           });
           profilePhoto = `https://api.oi.parkovski.com/uploads/${filename}`;
-        } finally {
-          input.parentNode.removeChild(input);
+        } catch {
         }
       });
-      input.addEventListener('cancel', () => input.parentNode.removeChild(input));
-      input.click();
     }
   }
 
