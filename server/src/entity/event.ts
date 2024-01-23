@@ -19,6 +19,7 @@ import PhotoModel from '../models/photo.js';
 export async function getEvents(req: Request, res: Response) {
   try {
     const session = validateUuid(req.cookies.session, 401);
+
     const eventResult = await getPool().query<EventSummary>(
       `
       SELECT events.id, events.title, events.start_time AS "startTime",
@@ -26,7 +27,7 @@ export async function getEvents(req: Request, res: Response) {
       FROM sessions
       INNER JOIN attendance ON sessions.uid = attendance.uid
       INNER JOIN events ON attendance.eid = events.id
-      WHERE sessions.sesskey = $1
+      WHERE sessions.sesskey = $1 AND events.gid IS NULL
       `,
       [session]
     );

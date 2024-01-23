@@ -47,6 +47,7 @@ CREATE INDEX IF NOT EXISTS microsoft_accounts_microsoft_id_idx ON microsoft_acco
 
 CREATE TABLE IF NOT EXISTS events(
   id bigserial PRIMARY KEY,
+  gid bigint REFERENCES groups(id) ON DELETE CASCADE,
   title text NOT NULL,
   description text,
   created_by bigint REFERENCES users(id) ON DELETE SET NULL,
@@ -62,6 +63,7 @@ CREATE TABLE IF NOT EXISTS events(
   ) STORED
 );
 CREATE INDEX IF NOT EXISTS events_ts_idx ON events USING GIN (ts);
+CREATE INDEX IF NOT EXISTS events_gid_idx ON events(gid);
 
 CREATE TABLE IF NOT EXISTS event_comments(
   id bigserial PRIMARY KEY,
@@ -71,6 +73,14 @@ CREATE TABLE IF NOT EXISTS event_comments(
   message text
 );
 CREATE INDEX IF NOT EXISTS event_comments_eid_idx ON event_comments(eid);
+
+CREATE TABLE IF NOT EXISTS event_photos(
+  id bigserial PRIMARY KEY,
+  eid bigint NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  uid_from bigint REFERENCES users(id) ON DELETE SET NULL,
+  sent timestamp without time zone NOT NULL DEFAULT NOW(),
+  filename text NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS contacts(
   uid_owner bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -139,27 +149,6 @@ CREATE TABLE IF NOT EXISTS group_messages_read(
   PRIMARY KEY (mid, uid)
 );
 CREATE INDEX IF NOT EXISTS group_messages_read_mid_idx ON group_messages_read(mid);
-
-CREATE TABLE IF NOT EXISTS group_events(
-  id bigserial PRIMARY KEY,
-  gid bigint REFERENCES groups(id) ON DELETE CASCADE,
-  created_by bigint REFERENCES users(id) ON DELETE SET NULL,
-  title text NOT NULL,
-  description text,
-  place text,
-  start_time timestamp without time zone NOT NULL,
-  end_time timestamp without time zone NOT NULL,
-  capacity integer
-);
-
-CREATE TABLE IF NOT EXISTS group_attendance(
-  uid bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  eid bigint NOT NULL REFERENCES group_events(id) ON DELETE CASCADE,
-  kind smallint NOT NULL,
-  PRIMARY KEY (uid, eid)
-);
-CREATE INDEX IF NOT EXISTS group_attendance_uid_idx ON group_attendance(uid);
-CREATE INDEX IF NOT EXISTS group_attendance_eid_idx ON group_attendance(eid);
 
 CREATE TABLE IF NOT EXISTS notification_settings(
   uid bigint NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

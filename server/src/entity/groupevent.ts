@@ -32,13 +32,12 @@ export async function getGroupEvents(req: Request, res: Response) {
 
     const eventResult = await client.query<GroupEventSummary>(
       `
-      SELECT group_events.id, group_events.title,
-        group_events.start_time AS "startTime", group_events.end_time AS "endTime",
-        group_attendance.kind
-      FROM group_events
-      LEFT JOIN group_attendance ON group_events.id = group_attendance.eid
-        AND group_attendance.uid = $1
-      WHERE group_events.gid = $2
+      SELECT events.id, events.title, events.start_time AS "startTime",
+        events.end_time AS "endTime", attendance.kind
+      FROM events
+      LEFT JOIN attendance ON events.id = attendance.eid
+        AND attendance.uid = $1
+      WHERE events.gid = $2
       `,
       [myUid, gid]
     );
@@ -65,7 +64,7 @@ export async function getGroupEventInfo(req: Request, res: Response) {
     const membershipResult = await client.query<{ kind: Membership }>(
       `
       SELECT kind FROM groupmems
-      WHERE (uid, gid) = ($1, (SELECT gid FROM group_events WHERE id = $2))
+      WHERE (uid, gid) = ($1, (SELECT gid FROM events WHERE id = $2))
       `,
       [myUid, eid]
     );
@@ -77,13 +76,12 @@ export async function getGroupEventInfo(req: Request, res: Response) {
     // Get the event info
     const eventResult = await client.query<GroupEvent>(
       `
-      SELECT group_events.id, group_events.gid, group_events.title,
-        group_events.description, group_events.place,
-        group_events.start_time AS "startTime",
-        group_events.end_time AS "endTime", group_attendance.kind
-      FROM group_events
-      LEFT JOIN group_attendance ON group_events.id = group_attendance.eid
-        AND group_attendance.uid = $1
+      SELECT events.id, events.gid, events.title, events.description,
+        events.place, events.start_time AS "startTime",
+        events.end_time AS "endTime", attendance.kind
+      FROM events
+      LEFT JOIN attendance ON events.id = attendance.eid
+        AND attendance.uid = $1
       WHERE id = $2
       `,
       [myUid, eid]
@@ -97,10 +95,10 @@ export async function getGroupEventInfo(req: Request, res: Response) {
     // Get the attendance list
     const memberResult = await client.query<EventMember>(
       `
-      SELECT users.id, users.name, users.username, group_attendance.kind
-      FROM group_attendance
-      INNER JOIN users ON group_attendance.uid = users.id
-      WHERE group_attendance.eid = $1
+      SELECT users.id, users.name, users.username, attendance.kind
+      FROM attendance
+      INNER JOIN users ON attendance.uid = users.id
+      WHERE attendance.eid = $1
       `,
       [eid]
     );
@@ -153,7 +151,7 @@ export async function newGroupEvent(req: Request, res: Response) {
 
     let newEventResult = await client.query<{ id: string }>(
       `
-      INSERT INTO group_events
+      INSERT INTO events
       (gid, title, description, created_by, place, start_time, end_time)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
@@ -169,7 +167,7 @@ export async function newGroupEvent(req: Request, res: Response) {
     // Add myself as a host (kind 3).
     await client.query(
       `
-      INSERT INTO group_attendance (uid, eid, kind)
+      INSERT INTO attendance (uid, eid, kind)
       VALUES ($1, $2, 3)
       `,
       [uid, eid]
@@ -214,10 +212,10 @@ export async function setGroupEventAttendance(req: Request, res: Response) {
 
     const attendanceResult = await client.query(
       `
-      INSERT INTO group_attendance (uid, eid, kind)
+      INSERT INTO attendance (uid, eid, kind)
       VALUES ((SELECT uid FROM sessions WHERE sesskey = $1), $2, $3)
       ON CONFLICT (uid, eid) DO UPDATE SET kind = $3
-      WHERE group_attendance.kind != 3
+      WHERE attendance.kind != 3
       `,
       [session, eid, kind]
     );

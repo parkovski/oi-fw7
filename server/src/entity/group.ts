@@ -47,10 +47,10 @@ export async function getGroups(req: Request, res: Response) {
       ),
       client.query<Unread>(
         `
-        SELECT count(*), group_events.gid FROM group_events
-        INNER JOIN groupmems ON group_events.gid = groupmems.gid
+        SELECT count(*), events.gid FROM events
+        INNER JOIN groupmems ON events.gid = groupmems.gid
         WHERE groupmems.uid = $1 AND start_time > NOW()
-        GROUP BY group_events.gid
+        GROUP BY events.gid
         `,
         [myUid]
       ),
