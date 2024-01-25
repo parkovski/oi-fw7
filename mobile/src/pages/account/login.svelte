@@ -12,11 +12,14 @@
   import { fetchText } from '../../js/fetch';
   import { postLoginEvent } from '../../js/onlogin';
   import { importGooglePlatform, importMicrosoftPlatform } from '../../js/linkedaccounts';
+  import { StatusError } from '../../js/error';
 
   export let f7router;
 
   let username;
   let password;
+  let usernameError;
+  let passwordError;
 
   function requestNotificationPermission() {
     if ('Notification' in window && Notification.permission !== 'granted') {
@@ -32,6 +35,8 @@
   }
 
   async function login() {
+    usernameError = undefined;
+    passwordError = undefined;
     try {
       requestNotificationPermission();
       const uid = await fetchText('/authorize', {
@@ -44,7 +49,21 @@
       setupSession(uid);
     }
     catch (e) {
-      console.error(e);
+      if (e instanceof StatusError) {
+        switch (e.status) {
+        case 404:
+          usernameError = 'Username not found';
+          break;
+        case 401:
+          passwordError = 'Password login not available';
+          break;
+        case 403:
+          passwordError = 'Invalid password';
+          break;
+        }
+      } else {
+        passwordError = e.message;
+      }
     }
   }
 
@@ -102,12 +121,22 @@
       placeholder="Username"
       bind:value={username}
     />
+    {#if usernameError}
+      <ListItem style="color: var(--f7-color-red)">
+        {usernameError}
+      </ListItem>
+    {/if}
     <ListInput
       type="password"
       name="password"
       placeholder="Password"
       bind:value={password}
     />
+    {#if passwordError}
+      <ListItem style="color: var(--f7-color-red)">
+        {passwordError}
+      </ListItem>
+    {/if}
     <div class="grid grid-cols-2 grid-gap">
       <ListButton title="Register" onClick={register} />
       <ListButton title="Sign In" onClick={login} />
