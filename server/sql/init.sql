@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS event_photos(
   sent timestamp without time zone NOT NULL DEFAULT NOW(),
   filename text NOT NULL
 );
+CREATE INDEX IF NOT EXISTS event_photos_eid_idx ON event_photos(eid);
 
 CREATE TABLE IF NOT EXISTS contacts(
   uid_owner bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,

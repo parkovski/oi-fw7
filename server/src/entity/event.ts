@@ -117,6 +117,16 @@ export async function getEventInfo(req: Request, res: Response) {
     if (commentsResult.rowCount) {
       eventInfo.comments = commentsResult.rows;
     }
+
+    // Get the photos list
+    const photosResult = await client.query<{ filename: string }>(
+      `SELECT filename FROM event_photos WHERE eid = $1`,
+      [eid]
+    );
+    if (photosResult.rowCount) {
+      eventInfo.photos = photosResult.rows.map(row => row.filename);
+    }
+
     res.json(eventInfo);
   } catch (e) {
     handleError(e, res);
@@ -416,7 +426,6 @@ export async function newEvent(req: Request, res: Response) {
         allowedExtensions: ['.png', '.jpg', '.jpeg']
       });
       coverPhotoFilename = filename;
-      console.log('cover photo = ' + coverPhotoFilename);
     }
 
     let newEventResult = await client.query<{ id: string; title: string }>(
@@ -476,5 +485,40 @@ export async function newEvent(req: Request, res: Response) {
   } finally {
     client && client.release();
     res.end();
+  }
+}
+
+export async function uploadEventPhoto(req: Request, res: Response) {
+  let client;
+
+  try {
+    const session = validateUuid(req.cookies.session, 401);
+    const eid = req.params.eid;
+    const file = req.files?.photo as UploadedFile | undefined;
+    if (!file) {
+      return;
+    }
+
+    client = await getPool().connect();
+
+    const photo = new PhotoModel(file);
+    const { filename } = await photo.upload({
+      allowedExtensions: ['.png', '.jpg', '.jpeg'],
+    });
+
+    await client.query(
+      `
+      INSERT INTO event_photos(eid, uid_from, filename)
+      VALUES ($1, (SELECT uid FROM sessions WHERE sesskey = $2), $3)
+      `,
+      [eid, session, filename]
+    );
+
+    res.write(filename);
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    res.end();
+    client && client.release();
   }
 }

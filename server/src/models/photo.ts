@@ -39,7 +39,7 @@ export default class PhotoModel {
       });
     });
     const name = await randomBytes;
-    const ext = path.extname(this._photo.name);
+    const ext = path.extname(this._photo.name).toLowerCase();
     if (options.allowedExtensions) {
       if (Array.isArray(options.allowedExtensions)) {
         if (!options.allowedExtensions.some(allowed => ext === allowed)) {

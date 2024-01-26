@@ -12,11 +12,14 @@
     ListItem,
     Icon,
     TextEditor,
+    Fab,
   } from 'framework7-svelte';
   import { onMount } from 'svelte';
   import eventService from '../../services/event';
   import { formatTimeRange, formatDate } from '../../js/timeutils';
   import innerTextPolyfill from '../../js/innertext';
+  import selectPhotos from '../../js/selectphotos';
+  import { fetchText } from '../../js/fetch';
 
   export let f7route;
 
@@ -57,6 +60,29 @@
           break;
       }
     }
+  }
+
+  function uploadPhotos() {
+    selectPhotos(async function(files) {
+      if (!event.photos) {
+        event.photos = [];
+      }
+      for (let i = 0; i < files.length; ++i) {
+        const formData = new FormData;
+        formData.append(`photo`, files[i]);
+        try {
+          const filename = await fetchText(`/events/${f7route.params.id}/photo`, {
+            method: 'PUT',
+            body: formData,
+          });
+          event.photos = event.photos.concat(filename);
+          event = event;
+        } catch (e) {
+          console.error(e);
+          break;
+        }
+      }
+    }, true);
   }
 
   let currentButton = 'event';
@@ -166,6 +192,7 @@
       style="background-color: var(--f7-navbar-bg-color, var(--f7-bars-bg-color)); padding: 10px">
       <Segmented>
         <Button small fill id="eventButton" on:click={changeView('event')}>Event</Button>
+        <Button small id="galleryButton" on:click={changeView('gallery')}>Gallery</Button>
         <Button small id="attendanceButton" on:click={changeView('attendance')}>Attendance</Button>
       </Segmented>
     </Block>
@@ -238,6 +265,18 @@
           </div>
         {/if}
       </List>
+    {:else if currentButton === 'gallery'}
+      <Fab position="right-bottom" on:click={uploadPhotos}>
+        <Icon ios="f7:plus" md="material:add"/>
+      </Fab>
+      {#if event.photos && event.photos.length}
+        {#each event.photos as photo (photo)}
+          <img src={'https://api.oi.parkovski.com/uploads/'+photo} alt="Event" width="100"
+            height="100">
+        {/each}
+      {:else}
+        <Block>There is nothing here.</Block>
+      {/if}
     {:else if currentButton === 'attendance'}
       <List style="margin-top: 0">
         <ListItem groupTitle>Hosts</ListItem>

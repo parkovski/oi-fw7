@@ -34,6 +34,7 @@ export interface Event {
   members?: EventMember[];
   comments?: EventComment[];
   coverPhoto: string | null;
+  photos?: string[];
 }
 
 export interface EventSummary {

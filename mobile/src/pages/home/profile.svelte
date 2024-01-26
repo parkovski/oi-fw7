@@ -17,7 +17,7 @@
   import { writeBarcodeToImageFile/*, type WriterOptions*/ } from 'zxing-wasm/writer';
   import { Camera, CameraResultType, CameraDirection, CameraSource } from '@capacitor/camera';
   import { fetchText } from '../../js/fetch';
-  import uploadPhoto from '../../js/uploadphoto';
+  import selectPhotos from '../../js/selectphotos';
   import profileService from '../../services/profile';
 
   let qrcodeUrl;
@@ -109,7 +109,7 @@
     if (f7.device.capacitor) {
       return uploadPictureCapacitor();
     } else {
-      uploadPhoto(async function(file) {
+      selectPhotos(async function(file) {
         const formData = new FormData;
         formData.append('photo', file);
         try {

@@ -1,4 +1,4 @@
-export default function uploadPhoto(callback) {
+export default function selectPhotos(callback, multiple) {
   let input = document.getElementById('upload-photo-input');
 
   if (!input) {
@@ -6,8 +6,11 @@ export default function uploadPhoto(callback) {
     input.id = 'upload-photo-input';
     input.type = 'file';
     input.hidden = true;
+    if (multiple) {
+      input.multiple = true;
+    }
     input.addEventListener('change', () => {
-      const file = input.files[0];
+      const file = multiple ? input.files : input.files[0];
       try {
         callback(file);
       } finally {
