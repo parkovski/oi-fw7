@@ -79,7 +79,8 @@ CREATE TABLE IF NOT EXISTS event_photos(
   eid bigint NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   uid_from bigint REFERENCES users(id) ON DELETE SET NULL,
   sent timestamp without time zone NOT NULL DEFAULT NOW(),
-  filename text NOT NULL
+  filename text NOT NULL,
+  thumbnail text
 );
 CREATE INDEX IF NOT EXISTS event_photos_eid_idx ON event_photos(eid);
 
