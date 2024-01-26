@@ -20,6 +20,7 @@
   import innerTextPolyfill from '../../js/innertext';
   import selectPhotos from '../../js/selectphotos';
   import { fetchText } from '../../js/fetch';
+  import PhotoGallery from '../../components/photogallery.svelte';
 
   export let f7route;
 
@@ -32,6 +33,7 @@
     invited: [],
   };
   let textEditor;
+  let photos;
 
   function sortAttendance(members) {
     attendance = {
@@ -64,8 +66,8 @@
 
   function uploadPhotos() {
     selectPhotos(async function(files) {
-      if (!event.photos) {
-        event.photos = [];
+      if (!photos) {
+        photos = [];
       }
       for (let i = 0; i < files.length; ++i) {
         const formData = new FormData;
@@ -75,7 +77,7 @@
             method: 'PUT',
             body: formData,
           });
-          event.photos = event.photos.concat(filename);
+          photos = photos.concat(filename);
           event = event;
         } catch (e) {
           console.error(e);
@@ -125,6 +127,7 @@
     const eventSubscription =
       eventService.getEvent(f7route.params.id).subscribe(e => {
         event = e;
+        photos = e.photos;
         sortAttendance(e.members);
       });
 
@@ -269,11 +272,8 @@
       <Fab position="right-bottom" on:click={uploadPhotos}>
         <Icon ios="f7:plus" md="material:add"/>
       </Fab>
-      {#if event.photos && event.photos.length}
-        {#each event.photos as photo (photo)}
-          <img src={'https://api.oi.parkovski.com/uploads/'+photo} alt="Event" width="100"
-            height="100">
-        {/each}
+      {#if photos && photos.length}
+        <PhotoGallery urls={photos.map(p => `https://api.oi.parkovski.com/uploads/${p}`)} />
       {:else}
         <Block>There is nothing here.</Block>
       {/if}
