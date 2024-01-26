@@ -75,11 +75,11 @@
   #popup {
     position: fixed;
     padding: 8px;
-    background: #d0d0d0;
+    background: #303030;
     border-radius: 5px;
   }
   :global(html.dark #popup) {
-    background: #303030;
+    background: #d0d0d0;
   }
 </style>
 
