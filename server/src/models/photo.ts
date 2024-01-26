@@ -2,6 +2,7 @@ import type { UploadedFile } from 'express-fileupload';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { StatusError } from '../util/error.js';
+import sharp from 'sharp';
 
 interface UploadOptions {
   useTempDir?: boolean;
@@ -64,5 +65,34 @@ export default class PhotoModel {
       path: uploadPath,
       filename,
     };
+  }
+
+  // Creates a thumbnail of at most width x height. The actual size is scaled
+  // to maintain the photo's aspect ratio.
+  static async createThumbnail(uploadPath: string, size?: number) {
+    const photo = sharp(uploadPath);
+    const metadata = await photo.metadata();
+    const photoWidth = metadata.width || 160;
+    const photoHeight = metadata.height || 160;
+    let width = null;
+    let height = null;
+    size ??= 160;
+    if (photoWidth / size > photoHeight / size) {
+      width = size;
+      //height = photoHeight * width / photoWidth;
+    } else {
+      height = size;
+      //width = photoWidth * height / photoHeight;
+    }
+    const randomBytes = new Promise<string>((resolve, reject) => {
+      crypto.randomBytes(32, (err, buf) => {
+        if (err) reject(err);
+        resolve(buf.toString('base64').replaceAll(/\//g, '_').replaceAll(/\+/g, '-'));
+      });
+    });
+    const ext = path.extname(uploadPath);
+    const filename = `${await randomBytes}${ext}`;
+    await photo.resize(width, height).rotate().toFile(`${process.env.UPLOAD_DIR}/${filename}`);
+    return filename;
   }
 }

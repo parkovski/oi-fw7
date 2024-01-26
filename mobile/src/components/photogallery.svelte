@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  export let urls;
+  export let images;
   export let targetSize = 160;
 
   let imageContainer;
@@ -17,10 +17,10 @@
   }
 
   onMount(() => {
-    urls.forEach(url => {
+    images.forEach(image => {
       const div = document.createElement('div');
       const img = document.createElement('img');
-      img.src = url;
+      img.src = image.thumbnail || image.url;
       img.onload = function() {
         setSize(img, targetSize, targetSize);
       };
@@ -31,7 +31,7 @@
           return;
         }
         const img = document.createElement('img');
-        img.src = url;
+        img.src = image.url;
         img.onload = function() {
           popup.style.display = 'block';
           const width = document.documentElement.clientWidth - 32;

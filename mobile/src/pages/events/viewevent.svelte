@@ -78,7 +78,6 @@
             body: formData,
           });
           photos = photos.concat(filename);
-          event = event;
         } catch (e) {
           console.error(e);
           break;
@@ -128,6 +127,7 @@
       eventService.getEvent(f7route.params.id).subscribe(e => {
         event = e;
         photos = e.photos;
+        console.log(photos);
         sortAttendance(e.members);
       });
 
@@ -273,7 +273,10 @@
         <Icon ios="f7:plus" md="material:add"/>
       </Fab>
       {#if photos && photos.length}
-        <PhotoGallery urls={photos.map(p => `https://api.oi.parkovski.com/uploads/${p}`)} />
+        <PhotoGallery images={photos.map(p => ({
+          url: `${import.meta.env.VITE_CONTENT_URL}/${p.url}`,
+          thumbnail: p.thumbnail && `${import.meta.env.VITE_CONTENT_URL}/${p.thumbnail}`
+        }))} />
       {:else}
         <Block>There is nothing here.</Block>
       {/if}

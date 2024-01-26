@@ -119,12 +119,13 @@ export async function getEventInfo(req: Request, res: Response) {
     }
 
     // Get the photos list
-    const photosResult = await client.query<{ filename: string }>(
-      `SELECT filename FROM event_photos WHERE eid = $1`,
+    const photosResult = await client.query<{ filename: string; thumbnail: string | null }>(
+      `SELECT filename, thumbnail FROM event_photos WHERE eid = $1`,
       [eid]
     );
     if (photosResult.rowCount) {
-      eventInfo.photos = photosResult.rows.map(row => row.filename);
+      eventInfo.photos = photosResult.rows.map(
+        row => ({ url: row.filename, thumbnail: row.thumbnail || undefined }));
     }
 
     res.json(eventInfo);
@@ -506,15 +507,17 @@ export async function uploadEventPhoto(req: Request, res: Response) {
       allowedExtensions: ['.png', '.jpg', '.jpeg'],
     });
 
+    const thumbnail = await PhotoModel.createThumbnail(`${process.env.UPLOAD_DIR}/${filename}`);
+
     await client.query(
       `
-      INSERT INTO event_photos(eid, uid_from, filename)
-      VALUES ($1, (SELECT uid FROM sessions WHERE sesskey = $2), $3)
+      INSERT INTO event_photos(eid, uid_from, filename, thumbnail)
+      VALUES ($1, (SELECT uid FROM sessions WHERE sesskey = $2), $3, $4)
       `,
-      [eid, session, filename]
+      [eid, session, filename, thumbnail]
     );
 
-    res.write(filename);
+    res.json({ url: filename, thumbnail });
   } catch (e) {
     handleError(e, res);
   } finally {

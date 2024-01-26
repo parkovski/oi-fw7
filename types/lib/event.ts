@@ -22,6 +22,11 @@ export interface EventComment {
   message: string;
 }
 
+export interface EventPhoto {
+  url: string;
+  thumbnail?: string;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -34,7 +39,7 @@ export interface Event {
   members?: EventMember[];
   comments?: EventComment[];
   coverPhoto: string | null;
-  photos?: string[];
+  photos?: EventPhoto[];
 }
 
 export interface EventSummary {
