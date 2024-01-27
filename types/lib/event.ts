@@ -47,6 +47,7 @@ export interface EventSummary {
   title: string;
   startTime: Date;
   endTime: Date;
-  public: boolean;
+  // Always set for non-group events. Not set for group events.
+  public?: boolean;
   kind: AttendanceKind;
 }

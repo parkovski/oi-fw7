@@ -99,10 +99,6 @@ var routes = [
     asyncComponent: () => import('../pages/groups/inviteusers.svelte'),
   },
   {
-    path: '/groups/newevent/:id/',
-    asyncComponent: () => import('../pages/groups/newevent.svelte'),
-  },
-  {
     path: '/panels/event/:id/',
     component: EventPanelPage,
   },

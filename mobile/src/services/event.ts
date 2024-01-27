@@ -132,7 +132,7 @@ class EventService {
 
   newEvent(title: string, description: string | null, place: string | null,
            startTime: Date, endTime: Date, isPublic: boolean, invited: string[] | undefined,
-           coverPhoto: File | undefined) {
+           coverPhoto: File | undefined, groupId: string | undefined) {
     const body = new FormData;
     body.append('title', title);
     description && body.append('description', description);
@@ -142,6 +142,7 @@ class EventService {
     body.append('public', ''+isPublic);
     invited && body.append('invited', JSON.stringify(invited));
     coverPhoto && body.append('coverPhoto', coverPhoto);
+    groupId && body.append('groupId', groupId);
     return fetchText(`/newevent`, {
       method: 'POST',
       body,

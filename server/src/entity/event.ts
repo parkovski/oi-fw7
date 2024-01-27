@@ -14,6 +14,7 @@ import {
 import {
   EventAddedMessage, EventAttendanceChangedMessage, EventRespondedMessage,
 } from 'oi-types/message';
+import { Membership } from 'oi-types/group';
 import PhotoModel from '../models/photo.js';
 
 export async function getEvents(req: Request, res: Response) {
@@ -83,8 +84,20 @@ export async function getEventInfo(req: Request, res: Response) {
       [session, eid]
     );
     if (attendanceResult.rowCount === 0) {
-      res.json(eventInfo);
-      return;
+      // I'm not in the attendance list. Check if the event is for a group that I am in.
+      const membershipResult = await client.query<{ kind: Membership }>(
+        `
+        SELECT kind FROM groupmems
+        WHERE (uid, gid) = (
+          (SELECT uid FROM sessions WHERE sesskey = $1),
+          (SELECT gid FROM events WHERE id = $2)
+        )`,
+        [session, eid]
+      );
+      if (membershipResult.rowCount === 0 || membershipResult.rows[0].kind < Membership.Member) {
+        res.json(eventInfo);
+        return;
+      }
     } else {
       eventInfo.kind = attendanceResult.rows[0].kind;
     }
@@ -129,6 +142,45 @@ export async function getEventInfo(req: Request, res: Response) {
     }
 
     res.json(eventInfo);
+  } catch (e) {
+    handleError(e, res);
+  } finally {
+    client && client.release();
+    res.end();
+  }
+}
+
+export async function getGroupEvents(req: Request, res: Response) {
+  let client;
+
+  try {
+    const session = validateUuid(req.cookies.session, 401);
+    const gid = validateNumeric(req.params.gid);
+
+    client = await getPool().connect();
+    const myUid = await getUserId(client, session);
+
+    const membershipResult = await client.query<{ kind: Membership }>(
+      `SELECT kind FROM groupmems WHERE (uid, gid) = ($1, $2)`,
+      [myUid, gid]
+    );
+    if (membershipResult.rowCount === 0 || membershipResult.rows[0].kind < Membership.Member) {
+      res.status(403);
+      return;
+    }
+
+    const eventResult = await client.query<EventSummary>(
+      `
+      SELECT events.id, events.title, events.start_time AS "startTime",
+        events.end_time AS "endTime", attendance.kind
+      FROM events
+      LEFT JOIN attendance ON events.id = attendance.eid
+        AND attendance.uid = $1
+      WHERE events.gid = $2
+      `,
+      [myUid, gid]
+    );
+    res.json(eventResult.rows);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -187,8 +239,13 @@ export async function setEventAttendance(req: Request, res: Response) {
 
     // Update attendance only if not hosting.
     const attendanceResult = await client.query(
-      `UPDATE attendance SET kind = $1 WHERE (uid, eid) = ($2, $3) AND (kind != 3)`,
-      [kind, myUid, eid]
+      `
+      INSERT INTO attendance (uid, eid, kind)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (uid, eid) DO UPDATE SET kind = $3
+      WHERE attendance.kind != 3
+      `,
+      [myUid, eid, kind]
     );
     if (attendanceResult.rowCount === 0) {
       res.status(404);
@@ -406,6 +463,7 @@ export async function newEvent(req: Request, res: Response) {
     const isPublic: boolean = validateBoolean(req.body.public);
     const invited = validateArrayEach(req.body.invited || [], validateNumeric);
     const coverPhoto = req.files?.coverPhoto as UploadedFile | undefined;
+    const gid: string | null = req.body.groupId || null;
 
     if (place) {
       validateMinMaxLength(place, 1, 255);
@@ -433,11 +491,11 @@ export async function newEvent(req: Request, res: Response) {
       `
       INSERT INTO events
       (title, description, created_by, place, start_time, end_time, public,
-        cover_photo)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        cover_photo, gid)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id
       `,
-      [title, description, uid, place, startTime, endTime, isPublic, coverPhotoFilename]
+      [title, description, uid, place, startTime, endTime, isPublic, coverPhotoFilename, gid]
     );
     if (newEventResult.rowCount === 0) {
       res.status(400);
@@ -461,7 +519,7 @@ export async function newEvent(req: Request, res: Response) {
     };
     wsclients.sendWs(uid, eventAddedMessage);
 
-    if (invited.length) {
+    if (!gid && invited.length) {
       await client.query(
         `INSERT INTO attendance (uid, eid, kind) VALUES (unnest($1::bigint array), $2, 0)`,
         [invited, eid]

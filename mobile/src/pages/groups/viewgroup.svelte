@@ -132,11 +132,11 @@
   }
 
   function newEventClicked() {
-    const props = {};
+    const props = { groupId: f7route.params.id };
     //if (viewKind === 'calendar') {
       props.initialDate = calendarValue;
     //}
-    f7router.navigate(`/groups/newevent/${f7route.params.id}/`, { props });
+    f7router.navigate(`/events/new/`, { props });
   }
 
   async function onRefresh(done) {

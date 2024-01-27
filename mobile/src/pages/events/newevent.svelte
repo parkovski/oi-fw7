@@ -11,11 +11,12 @@
   import { onMount } from 'svelte';
   import Select from '../../components/select.svelte';
   import TimePicker from '../../components/timepicker.svelte';
-  import uploadPhoto from '../../js/uploadphoto';
+  import selectPhotos from '../../js/selectphotos';
   import userService from '../../services/user';
   import eventService from '../../services/event';
 
   export let initialDate;
+  export let groupId;
   export let f7router;
 
   let contacts = [];
@@ -54,7 +55,7 @@
   });
 
   function choosePhoto() {
-    uploadPhoto(function(file) {
+    selectPhotos(function(file) {
       const oldUrl = coverPhotoUrl;
       const coverPhoto = document.getElementById('cover-photo');
       coverPhotoFile = file;
@@ -133,6 +134,7 @@
       isPublic,
       contactsSelected?.map(c => c.value),
       coverPhotoFile,
+      groupId,
     );
     f7router.navigate(`/events/view/${eid}/`, { reloadCurrent: true });
   }
@@ -187,14 +189,16 @@
         {validationErrorTime}
       </ListItem>
     {/if}
-    <ListItem>
-      <Select items={contacts} searchable multiple
-        placeholder="Select contacts" bind:value={contactsSelected}
-      />
-    </ListItem>
-    <ListItem checkbox bind:checked={isPublic}>
-      Public event?
-    </ListItem>
+    {#if !groupId}
+      <ListItem>
+        <Select items={contacts} searchable multiple
+          placeholder="Select contacts" bind:value={contactsSelected}
+        />
+      </ListItem>
+      <ListItem checkbox bind:checked={isPublic}>
+        Public event?
+      </ListItem>
+    {/if}
     <ListInput type="textarea" name="description" placeholder="Description"
       bind:value={description} style="z-index: 1" />
     <ListButton on:click={createClicked}>Create event</ListButton>

@@ -31,11 +31,8 @@ import {
 } from '../entity/groupchat.js';
 import {
   getEvents, getEventInfo, newEvent, setEventAttendance, inviteToEvent,
-  makeEventHost, postEventComment, uploadEventPhoto,
+  makeEventHost, postEventComment, uploadEventPhoto, getGroupEvents,
 } from '../entity/event.js';
-import {
-  getGroupEvents, getGroupEventInfo, newGroupEvent, setGroupEventAttendance,
-} from '../entity/groupevent.js';
 import { getHomeSummary, storePushEndpoint } from '../entity/home.js';
 import {
   getNotificationSettings, setNotificationSetting, setAllNotificationSettings
@@ -155,9 +152,6 @@ export default async function serve(port: number) {
   app.post('/groups/:gid/delete', deleteGroup);
   app.get('/groups/:gid/chat', getGroupChat);
   app.get('/groups/:gid/events', getGroupEvents);
-  app.get('/groupevents/:eid', getGroupEventInfo);
-  app.post('/groupevents/:eid/setattendance', setGroupEventAttendance);
-  app.post('/groups/:gid/newevent', newGroupEvent);
   app.post('/newgroup', newGroup);
 
   app.get('/contacts', getContacts);

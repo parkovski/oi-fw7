@@ -127,7 +127,6 @@
       eventService.getEvent(f7route.params.id).subscribe(e => {
         event = e;
         photos = e.photos;
-        console.log(photos);
         sortAttendance(e.members);
       });
 

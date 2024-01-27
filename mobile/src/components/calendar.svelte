@@ -100,7 +100,7 @@
 <div id={elementId}></div>
 <List class="no-margin no-hairlines no-safe-area-left">
   {#each eventItems as event}
-    <ListItem class="no-padding" href={`/events/view/${event.id}`}>
+    <ListItem class="no-padding" href={`/events/view/${event.id}/`}>
       <div class="event-color" style={`background-color: ${event.color}`}></div>
       <div class="item-title">
         {event.title}
