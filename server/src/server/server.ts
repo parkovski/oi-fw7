@@ -13,31 +13,31 @@ import { setGoogleCredential, authorizeWithGoogle } from '../auth/google.js';
 import { setMicrosoftCredential, authorizeWithMicrosoft } from '../auth/microsoft.js';
 import {
   getMyProfile, getUserInfo, updateProfile, uploadProfilePhoto, changePassword,
-} from '../entity/user.js';
+} from '../endpoints/user.js';
 import {
   getGroups, getGroupInfo, inviteToGroup, makeGroupAdmin, joinGroup,
   leaveGroup, newGroup, getGroupRequests, approveGroupRequest,
   denyGroupRequest, deleteGroup,
-} from '../entity/group.js';
+} from '../endpoints/group.js';
 import {
   getContacts, getContactRequests, addContact, removeContact, approveContact,
   denyContact, hasContact,
-} from '../entity/contact.js';
+} from '../endpoints/contact.js';
 import {
   chatListen, chatMessageReceived, getUserChat, getUserChatSummary,
-} from '../entity/chat.js';
+} from '../endpoints/chat.js';
 import {
   groupChatListen, groupMessageReceived, getGroupChat
-} from '../entity/groupchat.js';
+} from '../endpoints/groupchat.js';
 import {
   getEvents, getEventInfo, newEvent, setEventAttendance, inviteToEvent,
   makeEventHost, postEventComment, uploadEventPhoto, getGroupEvents,
-} from '../entity/event.js';
-import { getHomeSummary, storePushEndpoint } from '../entity/home.js';
+} from '../endpoints/event.js';
+import { getHomeSummary, storePushEndpoint } from '../endpoints/home.js';
 import {
   getNotificationSettings, setNotificationSetting, setAllNotificationSettings
-} from '../entity/settings.js';
-import { search } from '../entity/search.js';
+} from '../endpoints/settings.js';
+import { search } from '../endpoints/search.js';
 
 export default async function serve(port: number) {
   const dbHost = process.env.DB_HOST || 'localhost';
