@@ -265,8 +265,7 @@
         <Fab position="right-bottom" onClick={newEventClicked}>
           <Icon ios="f7:plus" md="material:add" />
         </Fab>
-        <Calendar groupEvents {events} elementId="group-calendar"
-          bind:value={calendarValue} />
+        <Calendar {events} elementId="group-calendar" bind:value={calendarValue} />
       {:else if currentButton === 'members'}
         {#if group.description}
           <div class="group-description">
