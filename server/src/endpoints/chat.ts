@@ -1,25 +1,20 @@
 import type { WebSocket } from 'ws';
 import type { Request, Response } from 'express';
 import clients from '../server/wsclients.js';
-import { getPool, getUserId } from '../util/db.js';
+import { getPool } from '../util/db.js';
 import escapeHtml from '../util/escapehtml.js';
 import { handleError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateMinMaxLength, validateArrayEach,
 } from '../util/validation.js';
 import { ContactKind } from 'oi-types/user';
-import {
-   ChatSummary, ChatMessage,
-} from 'oi-types/chat';
+import { UnreadMessageSummary } from 'oi-types/chat';
 import {
   ClientChatMessage, ServerChatMessage, MessageSentMessage,
   MessageReceivedMessage,
 } from 'oi-types/message';
-
-interface UnreadMessageSummary {
-  count: number;
-  uid: string;
-}
+import ChatModel from '../models/chat.js';
+import SessionModel from '../models/session.js';
 
 export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
   let client;
@@ -35,25 +30,14 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
 
     msg.text = escapeHtml(msg.text);
 
+    const chat = new ChatModel(client);
     // Make sure the recipient is an approved contact.
-    const contactResult = await client.query<{ kind: ContactKind }>(
-      `SELECT kind FROM contacts WHERE (uid_owner, uid_contact) = ($1, $2)`,
-      [uid, msg.to]
-    );
-    if (contactResult.rowCount === 0 || contactResult.rows[0].kind === ContactKind.Requested) {
+    const contactKind = await chat.getContactKind(uid, msg.to);
+    if (contactKind === null || contactKind === ContactKind.Requested) {
       return;
     }
 
-    const messageResult = await client.query<{ id: string; sent: string; message: string }>(
-      `
-      INSERT INTO user_messages
-      (uid_from, uid_to, message)
-      VALUES ($1, $2, $3)
-      RETURNING id, sent, message
-      `,
-      [uid, msg.to, msg.text]
-    );
-    const row = messageResult.rows[0];
+    const row = await chat.insertMessage(uid, msg.to, msg.text);
     clients.sendWs<MessageSentMessage>(uid, {
       m: 'message_sent',
       uuid: msg.uuid,
@@ -62,25 +46,17 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       text: row.message,
     });
 
-    const nameResult = await client.query<{ name: string; username: string; chat: boolean }>(
-      `
-      SELECT users.name, users.username, COALESCE(notification_settings.chat, TRUE) AS chat
-      FROM users
-      LEFT JOIN notification_settings ON users.id = notification_settings.uid
-      WHERE users.id = $1
-      `,
-      [uid]
-    );
+    const nameAndNotification = await chat.getNameAndChatNotification(uid);
     const message: ServerChatMessage = {
       m: 'chat',
       id: row.id,
       from: uid,
-      fromName: nameResult.rows[0].name,
-      fromUsername: nameResult.rows[0].username,
+      fromName: nameAndNotification.name,
+      fromUsername: nameAndNotification.username,
       time: row.sent,
       text: msg.text,
     };
-    clients.sendWsOrPush(msg.to, message, nameResult.rows[0].chat);
+    clients.sendWsOrPush(msg.to, message, nameAndNotification.chat);
   } catch {
     // Ignore
   } finally {
@@ -89,22 +65,21 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
 }
 
 export async function chatMessageReceived(this: WebSocket, msg: MessageReceivedMessage) {
+  let client;
+
   try {
+    client = await getPool().connect();
+
     if (Array.isArray(msg.id)) {
       validateArrayEach(msg.id, validateNumeric);
-      await getPool().query(
-        `UPDATE user_messages SET received = NOW() WHERE id = ANY($1) AND received IS NULL`,
-        [msg.id]
-      );
     } else {
       validateNumeric(msg.id);
-      await getPool().query(
-        `UPDATE user_messages SET received = NOW() WHERE id = $1 AND received IS NULL`,
-        [msg.id]
-      );
     }
+
+    new ChatModel(client).updateChatReceived(msg.id);
   } catch {
   } finally {
+    client && client.release();
   }
 }
 
@@ -117,22 +92,9 @@ export async function getUserChat(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const myUid = await getUserId(client, session);
-    const messageResult = await client.query<ChatMessage>(
-      `
-      SELECT user_messages.id, user_messages.uid_from AS "from",
-        user_messages.uid_to AS "to", users.name AS "fromName",
-        users.username AS "fromUsername", user_messages.message AS "text",
-        user_messages.sent, user_messages.received
-      FROM user_messages
-      INNER JOIN users ON user_messages.uid_from = users.id
-      WHERE (uid_from = $1 AND uid_to = $2) OR (uid_to = $1 AND uid_from = $2)
-      ORDER BY id DESC
-      LIMIT 50
-      `,
-      [uid, myUid]
-    );
-    res.json(messageResult.rows.reverse());
+    const myUid = await new SessionModel(client, session).getUserId();
+    const messages = await new ChatModel(client).getMessagesInitial(uid, myUid);
+    res.json(messages.reverse());
   } catch (e) {
     handleError(e, res, 400);
   } finally {
@@ -149,42 +111,16 @@ export async function getUserChatSummary(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const uid = await getUserId(client, session);
-    const summaryResult = await client.query<ChatSummary>(
-      `
-      SELECT DISTINCT ON (user_messages.uid_from)
-        user_messages.uid_from AS uid, users.name, users.username,
-        users.avatar_url AS "avatarUrl"
-      FROM user_messages
-      INNER JOIN users ON user_messages.uid_from = users.id
-      WHERE user_messages.uid_to = $1
-      UNION
-      SELECT DISTINCT ON (user_messages.uid_to)
-        user_messages.uid_to AS uid, users.name, users.username,
-        users.avatar_url AS "avatarUrl"
-      FROM user_messages
-      INNER JOIN users ON user_messages.uid_to = users.id
-      WHERE user_messages.uid_from = $1
-      `,
-      [uid]
-    );
-    const unreadResult = await client.query<UnreadMessageSummary>(
-      `
-      SELECT count(*), uid_from AS uid
-      FROM user_messages
-      WHERE uid_to = $1 AND received IS NULL
-      GROUP BY uid_from
-      `,
-      [uid]
-    );
-    const unread = new Map<string, UnreadMessageSummary>();
-    unreadResult.rows.forEach(row => {
-      unread.set(row.uid, row);
-    });
-    summaryResult.rows.forEach(row => {
-      row.unread = unread.get(row.uid)?.count;
-    });
-    res.json(summaryResult.rows);
+    const uid = await new SessionModel(client, session).getUserId();
+    const chat = new ChatModel(client);
+    const summary = await chat.getSummary(uid);
+    const unread = await chat.getUnreadMessageCount(uid);
+
+    const unreadMap = new Map<string, UnreadMessageSummary>();
+    unread.forEach(row => unreadMap.set(row.uid, row));
+    summary.forEach(row => row.unread = unreadMap.get(row.uid)?.count);
+
+    res.json(summary);
   } catch (e) {
     handleError(e, res, 400);
   } finally {

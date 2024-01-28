@@ -16,3 +16,8 @@ export interface ChatMessage {
   sent: Date; // Date???
   received: Date;
 }
+
+export interface UnreadMessageSummary {
+  count: number;
+  uid: string;
+}

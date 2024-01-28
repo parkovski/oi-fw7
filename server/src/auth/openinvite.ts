@@ -68,7 +68,7 @@ export async function register(req: Request, res: Response) {
 
   try {
     const username = validateMinMaxLength(req.body.username, 1, 64);
-    if (!/^[a-zA-Z0-9_-]$/.test(username)) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
       throw new StatusError(400, 'Invalid username');
     }
     const password = validateMinMaxLength(req.body.password, 6, 255);

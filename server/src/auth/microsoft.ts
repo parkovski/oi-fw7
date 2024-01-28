@@ -25,6 +25,7 @@ export async function setMicrosoftCredential(req: Request, res: Response) {
 
     const jwks = jose.createRemoteJWKSet(new URL('https://login.microsoftonline.com/consumers/discovery/v2.0/keys'));
     const payload = await jose.jwtVerify(msCred, jwks, {
+      // This issuer is the GUID for "consumers".
       issuer: 'https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0',
       audience: process.env.MSFT_CLIENT_ID,
     });
@@ -50,6 +51,7 @@ export async function authorizeWithMicrosoft(req: Request, res: Response) {
 
     const jwks = jose.createRemoteJWKSet(new URL('https://login.microsoftonline.com/consumers/discovery/v2.0/keys'));
     const payload = await jose.jwtVerify(msCred, jwks, {
+      // This issuer is the GUID for "consumers".
       issuer: 'https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0',
       audience: process.env.MSFT_CLIENT_ID,
     });

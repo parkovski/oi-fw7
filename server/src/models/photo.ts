@@ -77,7 +77,7 @@ export default class PhotoModel {
     let width = null;
     let height = null;
     size ??= 160;
-    if (photoWidth / size > photoHeight / size) {
+    if (photoWidth > photoHeight) {
       width = size;
       //height = photoHeight * width / photoWidth;
     } else {
