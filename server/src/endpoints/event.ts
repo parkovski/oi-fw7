@@ -1,41 +1,37 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from '../util/db.js';
+import { getPool } from '../util/db.js';
 import type { UploadedFile } from 'express-fileupload';
 import { handleError, StatusError } from '../util/error.js';
 import {
-  validateUuid, validateNumeric, validateMinMaxLength,
-  validateFutureDate, validateBoolean, validateArrayEach,
-  validateMaybeNegative,
+  validateNumeric, validateMinMaxLength, validateFutureDate, validateBoolean,
+  validateArrayEach, validateMaybeNegative,
 } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';
-import {
-  AttendanceKind, EventMember, Event, EventSummary, EventComment,
-} from 'oi-types/event';
+import { AttendanceKind } from 'oi-types/event';
 import {
   EventAddedMessage, EventAttendanceChangedMessage, EventRespondedMessage,
 } from 'oi-types/message';
 import { Membership } from 'oi-types/group';
+import EventModel from '../models/event.js';
+import SessionModel from '../models/session.js';
 import PhotoModel from '../models/photo.js';
+import GroupModel from '../models/group.js';
+import UserModel from '../models/user.js';
+import SettingsModel from '../models/settings.js';
 
 export async function getEvents(req: Request, res: Response) {
-  try {
-    const session = validateUuid(req.cookies.session, 401);
+  let client;
 
-    const eventResult = await getPool().query<EventSummary>(
-      `
-      SELECT events.id, events.title, events.start_time AS "startTime",
-        events.end_time AS "endTime", events.public, attendance.kind
-      FROM sessions
-      INNER JOIN attendance ON sessions.uid = attendance.uid
-      INNER JOIN events ON attendance.eid = events.id
-      WHERE sessions.sesskey = $1 AND events.gid IS NULL
-      `,
-      [session]
-    );
-    res.json(eventResult.rows);
+  try {
+    client = await getPool().connect();
+
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
+    const events = await new EventModel(client).getUserSummary(uid);
+    res.json(events);
   } catch (e) {
     handleError(e, res);
   } finally {
+    client && client.release();
     res.end();
   }
 }
@@ -49,96 +45,46 @@ export async function getEventInfo(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const eventResult = await client.query<Event>(
-      `
-      SELECT id, title, description, place, start_time AS "startTime",
-        end_time AS "endTime", public, cover_photo AS "coverPhoto"
-      FROM events
-      WHERE id = $1
-      `,
-      [eid]
-    );
-    if (eventResult.rowCount === 0) {
-      res.status(404);
-      return;
-    }
-
-    const eventInfo = eventResult.rows[0];
+    const event = new EventModel(client);
+    const eventInfo = await event.getEvent(eid);
     eventInfo.kind = null;
 
     if (!session) {
       res.json(eventInfo);
       return;
-    } else {
-      validateUuid(session);
     }
 
+    const uid = await new SessionModel(client, session).getUserId();
+
     // Check that I am invited to the event before listing invitees.
-    const attendanceResult = await client.query<{ kind: AttendanceKind }>(
-      `
-      SELECT attendance.kind
-      FROM sessions
-      INNER JOIN attendance ON sessions.uid = attendance.uid
-      WHERE sessions.sesskey = $1 AND attendance.eid = $2
-      `,
-      [session, eid]
-    );
-    if (attendanceResult.rowCount === 0) {
+    const attendance = await event.getAttendance(uid, eid);
+    if (attendance === null) {
       // I'm not in the attendance list. Check if the event is for a group that I am in.
-      const membershipResult = await client.query<{ kind: Membership }>(
-        `
-        SELECT kind FROM groupmems
-        WHERE (uid, gid) = (
-          (SELECT uid FROM sessions WHERE sesskey = $1),
-          (SELECT gid FROM events WHERE id = $2)
-        )`,
-        [session, eid]
-      );
-      if (membershipResult.rowCount === 0 || membershipResult.rows[0].kind < Membership.Member) {
+      const membership = await event.getGroupMembership(uid, eid);
+      if (membership === null || membership < Membership.Member) {
         res.json(eventInfo);
         return;
       }
     } else {
-      eventInfo.kind = attendanceResult.rows[0].kind;
+      eventInfo.kind = attendance;
     }
 
     // Get the invite list
-    const memberResult = await client.query<EventMember>(
-      `
-      SELECT users.id, users.name, users.username, attendance.kind
-      FROM attendance
-      INNER JOIN users ON attendance.uid = users.id
-      WHERE attendance.eid = $1
-      `,
-      [eid]
-    );
-    if (memberResult.rowCount) {
-      eventInfo.members = memberResult.rows;
+    const members = await event.getInviteList(eid);
+    if (members.length) {
+      eventInfo.members = members;
     }
 
     // Get the comments list
-    const commentsResult = await client.query<EventComment>(
-      `
-      SELECT event_comments.id, users.id AS "from", users.name AS "fromName",
-        users.avatar_url AS "avatarUrl", event_comments.message
-      FROM event_comments
-      LEFT JOIN users ON event_comments.uid_from = users.id
-      WHERE event_comments.eid = $1
-      `,
-      [eid]
-    );
-    if (commentsResult.rowCount) {
-      eventInfo.comments = commentsResult.rows;
+    const comments = await event.getCommentsList(eid);
+    if (comments.length) {
+      eventInfo.comments = comments;
     }
 
     // Get the photos list
-    const photosResult = await client.query<{ filename: string; thumbnail: string | null }>(
-      `SELECT filename, thumbnail FROM event_photos WHERE eid = $1`,
-      [eid]
-    );
-    if (photosResult.rowCount) {
-      eventInfo.photos = photosResult.rows.map(
-        row => ({ url: row.filename, thumbnail: row.thumbnail || undefined }));
+    const photos = await event.getPhotos(eid);
+    if (photos.length) {
+      eventInfo.photos = photos;
     }
 
     res.json(eventInfo);
@@ -154,33 +100,19 @@ export async function getGroupEvents(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
 
     client = await getPool().connect();
-    const myUid = await getUserId(client, session);
 
-    const membershipResult = await client.query<{ kind: Membership }>(
-      `SELECT kind FROM groupmems WHERE (uid, gid) = ($1, $2)`,
-      [myUid, gid]
-    );
-    if (membershipResult.rowCount === 0 || membershipResult.rows[0].kind < Membership.Member) {
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    const membership = await new GroupModel(client).getMembership(myUid, gid);
+    if (membership === null || membership < Membership.Member) {
       res.status(403);
       return;
     }
 
-    const eventResult = await client.query<EventSummary>(
-      `
-      SELECT events.id, events.title, events.start_time AS "startTime",
-        events.end_time AS "endTime", attendance.kind
-      FROM events
-      LEFT JOIN attendance ON events.id = attendance.eid
-        AND attendance.uid = $1
-      WHERE events.gid = $2
-      `,
-      [myUid, gid]
-    );
-    res.json(eventResult.rows);
+    const events = await new EventModel(client).getGroupEvents(myUid, gid);
+    res.json(events);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -193,26 +125,14 @@ export async function postEventComment(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const eid = validateNumeric(req.params.eid);
     const text = validateMinMaxLength(req.body.text, 1, 2000);
 
     client = await getPool().connect();
 
-    const result = await client.query<{ id: string }>(
-      `
-      INSERT INTO event_comments
-      (eid, uid_from, message)
-      VALUES ($1, (SELECT uid FROM sessions WHERE sesskey = $2), $3)
-      RETURNING id
-      `,
-      [eid, session, text]
-    );
-    if (!result.rowCount) {
-      res.status(500);
-      return;
-    }
-    res.write(result.rows[0].id);
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
+    const messageId = await new EventModel(client).insertComment(eid, uid, text);
+    res.write(messageId);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -225,7 +145,6 @@ export async function setEventAttendance(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const eid = validateNumeric(req.params.eid);
     const kind = +validateMaybeNegative(req.body.kind);
     switch (kind) {
@@ -235,19 +154,11 @@ export async function setEventAttendance(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const myUid = await getUserId(client, session);
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Update attendance only if not hosting.
-    const attendanceResult = await client.query(
-      `
-      INSERT INTO attendance (uid, eid, kind)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (uid, eid) DO UPDATE SET kind = $3
-      WHERE attendance.kind != 3
-      `,
-      [myUid, eid, kind]
-    );
-    if (attendanceResult.rowCount === 0) {
+    const event = new EventModel(client);
+    if (!await event.setAttendance(myUid, eid, kind)) {
       res.status(404);
     } else {
       wsclients.sendWs<EventAttendanceChangedMessage>(myUid, {
@@ -257,38 +168,21 @@ export async function setEventAttendance(req: Request, res: Response) {
       });
       res.write('' + kind);
 
-      const [myName, hosts, title, wantsNotification] = await Promise.all([
-        client.query(
-          `SELECT name FROM users WHERE id = $1`, [myUid]
-        ),
-        client.query(
-          `
-          SELECT users.id
-          FROM attendance
-          INNER JOIN users ON attendance.uid = users.id
-          WHERE attendance.eid = $1 AND attendance.kind = 3
-          `,
-          [eid]
-        ),
-        client.query(
-          `SELECT title FROM events WHERE id = $1`, [eid]
-        ),
-        client.query(
-          `SELECT event_responded FROM notification_settings WHERE uid = $1`,
-          [myUid]
-        ),
+      const [myUsername, hosts, title, wantsNotification] = await Promise.all([
+        new UserModel(client).getUsername(myUid),
+        event.getHosts(eid),
+        event.getTitle(eid),
+        new SettingsModel(client).getNotificationSetting(myUid, 'event_responded'),
       ]);
       // Notify the hosts.
       const message: EventRespondedMessage = {
         m: 'event_responded',
         id: eid,
-        name: myName.rows[0].name,
+        name: myUsername,
         kind,
-        title: title.rows[0].title,
+        title: title,
       };
-      wsclients.sendWsAndPush(
-        hosts.rows.map(row => row.id), message, wantsNotification.rows[0].event_responded
-      );
+      wsclients.sendWsAndPush(hosts, message, wantsNotification);
     }
   } catch (e) {
     handleError(e, res);
@@ -302,7 +196,6 @@ export async function inviteToEvent(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const eid = validateNumeric(req.params.eid);
     const invitedUids = validateArrayEach(req.body.uids, validateNumeric);
     if (!invitedUids.length) {
@@ -311,59 +204,29 @@ export async function inviteToEvent(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const loggedInUid = await getUserId(client, session);
+    const loggedInUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am in the event's member list
-    const memberResult = await client.query<{
-      kind: AttendanceKind;
-      public: boolean;
-      title: string;
-    }>(
-      `
-      SELECT attendance.kind, events.public, events.title
-      FROM attendance
-      RIGHT JOIN events ON attendance.eid = events.id AND attendance.uid = $1
-      WHERE events.id = $2
-      `,
-      [loggedInUid, eid]
-    );
-    if (memberResult.rowCount === 0) {
-      res.status(404);
-      return;
-    }
-    if (!memberResult.rows[0].public && memberResult.rows[0].kind === null) {
+    const event = new EventModel(client);
+    const attendanceInfo = await event.getAttendanceInfo(loggedInUid, eid);
+    if (!attendanceInfo.public && attendanceInfo.kind === null) {
       res.status(403);
       return;
     }
 
-    const insertResult = await client.query<{ uid: string }>(
-      `
-      INSERT INTO attendance (uid, eid, kind)
-      VALUES (unnest($1::bigint array), $2, 0)
-      ON CONFLICT (uid, eid) DO NOTHING
-      RETURNING uid
-      `,
-      [invitedUids, eid]
-    );
+    const inserted = await event.inviteUsers(eid, invitedUids);
 
-    const notificationResult = await client.query<{ event_added: boolean }>(
-      `
-      SELECT COALESCE(notification_settings.event_added, TRUE) AS event_added
-      FROM users
-      LEFT JOIN notification_settings ON users.id = notification_settings.uid
-      WHERE users.id = ANY($1::bigint array)
-      `,
-      [insertResult.rows.map(row => row.uid)]
+    const wantsNotification = await new SettingsModel(client).getNotificationSettingForMany(
+      inserted, 'event_added'
     );
 
     const msg: EventAddedMessage = {
       m: 'event_added',
       id: eid,
-      title: memberResult.rows[0].title
+      title: attendanceInfo.title
     }
-    for (let i = 0; i < insertResult.rowCount!; ++i) {
-      wsclients.sendWsOrPush(
-        insertResult.rows[i].uid, msg, notificationResult.rows[i].event_added);
+    for (let i = 0; i < inserted.length; ++i) {
+      wsclients.sendWsOrPush(inserted[i], msg, wantsNotification[i]);
     }
   } catch (e) {
     handleError(e, res);
@@ -377,7 +240,6 @@ export async function makeEventHost(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const eid = validateNumeric(req.params.eid);
     const invitedUids = validateArrayEach(req.body.uids, validateNumeric);
     if (!invitedUids.length) {
@@ -386,60 +248,39 @@ export async function makeEventHost(req: Request, res: Response) {
 
     client = await getPool().connect();
 
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+
     // Make sure I am a host first.
-    const hostingResult = await client.query<{ kind: AttendanceKind }>(
-      `
-      SELECT kind
-      FROM attendance
-      WHERE (uid, eid) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
-      `,
-      [session, eid]
-    );
-    if (hostingResult.rowCount === 0) {
-      res.status(404);
-      return;
-    }
-    if (hostingResult.rows[0].kind !== AttendanceKind.Hosting) {
-      res.status(403);
-      return;
+    const event = new EventModel(client);
+    const myAttendance = await event.getAttendance(myUid, eid);
+    if (myAttendance !== AttendanceKind.Hosting) {
+      throw new StatusError(403);
     }
 
     // Only invite users that are marked as attending.
-    const attendanceResult = await client.query<{ uid: string; kind: AttendanceKind }>(
-      `SELECT uid, kind FROM attendance WHERE uid = ANY($1::bigint array) AND eid = $2`,
-      [invitedUids, eid]
-    );
+    const attending = await event.getAttendingUsers(eid, invitedUids);
     const toInvite = [];
-    for (const row of attendanceResult.rows) {
-      if (row.kind === AttendanceKind.Attending) {
-        toInvite.push(row.uid);
+    for (const user of attending) {
+      if (user.kind === AttendanceKind.Attending) {
+        toInvite.push(user.uid);
       }
     }
+
     if (toInvite.length) {
-      await client.query(
-        `UPDATE attendance SET kind = 3 WHERE uid = ANY($1) AND eid = $2`,
-        [toInvite, eid]
-      );
-      const titleResult = await client.query(
-        `SELECT title FROM events WHERE id = $1`, [eid]
-      );
+      const [_, title, wantsNotification] = await Promise.all([
+        event.convertToHosts(eid, toInvite),
+        event.getTitle(eid),
+        new SettingsModel(client).getNotificationSettingForMany(
+          toInvite, 'event_attendance_changed')
+      ]);
       const message: EventAttendanceChangedMessage = {
         m: 'event_attendance_changed',
         id: eid,
         kind: AttendanceKind.Hosting,
-        title: titleResult.rows[0].title,
+        title,
       };
-      const wantsPush = await client.query<{ event_attendance_changed: boolean }>(
-        `
-        SELECT COALESCE(event_attendance_changed, TRUE) AS event_attendance_changed
-        FROM users
-        LEFT JOIN notification_settings ON users.id = notification_settings.uid
-        WHERE users.id = ANY($1::bigint array)
-        `,
-        [toInvite]
-      );
       toInvite.forEach((uid, index) =>
-        wsclients.sendWsAndPush(uid, message, wantsPush.rows[index].event_attendance_changed));
+        wsclients.sendWsAndPush(uid, message, wantsNotification[index]));
     } else {
       res.status(400).write('Selected users are not marked as attending');
     }
@@ -454,7 +295,6 @@ export async function newEvent(req: Request, res: Response) {
   let client;
 
   try {
-    const session: string = validateUuid(req.cookies.session, 401);
     const title: string = validateMinMaxLength(req.body.title?.trim(), 1, 255);
     const description: string | null = req.body.description?.trim() || null;
     const place: string | null = req.body.place?.trim() || null;
@@ -476,7 +316,8 @@ export async function newEvent(req: Request, res: Response) {
     }
 
     client = await getPool().connect();
-    const uid = await getUserId(client, session);
+
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
 
     let coverPhotoFilename = null;
     if (coverPhoto) {
@@ -487,30 +328,13 @@ export async function newEvent(req: Request, res: Response) {
       coverPhotoFilename = filename;
     }
 
-    let newEventResult = await client.query<{ id: string; title: string }>(
-      `
-      INSERT INTO events
-      (title, description, created_by, place, start_time, end_time, public,
-        cover_photo, gid)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id
-      `,
-      [title, description, uid, place, startTime, endTime, isPublic, coverPhotoFilename, gid]
+    const event = new EventModel(client);
+    const eid = await event.newEvent(
+      title, description, uid, place, startTime, endTime, isPublic, coverPhotoFilename, gid
     );
-    if (newEventResult.rowCount === 0) {
-      res.status(400);
-      return;
-    }
-    const eid = newEventResult.rows[0].id;
 
     // Add myself as a host (kind 3).
-    await client.query(
-      `
-      INSERT INTO attendance (uid, eid, kind)
-      VALUES ($1, $2, 3)
-      `,
-      [uid, eid]
-    );
+    await event.addHost(eid, uid);
 
     const eventAddedMessage: EventAddedMessage = {
       m: 'event_added',
@@ -520,21 +344,12 @@ export async function newEvent(req: Request, res: Response) {
     wsclients.sendWs(uid, eventAddedMessage);
 
     if (!gid && invited.length) {
-      await client.query(
-        `INSERT INTO attendance (uid, eid, kind) VALUES (unnest($1::bigint array), $2, 0)`,
-        [invited, eid]
+      const realInvited = await event.inviteUsers(eid, invited);
+      const wantsPush = await new SettingsModel(client).getNotificationSettingForMany(
+        realInvited, 'event_added'
       );
-      const wantsPush = await client.query<{ event_added: boolean }>(
-        `
-        SELECT COALESCE(event_added, TRUE) AS event_added
-        FROM users
-        LEFT JOIN notification_settings ON users.id = notification_settings.uid
-        WHERE users.id = ANY($1::bigint array)
-        `,
-        [invited]
-      );
-      for (let i = 0; i < invited.length; ++i) {
-        wsclients.sendWsAndPush(invited[i], eventAddedMessage, wantsPush.rows[i].event_added);
+      for (let i = 0; i < realInvited.length; ++i) {
+        wsclients.sendWsAndPush(realInvited[i], eventAddedMessage, wantsPush[i]);
       }
     }
 
@@ -551,7 +366,6 @@ export async function uploadEventPhoto(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const eid = req.params.eid;
     const file = req.files?.photo as UploadedFile | undefined;
     if (!file) {
@@ -560,6 +374,8 @@ export async function uploadEventPhoto(req: Request, res: Response) {
 
     client = await getPool().connect();
 
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
+
     const photo = new PhotoModel(file);
     const { filename } = await photo.upload({
       allowedExtensions: ['.png', '.jpg', '.jpeg'],
@@ -567,13 +383,7 @@ export async function uploadEventPhoto(req: Request, res: Response) {
 
     const thumbnail = await PhotoModel.createThumbnail(`${process.env.UPLOAD_DIR}/${filename}`);
 
-    await client.query(
-      `
-      INSERT INTO event_photos(eid, uid_from, filename, thumbnail)
-      VALUES ($1, (SELECT uid FROM sessions WHERE sesskey = $2), $3, $4)
-      `,
-      [eid, session, filename, thumbnail]
-    );
+    await new EventModel(client).addPhoto(eid, uid, filename, thumbnail);
 
     res.json({ url: filename, thumbnail });
   } catch (e) {

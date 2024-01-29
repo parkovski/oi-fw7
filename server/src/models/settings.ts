@@ -41,6 +41,20 @@ export default class SettingsModel extends DataModel {
     return result.rows[0].setting;
   }
 
+  async getNotificationSettingForMany(uids: string[], setting: keyof NotificationSettings):
+      Promise<boolean[]> {
+    const result = await this._dbclient.query<{ setting: boolean }>(
+      `
+      SELECT COALESCE(notification_settings."${setting}", TRUE) AS setting
+      FROM users
+      LEFT JOIN notification_settings ON users.id = notification_settings.uid
+      WHERE users.id = ANY($1::bigint array)
+      `,
+      [uids]
+    );
+    return result.rows.map(row => row.setting);
+  }
+
   async setNotificationSetting(session: string, settingName: string, value: boolean) {
     await this._dbclient.query(
       `
