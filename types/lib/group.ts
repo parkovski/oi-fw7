@@ -67,3 +67,8 @@ export interface GroupChatSummary {
   sent: string; // or Date?
   received: string;
 }
+
+export interface UnreadMessage {
+  count: number;
+  gid: string;
+}

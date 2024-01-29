@@ -1,19 +1,16 @@
 import type { Request, Response } from 'express';
-import { getPool, getUserId } from '../util/db.js';
+import { getPool } from '../util/db.js';
 import wsclients from '../server/wsclients.js';
 import { handleError, StatusError } from '../util/error.js';
 import {
   validateUuid, validateNumeric, validateArrayEach, validateMinMaxLength,
-  validateBoolean, validateIfDefined,
+  validateBoolean,
 } from '../util/validation.js';
 import {
-  Membership, GroupSummary, GroupMember, Group,
+  Membership, UnreadMessage
 } from 'oi-types/group';
-
-export interface Unread {
-  count: number;
-  gid: string;
-}
+import GroupModel from '../models/group.js';
+import SessionModel from '../models/session.js';
 
 export async function getGroups(req: Request, res: Response) {
   let client;
@@ -22,57 +19,32 @@ export async function getGroups(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const myUid = await getUserId(client, session);
+    const myUid = await new SessionModel(client, session).getUserId();
 
+    const group = new GroupModel(client);
     const [summary, unreadMessages, upcomingEvents] = await Promise.all([
-      client.query<GroupSummary>(
-        `
-        SELECT groups.id, groups.name, groupmems.kind AS "memberKind"
-        FROM groupmems
-        INNER JOIN groups ON groupmems.gid = groups.id
-        WHERE groupmems.uid = $1
-        `,
-        [myUid]
-      ),
-      client.query<Unread>(
-        `
-        SELECT count(*), group_messages.gid_to AS gid
-        FROM group_messages
-        LEFT JOIN group_messages_read ON group_messages.id = group_messages_read.mid
-          AND group_messages_read.uid = $1
-        WHERE group_messages.uid_from != $1 AND group_messages_read.uid IS NULL
-        GROUP BY group_messages.gid_to
-        `,
-        [myUid]
-      ),
-      client.query<Unread>(
-        `
-        SELECT count(*), events.gid FROM events
-        INNER JOIN groupmems ON events.gid = groupmems.gid
-        WHERE groupmems.uid = $1 AND start_time > NOW()
-        GROUP BY events.gid
-        `,
-        [myUid]
-      ),
+      group.getGroupsForUser(myUid),
+      group.getUnreadMessages(myUid),
+      group.getUpcomingEvents(myUid),
     ]);
 
-    const unreadMap = new Map<string, Unread>();
-    unreadMessages.rows.forEach(row => {
+    const unreadMap = new Map<string, UnreadMessage>();
+    unreadMessages.forEach(row => {
       unreadMap.set(row.gid, row);
     })
-    summary.rows.forEach(row => {
+    summary.forEach(row => {
       row.unreadMessages = unreadMap.get(row.id)?.count;
     });
 
     unreadMap.clear();
-    upcomingEvents.rows.forEach(row => {
+    upcomingEvents.forEach(row => {
       unreadMap.set(row.gid, row);
     });
-    summary.rows.forEach(row => {
+    summary.forEach(row => {
       row.upcomingEvents = unreadMap.get(row.id)?.count;
     });
 
-    res.json(summary.rows);
+    res.json(summary);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -90,16 +62,9 @@ export async function getGroupInfo(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const basicInfo = await client.query<Group>(
-      `SELECT id, name, description, public FROM groups WHERE id = $1`,
-      [gid]
-    );
-    if (basicInfo.rowCount === 0) {
-      res.status(404);
-      return;
-    }
+    const group = new GroupModel(client);
+    const groupInfo = await group.getBasicInfo(gid);
 
-    const groupInfo = basicInfo.rows[0];
     groupInfo.memberKind = null;
 
     if (!session) {
@@ -107,58 +72,33 @@ export async function getGroupInfo(req: Request, res: Response) {
       return;
     }
 
-    const myUid = await getUserId(client, session);
+    const myUid = await new SessionModel(client, session).getUserId();
 
     // Check that the logged in user is in the group before listing members.
-    const myMembership = await client.query<{ kind: Membership }>(
-      `SELECT kind FROM groupmems WHERE uid = $1 AND gid = $2`,
-      [myUid, gid]
-    );
-    if (myMembership.rowCount === 0) {
+    const myMembership = await group.getMembership(myUid, gid);
+    if (myMembership === null) {
       // Not a group member, so just reply with group name and public/private.
       // memberKind is already null here.
       res.json(groupInfo);
       return;
-    } else if (myMembership.rows[0].kind <= Membership.Invited) {
+    } else if (myMembership <= Membership.Invited) {
       // Not a member (yet) but have a member kind.
-      groupInfo.memberKind = myMembership.rows[0].kind;
+      groupInfo.memberKind = myMembership;
       res.json(groupInfo);
       return;
     } else {
       // Either a regular member or admin.
-      groupInfo.memberKind = myMembership.rows[0].kind;
+      groupInfo.memberKind = myMembership;
     }
 
     // Get the member list and unread messages for the group.
     const [members, unreadMessages] = await Promise.all([
-      client.query<GroupMember>(
-        `
-        SELECT users.id, users.name, users.username, groupmems.kind
-        FROM groupmems
-        INNER JOIN users ON groupmems.uid = users.id
-        WHERE groupmems.gid = $1
-        `,
-        [gid]
-      ),
-      client.query<{ count: number }>(
-        `
-        SELECT count(*), group_messages.gid_to AS gid
-        FROM group_messages
-        LEFT JOIN group_messages_read ON group_messages.id = group_messages_read.mid
-          AND group_messages_read.uid = $1
-        WHERE group_messages.uid_from != $1 AND group_messages_read.uid IS NULL
-          AND group_messages.gid_to = $2
-        GROUP BY group_messages.gid_to
-        `,
-        [myUid, gid]
-      )
+      group.getMembers(gid),
+      group.getUnreadMessageCount(myUid, gid)
     ]);
+    groupInfo.members = members;
+    groupInfo.unreadMessages = unreadMessages;
 
-    groupInfo.members = members.rows;
-
-    if (unreadMessages.rowCount) {
-      groupInfo.unreadMessages = unreadMessages.rows[0].count;
-    }
     res.json(groupInfo);
   } catch (e) {
     handleError(e, res);
@@ -172,7 +112,6 @@ export async function inviteToGroup(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
     const invitedUids = validateArrayEach(req.body.uids, validateNumeric);
     if (!invitedUids.length) {
@@ -181,46 +120,25 @@ export async function inviteToGroup(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const loggedInUid = await getUserId(client, session);
+    const loggedInUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am a member of the group or the group is public.
-    let memberInfo = await client.query<{ kind: Membership, public: boolean }>(
-      `
-      SELECT groupmems.kind, groups.public
-      FROM groupmems
-      RIGHT JOIN groups ON groupmems.gid = groups.id AND groupmems.uid = $1
-      WHERE groups.id = $2
-      `,
-      [loggedInUid, gid]
-    );
-    if (memberInfo.rowCount === 0) {
-      res.status(404);
-      return;
-    }
-    if (!memberInfo.rows[0].public && memberInfo.rows[0].kind === null) {
+    const group = new GroupModel(client);
+    const memberInfo = await group.getMembershipAndPublic(loggedInUid, gid);
+    if (!memberInfo.public && memberInfo.kind === null) {
       res.status(403);
       return;
     }
 
     // Insert the users into the group's members with invited status unless the
     // user is already in the group, then do nothing.
-    const updatedUids = await client.query<{ uid: string }>(
-      `
-      INSERT INTO groupmems
-      (uid, gid, kind)
-      VALUES (unnest($1::bigint array), $2, 0)
-      ON CONFLICT (uid, gid) DO NOTHING
-      RETURNING uid
-      `,
-      [invitedUids, gid]
-    );
-
+    const updatedUids = await group.inviteUsers(gid, invitedUids);
     const invitedMsg = {
       m: 'group_membership_changed',
       id: gid,
       kind: Membership.Invited,
     };
-    wsclients.sendWs(updatedUids.rows.map(row => row.uid), invitedMsg);
+    wsclients.sendWs(updatedUids, invitedMsg);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -239,31 +157,19 @@ export async function makeGroupAdmin(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const loggedInUid = getUserId(client, session);
+    const loggedInUid = await new SessionModel(client, session).getUserId();
 
     // Make sure I am an admin of this group.
-    const myMembership = await client.query<{ kind: Membership }>(
-      `SELECT kind FROM groupmems WHERE uid = $1 AND gid = $2`,
-      [loggedInUid, gid]
-    );
-    if (myMembership.rowCount === 0 || myMembership.rows[0].kind !== Membership.Admin) {
+    const group = new GroupModel(client);
+    const myMembership = await group.getMembership(loggedInUid, gid);
+    if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
     // Give the requested user admin status.
-    const userUpdate = await client.query<never>(
-      `
-      INSERT INTO groupmems
-      (uid, gid, kind)
-      VALUES ($1, $2, 2)
-      ON CONFLICT (uid, gid) DO UPDATE SET kind = 2
-      `,
-      [requestedUid, gid]
-    );
-    if (userUpdate.rowCount === 0) {
-      res.status(400);
-      return;
+    if (!await group.makeAdmin(gid, requestedUid)) {
+      throw new StatusError(404, 'Group membership not found');
     }
     wsclients.sendWs(requestedUid, {
       m: 'group_membership_changed',
@@ -282,55 +188,28 @@ export async function joinGroup(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
 
     client = await getPool().connect();
 
-    const uid = await getUserId(client, session);
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am invited to the group or the group is public.
-    let myMembership = await client.query<{ kind: Membership, public: boolean }>(
-      `
-      SELECT groupmems.kind, groups.public
-      FROM groupmems
-      RIGHT JOIN groups ON groupmems.gid = groups.id AND groupmems.uid = $1
-      WHERE groups.id = $2
-      `,
-      [uid, gid]
-    );
-    if (myMembership.rowCount === 0) {
-      res.status(404);
-      return;
-    }
-    if (myMembership.rows[0].kind !== null && myMembership.rows[0].kind > 0) {
+    const group = new GroupModel(client);
+    const myMembership = await group.getMembershipAndPublic(uid, gid);
+    if (myMembership.kind !== null && myMembership.kind > Membership.Invited) {
       // I am already a member.
       res.status(400);
       return;
     }
-    if (!myMembership.rows[0].public && myMembership.rows[0].kind !== 0) {
+    if (!myMembership.public && myMembership.kind !== Membership.Invited) {
       // The group is not public and I have not been invited. Insert a
       // requested status.
-      await client.query(
-        `
-        INSERT INTO groupmems
-        (uid, gid, kind)
-        VALUES ($1, $2, -1)
-        ON CONFLICT (uid, gid) DO NOTHING
-        `,
-        [uid, gid]
-      );
+      await group.requestToJoin(gid, uid);
       res.write('requested');
     } else {
       // Change my invite status to member.
-      await client.query(
-        `
-        INSERT INTO groupmems
-        (uid, gid, kind)
-        VALUES ($1, $2, 1)
-        ON CONFLICT (uid, gid) DO UPDATE SET kind = 1`,
-        [uid, gid]
-      );
+      await group.joinGroup(gid, uid);
       res.write('joined');
     }
   } catch (e) {
@@ -345,35 +224,23 @@ export async function getGroupRequests(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
 
     client = await getPool().connect();
 
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+
     // Make sure I am an admin of this group.
-    const memberKind = await client.query<{ kind: Membership }>(
-      `
-      SELECT kind FROM groupmems
-      WHERE (uid, gid) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
-      `,
-      [session, gid]
-    );
-    if (memberKind.rowCount === 0 || memberKind.rows[0].kind !== Membership.Admin) {
+    const group = new GroupModel(client);
+    const memberKind = await group.getMembership(myUid, gid);
+    if (memberKind !== Membership.Admin) {
       res.status(403);
       return;
     }
 
     // Get users who have a member status of -1 (Requested).
-    const requestedUsers = await getPool().query<{ id: string; name: string }>(
-      `
-      SELECT users.id, users.name
-      FROM groupmems
-      INNER JOIN users ON groupmems.uid = users.id
-      WHERE groupmems.gid = $1 AND groupmems.kind = -1
-      `,
-      [gid]
-    );
-    res.json(requestedUsers.rows);
+    const requestedUsers = await group.getJoinRequests(gid);
+    res.json(requestedUsers);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -386,29 +253,22 @@ export async function approveGroupRequest(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
     const uid = validateNumeric(req.body.uid);
 
     client = await getPool().connect();
 
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+
     // Make sure I am an admin of this group.
-    let myMembership = await client.query<{ kind: Membership }>(
-      `
-      SELECT kind FROM groupmems
-      WHERE (uid, gid) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
-      `,
-      [session, gid]
-    );
-    if (myMembership.rowCount === 0 || myMembership.rows[0].kind !== Membership.Admin) {
+    const group = new GroupModel(client);
+    const myMembership = await group.getMembership(myUid, gid);
+    if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
-    await client.query(
-      `UPDATE groupmems SET kind = 1 WHERE (uid, gid, kind) = ($1, $2, -1)`,
-      [uid, gid]
-    );
+    await group.approveJoinRequest(gid, uid);
   } catch (e) {
     handleError(e, res, 400);
   } finally {
@@ -421,29 +281,22 @@ export async function denyGroupRequest(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
     const uid = validateNumeric(req.body.uid);
 
     client = await getPool().connect();
 
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+
     // Make sure I am an admin of this group.
-    let myMembership = await client.query<{ kind: Membership }>(
-      `
-      SELECT kind FROM groupmems
-      WHERE (uid, gid) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
-      `,
-      [session, gid]
-    );
-    if (myMembership.rowCount === 0 || myMembership.rows[0].kind !== Membership.Admin) {
+    const group = new GroupModel(client);
+    const myMembership = await group.getMembership(myUid, gid);
+    if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
-    await client.query(
-      `DELETE FROM groupmems WHERE (uid, gid, kind) = ($1, $2, -1)`,
-      [uid, gid]
-    );
+    await group.rejectJoinRequest(gid, uid);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -453,25 +306,22 @@ export async function denyGroupRequest(req: Request, res: Response) {
 }
 
 export async function leaveGroup(req: Request, res: Response) {
+  let client;
+
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
 
-    const deleteResult = await getPool().query<never>(
-      `
-      DELETE FROM groupmems
-      WHERE uid = (SELECT uid FROM sessions WHERE sesskey = $1)
-        AND gid = $2
-      `,
-      [session, gid]
-    );
-    if (deleteResult.rowCount === 0) {
-      res.status(400);
-    }
+    client = await getPool().connect();
+
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
+
+    const group = new GroupModel(client);
+    await group.leaveGroup(gid, uid);
   } catch (e) {
     handleError(e, res);
   } finally {
     res.end();
+    client && client.release();
   }
 }
 
@@ -488,39 +338,24 @@ export async function newGroup(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const myUid = await getUserId(client, session);
+    const myUid = await new SessionModel(client, session).getUserId();
 
-    let newGroupResult = await client.query<{ id: string }>(
-      `INSERT INTO groups (name, public, description) VALUES ($1, $2, $3) RETURNING id`,
-      [name, isPublic, description]
-    );
-    const gid = newGroupResult.rows[0].id;
+    const gid = await GroupModel.newGroup(client, name, isPublic, description);
+    const group = new GroupModel(client);
 
-    await client.query(
-      `INSERT INTO groupmems (uid, gid, kind) VALUES ($1, $2, 2)`,
-      [myUid, gid]
-    );
-    if (invited) {
-      await client.query(
-        `
-        INSERT INTO groupmems (uid, gid, kind)
-        VALUES (unnest($1::bigint array), $2, 0)
-        `,
-        [invited, gid]
-      );
+    await group.makeAdmin(gid, myUid);
+    if (invited.length) {
+      await group.inviteUsers(gid, invited);
     }
 
     invited.push(myUid);
-    const memberResult = await client.query<Omit<GroupMember, 'kind'>>(
-      `SELECT id, name, username FROM users WHERE id = ANY($1::bigint array)`,
-      [invited]
-    );
+    const members = await group.getMembers(gid);
     res.json({
       id: gid,
       name,
       public: isPublic,
       memberKind: Membership.Admin,
-      members: memberResult.rows.map(row => ({ kind: Membership.Invited, ...row })),
+      members,
     });
   } catch (e) {
     handleError(e, res);
@@ -534,32 +369,22 @@ export async function deleteGroup(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const gid = validateNumeric(req.params.gid);
 
     client = await getPool().connect();
 
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+
     // Make sure I am an admin of this group.
-    let myMembership = await client.query<{ kind: Membership }>(
-      `
-      SELECT kind FROM groupmems
-      WHERE (uid, gid) = ((SELECT uid FROM sessions WHERE sesskey = $1), $2)
-      `,
-      [session, gid]
-    );
-    if (myMembership.rowCount === 0 || myMembership.rows[0].kind !== Membership.Admin) {
+    const group = new GroupModel(client);
+    const myMembership = await group.getMembership(myUid, gid);
+    if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
     // Delete the group.
-    const deleteResult = await client.query(
-      `DELETE FROM groups WHERE id = $1`,
-      [gid]
-    );
-    if (deleteResult.rowCount === 0) {
-      res.status(500);
-    }
+    await group.deleteGroup(gid);
   } catch (e) {
     handleError(e, res);
   } finally {

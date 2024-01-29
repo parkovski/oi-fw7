@@ -47,7 +47,7 @@ export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) 
     } satisfies GroupMessageSentMessage));
 
     const { name, username } = await new UserModel(client).getNameAndUsername(uid);
-    const members = await group.getMembers(msg.to);
+    const members = await group.getMemberUids(msg.to);
     const groupmsg: ServerGroupMessage = {
       m: 'groupchat',
       id: insertResult.id,
