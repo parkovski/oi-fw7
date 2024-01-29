@@ -189,6 +189,16 @@ export default class UserModel extends DataModel {
     return result.rows[0].username;
   }
 
+  async getNameAndUsername(uid: string): Promise<{ name: string; username: string }> {
+    const result = await this._dbclient.query<{ name: string; username: string }>(
+      `SELECT name, username FROM users WHERE id = $1`, [uid]
+    );
+    if (!result.rowCount) {
+      throw new StatusError(404, 'User not found');
+    }
+    return result.rows[0];
+  }
+
   async addContact(myUid: string, contactUid: string, kind: ContactKind) {
     const result = await this._dbclient.query(
       `

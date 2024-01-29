@@ -12,4 +12,11 @@ export default class GroupModel extends DataModel {
     }
     return result.rows[0].kind;
   }
+
+  async getMembers(gid: string): Promise<string[]> {
+    const result = await this._dbclient.query<{ uid: string }>(
+      `SELECT uid FROM groupmems WHERE gid = $1`, [gid]
+    );
+    return result.rows.map(row => row.uid);
+  }
 }
