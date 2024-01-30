@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getPool, getNotificationSetting } from '../util/db.js';
+import { getPool } from '../util/db.js';
 import { handleError } from '../util/error.js';
 import { validateUuid, validateNumeric } from '../util/validation.js';
 import wsclients from '../server/wsclients.js';

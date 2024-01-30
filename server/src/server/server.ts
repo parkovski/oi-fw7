@@ -8,9 +8,9 @@ import { onWebSocketConnected, listen as wslisten } from './wsserver.js';
 import { initPool } from '../util/db.js';
 import {
   hello, authorize, logout, register, registerWithProvider,
-} from '../auth/openinvite.js';
-import { setGoogleCredential, authorizeWithGoogle } from '../auth/google.js';
-import { setMicrosoftCredential, authorizeWithMicrosoft } from '../auth/microsoft.js';
+} from '../endpoints/auth-openinvite.js';
+import { setGoogleCredential, authorizeWithGoogle } from '../endpoints/auth-google.js';
+import { setMicrosoftCredential, authorizeWithMicrosoft } from '../endpoints/auth-microsoft.js';
 import {
   getMyProfile, getUserInfo, updateProfile, uploadProfilePhoto, changePassword,
 } from '../endpoints/user.js';
