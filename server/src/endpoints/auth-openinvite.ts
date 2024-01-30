@@ -67,6 +67,10 @@ export async function register(req: Request, res: Response) {
   let client;
 
   try {
+    if (req.cookies.session) {
+      throw new StatusError(400, 'User already logged in');
+    }
+
     const username = validateMinMaxLength(req.body.username, 1, 64);
     if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
       throw new StatusError(400, 'Invalid username');
@@ -87,6 +91,7 @@ export async function register(req: Request, res: Response) {
       const session = await SessionModel.newSession(client, uid);
       session.setSessionCookie(res);
     }
+    res.write(uid);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -99,7 +104,14 @@ export async function registerWithProvider(req: Request, res: Response) {
   let client;
 
   try {
+    if (req.cookies.session) {
+      throw new StatusError(400, 'User already logged in');
+    }
+
     const username = validateMinMaxLength(req.body.username, 1, 64);
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      throw new StatusError(400, 'Invalid username');
+    }
     const provider = validateMinMaxLength(req.body.provider, 1, 255);
     const providerName = provider.split(':')[0];
 
