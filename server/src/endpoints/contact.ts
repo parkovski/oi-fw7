@@ -165,7 +165,9 @@ export async function approveContact(req: Request, res: Response) {
 
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
     const { uid_contact, name } = await new UserModel(client, myUid).approveContact(uidOwner);
-    const setting = await getNotificationSetting(client, uidOwner, 'contact_request_approved');
+    const setting = await new SettingsModel(client).getNotificationSetting(
+      uidOwner, 'contact_request_approved'
+    );
     const message: ContactRequestApprovedMessage = {
       m: 'contact_request_approved',
       id: uid_contact,

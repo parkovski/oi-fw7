@@ -5,6 +5,7 @@ import { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';
 import type { IncomingMessage } from 'node:http';
 import type { Message } from 'oi-types/message';
+import SessionModel from '../models/session.js';
 
 export type WebSocketListener<T extends Message | Buffer> = (this: WebSocket, message: T) => void;
 
@@ -61,7 +62,7 @@ async function setupWebSocket(ws: WebSocket, cookies: Record<string, string>, re
 
   try {
     client = await getPool().connect();
-    const uid = await getUserId(client, cookies.session);
+    const uid = await new SessionModel(client, cookies.session).getUserId();
     ws.on('error', onError);
     ws.on('close', onClose);
     ws.on('message', onMessage);

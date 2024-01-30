@@ -5,7 +5,7 @@ import type { UploadedFile } from 'express-fileupload';
 import { getPool } from '../util/db.js';
 import { handleError, StatusError } from '../util/error.js';
 import {
-  validateUuid, validateMinMaxLength, validateBoolean, validateIfDefined,
+  validateMinMaxLength, validateBoolean, validateIfDefined,
 } from '../util/validation.js';
 import sharp from 'sharp';
 import UserModel from '../models/user.js';
