@@ -21,11 +21,10 @@ export async function getGroups(req: Request, res: Response) {
 
     const myUid = await new SessionModel(client, session).getUserId();
 
-    const group = new GroupModel(client);
     const [summary, unreadMessages, upcomingEvents] = await Promise.all([
-      group.getGroupsForUser(myUid),
-      group.getUnreadMessages(myUid),
-      group.getUpcomingEvents(myUid),
+      GroupModel.getGroupsForUser(client, myUid),
+      GroupModel.getUnreadMessages(client, myUid),
+      GroupModel.getUpcomingEvents(client, myUid),
     ]);
 
     const unreadMap = new Map<string, UnreadMessage>();
@@ -62,8 +61,8 @@ export async function getGroupInfo(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const group = new GroupModel(client);
-    const groupInfo = await group.getBasicInfo(gid);
+    const group = new GroupModel(client, gid);
+    const groupInfo = await group.getBasicInfo();
 
     groupInfo.memberKind = null;
 
@@ -75,7 +74,7 @@ export async function getGroupInfo(req: Request, res: Response) {
     const myUid = await new SessionModel(client, session).getUserId();
 
     // Check that the logged in user is in the group before listing members.
-    const myMembership = await group.getMembership(myUid, gid);
+    const myMembership = await group.getMembership(myUid);
     if (myMembership === null) {
       // Not a group member, so just reply with group name and public/private.
       // memberKind is already null here.
@@ -93,8 +92,8 @@ export async function getGroupInfo(req: Request, res: Response) {
 
     // Get the member list and unread messages for the group.
     const [members, unreadMessages] = await Promise.all([
-      group.getMembers(gid),
-      group.getUnreadMessageCount(myUid, gid)
+      group.getMembers(),
+      group.getUnreadMessageCount(myUid)
     ]);
     groupInfo.members = members;
     groupInfo.unreadMessages = unreadMessages;
@@ -123,8 +122,8 @@ export async function inviteToGroup(req: Request, res: Response) {
     const loggedInUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am a member of the group or the group is public.
-    const group = new GroupModel(client);
-    const memberInfo = await group.getMembershipAndPublic(loggedInUid, gid);
+    const group = new GroupModel(client, gid);
+    const memberInfo = await group.getMembershipAndPublic(loggedInUid);
     if (!memberInfo.public && memberInfo.kind === null) {
       res.status(403);
       return;
@@ -132,7 +131,7 @@ export async function inviteToGroup(req: Request, res: Response) {
 
     // Insert the users into the group's members with invited status unless the
     // user is already in the group, then do nothing.
-    const updatedUids = await group.inviteUsers(gid, invitedUids);
+    const updatedUids = await group.inviteUsers(invitedUids);
     const invitedMsg = {
       m: 'group_membership_changed',
       id: gid,
@@ -160,15 +159,15 @@ export async function makeGroupAdmin(req: Request, res: Response) {
     const loggedInUid = await new SessionModel(client, session).getUserId();
 
     // Make sure I am an admin of this group.
-    const group = new GroupModel(client);
-    const myMembership = await group.getMembership(loggedInUid, gid);
+    const group = new GroupModel(client, gid);
+    const myMembership = await group.getMembership(loggedInUid);
     if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
     // Give the requested user admin status.
-    if (!await group.makeAdmin(gid, requestedUid)) {
+    if (!await group.makeAdmin(requestedUid)) {
       throw new StatusError(404, 'Group membership not found');
     }
     wsclients.sendWs(requestedUid, {
@@ -195,8 +194,8 @@ export async function joinGroup(req: Request, res: Response) {
     const uid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am invited to the group or the group is public.
-    const group = new GroupModel(client);
-    const myMembership = await group.getMembershipAndPublic(uid, gid);
+    const group = new GroupModel(client, gid);
+    const myMembership = await group.getMembershipAndPublic(uid);
     if (myMembership.kind !== null && myMembership.kind > Membership.Invited) {
       // I am already a member.
       res.status(400);
@@ -205,11 +204,11 @@ export async function joinGroup(req: Request, res: Response) {
     if (!myMembership.public && myMembership.kind !== Membership.Invited) {
       // The group is not public and I have not been invited. Insert a
       // requested status.
-      await group.requestToJoin(gid, uid);
+      await group.requestToJoin(uid);
       res.write('requested');
     } else {
       // Change my invite status to member.
-      await group.joinGroup(gid, uid);
+      await group.joinGroup(uid);
       res.write('joined');
     }
   } catch (e) {
@@ -231,15 +230,15 @@ export async function getGroupRequests(req: Request, res: Response) {
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am an admin of this group.
-    const group = new GroupModel(client);
-    const memberKind = await group.getMembership(myUid, gid);
+    const group = new GroupModel(client, gid);
+    const memberKind = await group.getMembership(myUid);
     if (memberKind !== Membership.Admin) {
       res.status(403);
       return;
     }
 
     // Get users who have a member status of -1 (Requested).
-    const requestedUsers = await group.getJoinRequests(gid);
+    const requestedUsers = await group.getJoinRequests();
     res.json(requestedUsers);
   } catch (e) {
     handleError(e, res);
@@ -261,14 +260,14 @@ export async function approveGroupRequest(req: Request, res: Response) {
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am an admin of this group.
-    const group = new GroupModel(client);
-    const myMembership = await group.getMembership(myUid, gid);
+    const group = new GroupModel(client, gid);
+    const myMembership = await group.getMembership(myUid);
     if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
-    await group.approveJoinRequest(gid, uid);
+    await group.approveJoinRequest(uid);
   } catch (e) {
     handleError(e, res, 400);
   } finally {
@@ -289,14 +288,14 @@ export async function denyGroupRequest(req: Request, res: Response) {
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am an admin of this group.
-    const group = new GroupModel(client);
-    const myMembership = await group.getMembership(myUid, gid);
+    const group = new GroupModel(client, gid);
+    const myMembership = await group.getMembership(myUid);
     if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
-    await group.rejectJoinRequest(gid, uid);
+    await group.rejectJoinRequest(uid);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -315,8 +314,8 @@ export async function leaveGroup(req: Request, res: Response) {
 
     const uid = await new SessionModel(client, req.cookies.session).getUserId();
 
-    const group = new GroupModel(client);
-    await group.leaveGroup(gid, uid);
+    const group = new GroupModel(client, gid);
+    await group.leaveGroup(uid);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -341,15 +340,15 @@ export async function newGroup(req: Request, res: Response) {
     const myUid = await new SessionModel(client, session).getUserId();
 
     const gid = await GroupModel.newGroup(client, name, isPublic, description);
-    const group = new GroupModel(client);
+    const group = new GroupModel(client, gid);
 
-    await group.makeAdmin(gid, myUid);
+    await group.makeAdmin(myUid);
     if (invited.length) {
-      await group.inviteUsers(gid, invited);
+      await group.inviteUsers(invited);
     }
 
     invited.push(myUid);
-    const members = await group.getMembers(gid);
+    const members = await group.getMembers();
     res.json({
       id: gid,
       name,
@@ -376,15 +375,15 @@ export async function deleteGroup(req: Request, res: Response) {
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am an admin of this group.
-    const group = new GroupModel(client);
-    const myMembership = await group.getMembership(myUid, gid);
+    const group = new GroupModel(client,gid);
+    const myMembership = await group.getMembership(myUid);
     if (myMembership !== Membership.Admin) {
       res.status(403);
       return;
     }
 
     // Delete the group.
-    await group.deleteGroup(gid);
+    await group.deleteGroup();
   } catch (e) {
     handleError(e, res);
   } finally {

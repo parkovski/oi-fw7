@@ -21,10 +21,10 @@ export async function getContacts(req: Request, res: Response) {
 
     const myUid = await new SessionModel(client, session).getUserId();
 
-    const user = new UserModel(client);
+    const user = new UserModel(client, myUid);
     const [contacts, followers] = await Promise.all([
-      user.getContactsForUser(myUid),
-      user.getFollowersForUser(myUid),
+      user.getContacts(),
+      user.getFollowers(),
     ]);
 
     const response: ContactData = {
@@ -54,11 +54,10 @@ export async function getContactRequests(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
-
     client = await getPool().connect();
 
-    const contacts = await new UserModel(client).getContactRequestsForSession(session);
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    const contacts = await new UserModel(client, myUid).getContactRequests();
     res.json(contacts);
   } catch (e) {
     handleError(e, res);
@@ -71,12 +70,12 @@ export async function getContactRequests(req: Request, res: Response) {
 export async function hasContact(req: Request, res: Response) {
   let client;
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const uidContact = validateNumeric(req.params.uid);
 
     client = await getPool().connect();
 
-    if (await new UserModel(client).sessionHasContact(session, uidContact)) {
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    if (await new UserModel(client, myUid).hasContact(uidContact)) {
       res.write('true');
     } else {
       res.write('false');
@@ -104,13 +103,13 @@ export async function addContact(req: Request, res: Response) {
       return;
     }
 
-    const user = new UserModel(client);
-    const { name, public: isPublic } = await user.getNameAndPublic(contactUid);
+    const user = new UserModel(client, myUid);
+    const { name, public: isPublic } = await new UserModel(client, contactUid).getNameAndPublic();
     const contactKind = isPublic
       ? ContactKind.Approved
       : ContactKind.Requested;
 
-    await user.addContact(myUid, contactUid, contactKind);
+    await user.addContact(contactUid, contactKind);
     if (contactKind === ContactKind.Requested) {
       res.end('requested');
       const setting =
@@ -142,12 +141,12 @@ export async function removeContact(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const contactUid = validateNumeric(req.params.uid);
 
     client = await getPool().connect();
 
-    await new UserModel(client).deleteContact(session, contactUid);
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    await new UserModel(client, myUid).deleteContact(contactUid);
   } catch (e) {
     handleError(e, res);
   } finally {
@@ -160,12 +159,12 @@ export async function approveContact(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const uidOwner = validateNumeric(req.params.uid);
 
     client = await getPool().connect();
 
-    const { uid_contact, name } = await new UserModel(client).approveContact(session, uidOwner);
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    const { uid_contact, name } = await new UserModel(client, myUid).approveContact(uidOwner);
     const setting = await getNotificationSetting(client, uidOwner, 'contact_request_approved');
     const message: ContactRequestApprovedMessage = {
       m: 'contact_request_approved',
@@ -185,12 +184,12 @@ export async function denyContact(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const uidOwner = validateNumeric(req.params.uid);
 
     client = await getPool().connect();
 
-    await new UserModel(client).denyContact(session, uidOwner);
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    await new UserModel(client, myUid).denyContact(uidOwner);
   } catch (e) {
     handleError(e, res);
   } finally {

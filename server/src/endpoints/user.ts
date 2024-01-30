@@ -15,12 +15,11 @@ import PhotoModel from '../models/photo.js';
 export async function getMyProfile(req: Request, res: Response) {
   let client;
   try {
-    const session = validateUuid(req.cookies.session, 401);
-
     client = await getPool().connect();
 
-    const user = new UserModel(client);
-    const profile = await user.getProfileForSession(session);
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
+    const user = new UserModel(client, uid);
+    const profile = await user.getProfile();
     res.json(profile);
   } catch (e) {
     handleError(e, res);
@@ -34,7 +33,6 @@ export async function updateProfile(req: Request, res: Response) {
   let client;
 
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const username = validateIfDefined<string>(
       req.body.username, x => validateMinMaxLength(x, 1, 64)
     );
@@ -45,42 +43,42 @@ export async function updateProfile(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const user = new UserModel(client);
-    const profile = await user.getProfileForSession(session);
-    const myUid = profile.id;
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    const user = new UserModel(client, myUid);
+    const profile = await user.getProfile();
 
     const promises: Promise<any>[] = [];
 
     if (username && username.length && username !== profile.username) {
       if (username.toLowerCase() === profile.username.toLowerCase()) {
         // We're just changing the case here.
-        promises.push(user.updateUserField(myUid, 'username', username));
+        promises.push(user.updateUserField('username', username));
       } else {
-        const uid = await user.getIdForUsername(username);
+        const uid = await UserModel.getIdForUsername(client, username);
         if (uid !== null) {
           // This username is already taken.
           res.status(409);
           return;
         } else {
-          promises.push(user.updateUserField(myUid, 'username', username));
+          promises.push(user.updateUserField('username', username));
         }
       }
     }
 
     if (name && name.length && name !== profile.name) {
-      promises.push(user.updateUserField(myUid, 'name', name));
+      promises.push(user.updateUserField('name', name));
     }
 
     if (email && email.length && email !== profile.email) {
-      promises.push(user.updateUserField(myUid, 'email', email));
+      promises.push(user.updateUserField('email', email));
     }
 
     if (phone && phone.length && phone !== profile.phone) {
-      promises.push(user.updateUserField(myUid, 'phone', phone));
+      promises.push(user.updateUserField('phone', phone));
     }
 
     if (isPublic !== profile.public) {
-      promises.push(user.updateUserField(myUid, 'public', isPublic));
+      promises.push(user.updateUserField('public', isPublic));
     }
 
     await Promise.all(promises);
@@ -101,12 +99,11 @@ export async function getUserInfo(req: Request, res: Response) {
 
     client = await getPool().connect();
     if (session) {
-      validateUuid(session);
-
-      const contact = await new UserModel(client).getContactForSession(session, uid);
+      const myUid = await new SessionModel(client, session).getUserId();
+      const contact = await new UserModel(client, myUid).getContact(uid);
       res.json(contact);
     } else {
-      const user = await new UserModel(client).getMinUser(uid);
+      const user = await new UserModel(client, uid).getMinUser();
       res.json(user);
     }
   } catch (e) {
@@ -132,24 +129,22 @@ export async function uploadProfilePhoto(req: Request, res: Response) {
 
   let client;
   try {
-    const session = validateUuid(req.cookies.session, 401);
-
     client = await getPool().connect();
 
     const photo = new PhotoModel(file);
     const {path: tmpPath, filename} = await photo.upload({ allowedExtensions, useTempDir: true });
     const uploadPath = `${process.env.UPLOAD_DIR}/${filename}`;
 
-    const user = new UserModel(client);
-    const avatarInfo = await user.getIdAndAvatarForSession(session);
+    const myUid = await new SessionModel(client, req.cookies.session).getUserId();
+    const user = new UserModel(client, myUid);
+    const avatarInfo = await user.getIdAndAvatar();
     if (avatarInfo === null) {
       res.status(404);
       return;
     }
-    const myUid = avatarInfo.id;
     const oldAvatar = avatarInfo.avatar_url;
     const promises = [
-      user.updateUserField(myUid, 'avatar_url', filename),
+      user.updateUserField('avatar_url', filename),
     ];
     if (oldAvatar) {
       promises.push(fs.unlink(`${process.env.UPLOAD_DIR}/${oldAvatar}`));
@@ -172,7 +167,6 @@ export async function uploadProfilePhoto(req: Request, res: Response) {
 export async function changePassword(req: Request, res: Response) {
   let client;
   try {
-    const session = validateUuid(req.cookies.session, 401);
     const currentPassword = validateMinMaxLength(req.body.currentPassword, 1, 255);
     const newPassword = validateMinMaxLength(req.body.newPassword, 6, 255);
     const confirmPassword = req.body.confirmPassword;
@@ -183,8 +177,8 @@ export async function changePassword(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const uid = await new SessionModel(client, session).getUserId();
-    await new UserModel(client).changePassword(uid, currentPassword, newPassword);
+    const uid = await new SessionModel(client, req.cookies.session).getUserId();
+    await new UserModel(client, uid).changePassword(currentPassword, newPassword);
   } catch (e) {
     handleError(e, res);
   } finally {

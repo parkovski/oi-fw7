@@ -13,7 +13,6 @@ import {
   GroupMessageReceivedMessage,
 } from 'oi-types/message';
 import GroupModel from '../models/group.js';
-import GroupChatModel from '../models/groupchat.js';
 import UserModel from '../models/user.js';
 import SessionModel from '../models/session.js';
 
@@ -30,14 +29,13 @@ export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) 
     client = await getPool().connect();
 
     // Check that I am a member of the group.
-    const group = new GroupModel(client);
-    const membership = await group.getMembership(uid, msg.to);
+    const group = new GroupModel(client, msg.to);
+    const membership = await group.getMembership(uid);
     if (membership === null || membership <= Membership.Invited) {
       return;
     }
 
-    const groupChat = new GroupChatModel(client);
-    const insertResult = await groupChat.insertMessage(uid, msg.to, msg.text);
+    const insertResult = await group.insertMessage(uid, msg.text);
     this.send(JSON.stringify({
       m: 'group_message_sent',
       uuid: msg.uuid,
@@ -46,8 +44,8 @@ export async function groupChatListen(this: WebSocket, msg: ClientGroupMessage) 
       text: msg.text,
     } satisfies GroupMessageSentMessage));
 
-    const { name, username } = await new UserModel(client).getNameAndUsername(uid);
-    const members = await group.getMemberUids(msg.to);
+    const { name, username } = await new UserModel(client, uid).getNameAndUsername();
+    const members = await group.getMemberUids();
     const groupmsg: ServerGroupMessage = {
       m: 'groupchat',
       id: insertResult.id,
@@ -79,7 +77,7 @@ export async function groupMessageReceived(this: WebSocket, msg: GroupMessageRec
 
     client = await getPool().connect();
 
-    await new GroupChatModel(client).markRead(msg.id, uid);
+    await GroupModel.markRead(client, msg.id, uid);
   } catch {
     // Ignore
   } finally {
@@ -98,12 +96,13 @@ export async function getGroupChat(req: Request, res: Response) {
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Check that I am a member of the group.
-    const membership = await new GroupModel(client).getMembership(myUid, gid);
+    const group = new GroupModel(client, gid);
+    const membership = await group.getMembership(myUid);
     if (membership === null || membership <= Membership.Invited) {
       throw new StatusError(403);
     }
 
-    const messages = await new GroupChatModel(client).getInitialMessages(myUid, gid);
+    const messages = await group.getInitialMessages(myUid);
     res.json(messages);
   } catch (e) {
     handleError(e, res);

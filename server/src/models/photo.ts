@@ -21,6 +21,21 @@ export default class PhotoModel {
     this._photo = photo;
   }
 
+  static createUniqueFilename(ext?: string): Promise<string> {
+    if (ext && ext[0] !== '.') {
+      ext = '.' + ext;
+    }
+
+    const randomBytes = new Promise<string>((resolve, reject) => {
+      crypto.randomBytes(32, (err, buf) => {
+        if (err) reject(err);
+        const name = buf.toString('base64').replaceAll(/\//g, '_').replaceAll(/\+/g, '-');
+        resolve(ext ? `${name}${ext}` : name);
+      });
+    });
+    return randomBytes;
+  }
+
   upload(): Promise<UploadReturn>;
   upload(options: UploadOptions): Promise<UploadReturn>;
   upload(allowedExtensions: string[] | Set<string>): Promise<UploadReturn>;
@@ -33,13 +48,6 @@ export default class PhotoModel {
       };
     }
 
-    const randomBytes = new Promise<string>((resolve, reject) => {
-      crypto.randomBytes(32, (err, buf) => {
-        if (err) reject(err);
-        resolve(buf.toString('base64').replaceAll(/\//g, '_').replaceAll(/\+/g, '-'));
-      });
-    });
-    const name = await randomBytes;
     const ext = path.extname(this._photo.name).toLowerCase();
     if (options.allowedExtensions) {
       if (Array.isArray(options.allowedExtensions)) {
@@ -52,6 +60,7 @@ export default class PhotoModel {
         }
       }
     }
+    const name = await PhotoModel.createUniqueFilename();
     const filename = `${name}${ext}`;
     let uploadPath;
     if (options.useTempDir) {
@@ -84,14 +93,8 @@ export default class PhotoModel {
       height = size;
       //width = photoWidth * height / photoHeight;
     }
-    const randomBytes = new Promise<string>((resolve, reject) => {
-      crypto.randomBytes(32, (err, buf) => {
-        if (err) reject(err);
-        resolve(buf.toString('base64').replaceAll(/\//g, '_').replaceAll(/\+/g, '-'));
-      });
-    });
     const ext = path.extname(uploadPath);
-    const filename = `${await randomBytes}${ext}`;
+    const filename = await PhotoModel.createUniqueFilename(ext);
     await photo.resize(width, height).rotate().toFile(`${process.env.UPLOAD_DIR}/${filename}`);
     return filename;
   }

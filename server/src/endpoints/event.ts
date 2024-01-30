@@ -26,7 +26,7 @@ export async function getEvents(req: Request, res: Response) {
     client = await getPool().connect();
 
     const uid = await new SessionModel(client, req.cookies.session).getUserId();
-    const events = await new EventModel(client).getUserSummary(uid);
+    const events = await new UserModel(client, uid).getEventSummary();
     res.json(events);
   } catch (e) {
     handleError(e, res);
@@ -45,8 +45,8 @@ export async function getEventInfo(req: Request, res: Response) {
 
     client = await getPool().connect();
 
-    const event = new EventModel(client);
-    const eventInfo = await event.getEvent(eid);
+    const event = new EventModel(client, eid);
+    const eventInfo = await event.getEvent();
     eventInfo.kind = null;
 
     if (!session) {
@@ -57,10 +57,10 @@ export async function getEventInfo(req: Request, res: Response) {
     const uid = await new SessionModel(client, session).getUserId();
 
     // Check that I am invited to the event before listing invitees.
-    const attendance = await event.getAttendance(uid, eid);
+    const attendance = await event.getAttendance(uid);
     if (attendance === null) {
       // I'm not in the attendance list. Check if the event is for a group that I am in.
-      const membership = await event.getGroupMembership(uid, eid);
+      const membership = await event.getGroupMembership(uid);
       if (membership === null || membership < Membership.Member) {
         res.json(eventInfo);
         return;
@@ -70,19 +70,19 @@ export async function getEventInfo(req: Request, res: Response) {
     }
 
     // Get the invite list
-    const members = await event.getInviteList(eid);
+    const members = await event.getInviteList();
     if (members.length) {
       eventInfo.members = members;
     }
 
     // Get the comments list
-    const comments = await event.getCommentsList(eid);
+    const comments = await event.getCommentsList();
     if (comments.length) {
       eventInfo.comments = comments;
     }
 
     // Get the photos list
-    const photos = await event.getPhotos(eid);
+    const photos = await event.getPhotos();
     if (photos.length) {
       eventInfo.photos = photos;
     }
@@ -105,13 +105,14 @@ export async function getGroupEvents(req: Request, res: Response) {
     client = await getPool().connect();
 
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
-    const membership = await new GroupModel(client).getMembership(myUid, gid);
+    const group = new GroupModel(client, gid);
+    const membership = await group.getMembership(myUid);
     if (membership === null || membership < Membership.Member) {
       res.status(403);
       return;
     }
 
-    const events = await new EventModel(client).getGroupEvents(myUid, gid);
+    const events = await group.getGroupEvents(myUid);
     res.json(events);
   } catch (e) {
     handleError(e, res);
@@ -131,7 +132,7 @@ export async function postEventComment(req: Request, res: Response) {
     client = await getPool().connect();
 
     const uid = await new SessionModel(client, req.cookies.session).getUserId();
-    const messageId = await new EventModel(client).insertComment(eid, uid, text);
+    const messageId = await new EventModel(client, eid).insertComment(uid, text);
     res.write(messageId);
   } catch (e) {
     handleError(e, res);
@@ -157,8 +158,8 @@ export async function setEventAttendance(req: Request, res: Response) {
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Update attendance only if not hosting.
-    const event = new EventModel(client);
-    if (!await event.setAttendance(myUid, eid, kind)) {
+    const event = new EventModel(client, eid);
+    if (!await event.setAttendance(myUid, kind)) {
       res.status(404);
     } else {
       wsclients.sendWs<EventAttendanceChangedMessage>(myUid, {
@@ -169,9 +170,9 @@ export async function setEventAttendance(req: Request, res: Response) {
       res.write('' + kind);
 
       const [myUsername, hosts, title, wantsNotification] = await Promise.all([
-        new UserModel(client).getUsername(myUid),
-        event.getHosts(eid),
-        event.getTitle(eid),
+        new UserModel(client, myUid).getUsername(),
+        event.getHosts(),
+        event.getTitle(),
         new SettingsModel(client).getNotificationSetting(myUid, 'event_responded'),
       ]);
       // Notify the hosts.
@@ -207,14 +208,14 @@ export async function inviteToEvent(req: Request, res: Response) {
     const loggedInUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am in the event's member list
-    const event = new EventModel(client);
-    const attendanceInfo = await event.getAttendanceInfo(loggedInUid, eid);
+    const event = new EventModel(client, eid);
+    const attendanceInfo = await event.getAttendanceInfo(loggedInUid);
     if (!attendanceInfo.public && attendanceInfo.kind === null) {
       res.status(403);
       return;
     }
 
-    const inserted = await event.inviteUsers(eid, invitedUids);
+    const inserted = await event.inviteUsers(invitedUids);
 
     const wantsNotification = await new SettingsModel(client).getNotificationSettingForMany(
       inserted, 'event_added'
@@ -251,14 +252,14 @@ export async function makeEventHost(req: Request, res: Response) {
     const myUid = await new SessionModel(client, req.cookies.session).getUserId();
 
     // Make sure I am a host first.
-    const event = new EventModel(client);
-    const myAttendance = await event.getAttendance(myUid, eid);
+    const event = new EventModel(client, eid);
+    const myAttendance = await event.getAttendance(myUid);
     if (myAttendance !== AttendanceKind.Hosting) {
       throw new StatusError(403);
     }
 
     // Only invite users that are marked as attending.
-    const attending = await event.getAttendingUsers(eid, invitedUids);
+    const attending = await event.getAttendingUsers(invitedUids);
     const toInvite = [];
     for (const user of attending) {
       if (user.kind === AttendanceKind.Attending) {
@@ -268,8 +269,8 @@ export async function makeEventHost(req: Request, res: Response) {
 
     if (toInvite.length) {
       const [_, title, wantsNotification] = await Promise.all([
-        event.convertToHosts(eid, toInvite),
-        event.getTitle(eid),
+        event.convertToHosts(toInvite),
+        event.getTitle(),
         new SettingsModel(client).getNotificationSettingForMany(
           toInvite, 'event_attendance_changed')
       ]);
@@ -328,13 +329,14 @@ export async function newEvent(req: Request, res: Response) {
       coverPhotoFilename = filename;
     }
 
-    const event = new EventModel(client);
-    const eid = await event.newEvent(
-      title, description, uid, place, startTime, endTime, isPublic, coverPhotoFilename, gid
+    const eid = await EventModel.newEvent(
+      client, title, description, uid, place, startTime, endTime, isPublic,
+      coverPhotoFilename, gid
     );
+    const event = new EventModel(client, eid);
 
     // Add myself as a host (kind 3).
-    await event.addHost(eid, uid);
+    await event.addHost(uid);
 
     const eventAddedMessage: EventAddedMessage = {
       m: 'event_added',
@@ -344,7 +346,7 @@ export async function newEvent(req: Request, res: Response) {
     wsclients.sendWs(uid, eventAddedMessage);
 
     if (!gid && invited.length) {
-      const realInvited = await event.inviteUsers(eid, invited);
+      const realInvited = await event.inviteUsers(invited);
       const wantsPush = await new SettingsModel(client).getNotificationSettingForMany(
         realInvited, 'event_added'
       );
@@ -383,7 +385,7 @@ export async function uploadEventPhoto(req: Request, res: Response) {
 
     const thumbnail = await PhotoModel.createThumbnail(`${process.env.UPLOAD_DIR}/${filename}`);
 
-    await new EventModel(client).addPhoto(eid, uid, filename, thumbnail);
+    await new EventModel(client, eid).addPhoto(uid, filename, thumbnail);
 
     res.json({ url: filename, thumbnail });
   } catch (e) {

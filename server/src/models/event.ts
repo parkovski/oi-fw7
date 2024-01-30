@@ -1,4 +1,5 @@
 import DataModel from './data.js';
+import type { PoolClient } from 'pg';
 import {
   Event, EventSummary, EventMember, EventComment, EventPhoto, AttendanceKind
 } from 'oi-types/event';
@@ -6,21 +7,14 @@ import { Membership } from 'oi-types/group';
 import { StatusError } from '../util/error.js';
 
 export default class EventModel extends DataModel {
-  async getUserSummary(uid: string): Promise<EventSummary[]> {
-    const result = await this._dbclient.query<EventSummary>(
-      `
-      SELECT events.id, events.title, events.start_time AS "startTime",
-        events.end_time AS "endTime", events.public, attendance.kind
-      FROM attendance
-      INNER JOIN events ON attendance.eid = events.id
-      WHERE attendance.uid = $1 AND events.gid IS NULL
-      `,
-      [uid]
-    );
-    return result.rows;
+  private _eid: string;
+
+  constructor(client: PoolClient, eid: string) {
+    super(client);
+    this._eid = eid;
   }
 
-  async getEvent(id: string): Promise<Event> {
+  async getEvent(): Promise<Event> {
     const result = await this._dbclient.query<Event>(
       `
       SELECT id, title, description, place, start_time AS "startTime",
@@ -28,7 +22,7 @@ export default class EventModel extends DataModel {
       FROM events
       WHERE id = $1
       `,
-      [id]
+      [this._eid]
     );
     if (result.rowCount === 0) {
       throw new StatusError(404, 'Event not found');
@@ -36,10 +30,10 @@ export default class EventModel extends DataModel {
     return result.rows[0];
   }
 
-  async getAttendance(uid: string, eid: string): Promise<AttendanceKind | null> {
+  async getAttendance(uid: string): Promise<AttendanceKind | null> {
     const result = await this._dbclient.query<{ kind: AttendanceKind }>(
       `SELECT kind FROM attendance WHERE (uid, eid) = ($1, $2)`,
-      [uid, eid]
+      [uid, this._eid]
     );
     if (result.rowCount === 0) {
       return null;
@@ -47,13 +41,13 @@ export default class EventModel extends DataModel {
     return result.rows[0].kind;
   }
 
-  async getGroupMembership(uid: string, eid: string): Promise<Membership | null> {
+  async getGroupMembership(uid: string): Promise<Membership | null> {
     const result = await this._dbclient.query<{ kind: Membership }>(
       `
       SELECT kind FROM groupmems
       WHERE (uid, gid) = ($1, (SELECT gid FROM events WHERE id = $2))
       `,
-      [uid, eid]
+      [uid, this._eid]
     );
     if (result.rowCount === 0) {
       return null;
@@ -61,7 +55,7 @@ export default class EventModel extends DataModel {
     return result.rows[0].kind;
   }
 
-  async getInviteList(eid: string): Promise<EventMember[]> {
+  async getInviteList(): Promise<EventMember[]> {
     const result = await this._dbclient.query<EventMember>(
       `
       SELECT users.id, users.name, users.username, attendance.kind
@@ -69,12 +63,12 @@ export default class EventModel extends DataModel {
       INNER JOIN users ON attendance.uid = users.id
       WHERE attendance.eid = $1
       `,
-      [eid]
+      [this._eid]
     );
     return result.rows;
   }
 
-  async getCommentsList(eid: string): Promise<EventComment[]> {
+  async getCommentsList(): Promise<EventComment[]> {
     const result = await this._dbclient.query<EventComment>(
       `
       SELECT event_comments.id, users.id AS "from", users.name AS "fromName",
@@ -83,42 +77,27 @@ export default class EventModel extends DataModel {
       LEFT JOIN users ON event_comments.uid_from = users.id
       WHERE event_comments.eid = $1
       `,
-      [eid]
+      [this._eid]
     );
     return result.rows;
   }
 
-  async getPhotos(eid: string): Promise<EventPhoto[]> {
+  async getPhotos(): Promise<EventPhoto[]> {
     const result = await this._dbclient.query<EventPhoto>(
       `SELECT filename AS url, thumbnail FROM event_photos WHERE eid = $1`,
-      [eid]
+      [this._eid]
     );
     return result.rows;
   }
 
-  async getGroupEvents(uid: string, gid: string): Promise<EventSummary[]> {
-    const result = await this._dbclient.query(
-      `
-      SELECT events.id, events.title, events.start_time AS "startTime",
-        events.end_time AS "endTime", attendance.kind
-      FROM events
-      LEFT JOIN attendance ON events.id = attendance.eid
-        AND attendance.uid = $1
-      WHERE events.gid = $2
-      `,
-      [uid, gid]
-    );
-    return result.rows;
-  }
-
-  async insertComment(eid: string, uid: string, text: string) {
+  async insertComment(uid: string, text: string) {
     const result = await this._dbclient.query<{ id: string }>(
       `
       INSERT INTO event_comments (eid, uid_from, message)
       VALUES ($1, $2, $3)
       RETURNING id
       `,
-      [eid, uid, text]
+      [this._eid, uid, text]
     );
     if (result.rowCount === 0) {
       throw new StatusError(500, 'Message insert failed');
@@ -126,7 +105,7 @@ export default class EventModel extends DataModel {
     return result.rows[0].id;
   }
 
-  async setAttendance(uid: string, eid: string, kind: AttendanceKind): Promise<boolean> {
+  async setAttendance(uid: string, kind: AttendanceKind): Promise<boolean> {
     const result = await this._dbclient.query(
       `
       INSERT INTO attendance (uid, eid, kind)
@@ -134,12 +113,12 @@ export default class EventModel extends DataModel {
       ON CONFLICT (uid, eid) DO UPDATE SET kind = $3
       WHERE attendance.kind != 3
       `,
-      [uid, eid, kind]
+      [uid, this._eid, kind]
     );
     return result.rowCount! > 0;
   }
 
-  async getHosts(eid: string): Promise<string[]> {
+  async getHosts(): Promise<string[]> {
     const result = await this._dbclient.query<{ id: string }>(
       `
       SELECT users.id
@@ -147,14 +126,14 @@ export default class EventModel extends DataModel {
       INNER JOIN users ON attendance.uid = users.id
       WHERE attendance.eid = $1 AND attendance.kind = 3
       `,
-      [eid]
+      [this._eid]
     );
     return result.rows.map(row => row.id);
   }
 
-  async getTitle(eid: string): Promise<string> {
+  async getTitle(): Promise<string> {
     const result = await this._dbclient.query<{ title: string }>(
-      `SELECT title FROM events WHERE id = $1`, [eid]
+      `SELECT title FROM events WHERE id = $1`, [this._eid]
     );
     if (result.rowCount === 0) {
       throw new StatusError(404, 'Event not found');
@@ -162,7 +141,7 @@ export default class EventModel extends DataModel {
     return result.rows[0].title;
   }
 
-  async getAttendanceInfo(uid: string, eid: string): Promise<{
+  async getAttendanceInfo(uid: string): Promise<{
     kind: AttendanceKind | null;
     public: boolean;
     title: string;
@@ -178,7 +157,7 @@ export default class EventModel extends DataModel {
       RIGHT JOIN events ON attendance.eid = events.id AND attendance.uid = $1
       WHERE events.id = $2
       `,
-      [uid, eid]
+      [uid, this._eid]
     );
     if (result.rowCount === 0) {
       throw new StatusError(404, 'Event not found');
@@ -187,7 +166,7 @@ export default class EventModel extends DataModel {
   }
 
   // Returns uids actually invited which may be different than `uids`.
-  async inviteUsers(eid: string, uids: string[]): Promise<string[]> {
+  async inviteUsers(uids: string[]): Promise<string[]> {
     const result = await this._dbclient.query<{ uid: string }>(
       `
       INSERT INTO attendance (uid, eid, kind)
@@ -195,31 +174,32 @@ export default class EventModel extends DataModel {
       ON CONFLICT (uid, eid) DO NOTHING
       RETURNING uid
       `,
-      [uids, eid]
+      [uids, this._eid]
     );
     return result.rows.map(row => row.uid);
   }
 
-  async getAttendingUsers(eid: string, uids: string[]): Promise<{
+  async getAttendingUsers(uids: string[]): Promise<{
     uid: string;
     kind: AttendanceKind;
   }[]> {
     const result = await this._dbclient.query<{ uid: string; kind: AttendanceKind; }>(
       `SELECT uid, kind FROM attendance WHERE uid = ANY($1::bigint array) AND eid = $2`,
-      [uids, eid]
+      [uids, this._eid]
     );
     return result.rows;
   }
 
-  async convertToHosts(eid: string, uids: string[]) {
+  async convertToHosts(uids: string[]) {
     await this._dbclient.query(
       `UPDATE attendance SET kind = 3 WHERE uid = ANY($1) AND eid = $2`,
-      [uids, eid]
+      [uids, this._eid]
     );
   }
 
   // Returns the new event's ID.
-  async newEvent(
+  static async newEvent(
+    dbclient: PoolClient,
     title: string,
     description: string | null,
     createdBy: string,
@@ -230,7 +210,7 @@ export default class EventModel extends DataModel {
     coverPhotoFilename: string | null,
     gid: string | null,
   ): Promise<string> {
-    const result = await this._dbclient.query<{ id: string }>(
+    const result = await dbclient.query<{ id: string }>(
       `
       INSERT INTO events
       (title, description, created_by, place, start_time, end_time, public,
@@ -246,23 +226,23 @@ export default class EventModel extends DataModel {
     return result.rows[0].id;
   }
 
-  async addHost(eid: string, uid: string) {
+  async addHost(uid: string) {
     await this._dbclient.query(
       `
       INSERT INTO attendance (uid, eid, kind)
       VALUES ($1, $2, 3)
       `,
-      [uid, eid]
+      [uid, this._eid]
     );
   }
 
-  async addPhoto(eid: string, uid: string, filename: string, thumbnail: string) {
+  async addPhoto(uid: string, filename: string, thumbnail: string) {
     await this._dbclient.query(
       `
       INSERT INTO event_photos(eid, uid_from, filename, thumbnail)
       VALUES ($1, $2, $3, $4)
       `,
-      [eid, uid, filename, thumbnail]
+      [this._eid, uid, filename, thumbnail]
     );
   }
 }
