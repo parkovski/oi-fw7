@@ -1,13 +1,21 @@
 import DataModel from './data.js';
+import type { PoolClient } from 'pg';
 import { ContactKind } from 'oi-types/user';
 import { ChatMessage, ChatSummary, UnreadMessageSummary } from 'oi-types/chat';
 import { StatusError } from '../util/error.js';
 
 export default class ChatModel extends DataModel {
-  async getContactKind(uidOwner: string, uidContact: string): Promise<ContactKind | null> {
+  _uid: string;
+
+  constructor(client: PoolClient, uid: string) {
+    super(client);
+    this._uid = uid;
+  }
+
+  async getContactKind(uidContact: string): Promise<ContactKind | null> {
     const result = await this._dbclient.query<{ kind: ContactKind }>(
       `SELECT kind FROM contacts WHERE (uid_owner, uid_contact) = ($1, $2)`,
-      [uidOwner, uidContact]
+      [this._uid, uidContact]
     );
     if (result.rowCount === 0) {
       return null;
@@ -15,7 +23,7 @@ export default class ChatModel extends DataModel {
     return result.rows[0].kind;
   }
 
-  async insertMessage(uidFrom: string, uidTo: string, message: string): Promise<{
+  async insertMessage(uidTo: string, message: string): Promise<{
     id: string;
     sent: string;
     message: string;
@@ -26,7 +34,7 @@ export default class ChatModel extends DataModel {
       VALUES ($1, $2, $3)
       RETURNING id, sent, message
       `,
-      [uidFrom, uidTo, message]
+      [this._uid, uidTo, message]
     );
     if (result.rowCount === 0) {
       throw new StatusError(500, 'Message insert failed');
@@ -34,7 +42,7 @@ export default class ChatModel extends DataModel {
     return result.rows[0];
   }
 
-  async getNameAndChatNotification(uid: string): Promise<{
+  async getNameAndChatNotification(): Promise<{
     name: string;
     username: string;
     chat: boolean;
@@ -46,7 +54,7 @@ export default class ChatModel extends DataModel {
       LEFT JOIN notification_settings ON users.id = notification_settings.uid
       WHERE users.id = $1
       `,
-      [uid]
+      [this._uid]
     );
     if (result.rowCount === 0) {
       throw new StatusError(404, 'User not found');
@@ -54,21 +62,21 @@ export default class ChatModel extends DataModel {
     return result.rows[0];
   }
 
-  async updateChatReceived(id: string | string[]) {
+  static async updateChatReceived(dbclient: PoolClient, id: string | string[]) {
     if (Array.isArray(id)) {
-      await this._dbclient.query(
+      await dbclient.query(
         `UPDATE user_messages SET received = NOW() WHERE id = ANY($1) AND received IS NULL`,
         [id]
       );
     } else {
-      await this._dbclient.query(
+      await dbclient.query(
         `UPDATE user_messages SET received = NOW() WHERE id = $1 AND received IS NULL`,
         [id]
       );
     }
   }
 
-  async getMessagesInitial(uidA: string, uidB: string, count?: number): Promise<ChatMessage[]> {
+  async getMessagesInitial(uid: string, count?: number): Promise<ChatMessage[]> {
     count ??= 50;
     const result = await this._dbclient.query<ChatMessage>(
       `
@@ -82,12 +90,12 @@ export default class ChatModel extends DataModel {
       ORDER BY id DESC
       LIMIT ${count}
       `,
-      [uidA, uidB]
+      [this._uid, uid]
     );
     return result.rows;
   }
 
-  async getSummary(uid: string): Promise<ChatSummary[]> {
+  async getSummary(): Promise<ChatSummary[]> {
     const result = await this._dbclient.query(
       `
       SELECT DISTINCT ON (user_messages.uid_from)
@@ -104,12 +112,12 @@ export default class ChatModel extends DataModel {
       INNER JOIN users ON user_messages.uid_to = users.id
       WHERE user_messages.uid_from = $1
       `,
-      [uid]
+      [this._uid]
     );
     return result.rows;
   }
 
-  async getUnreadMessageCount(uid: string): Promise<UnreadMessageSummary[]> {
+  async getUnreadMessageCount(): Promise<UnreadMessageSummary[]> {
     const result = await this._dbclient.query<UnreadMessageSummary>(
       `
       SELECT count(*), uid_from AS uid
@@ -117,7 +125,7 @@ export default class ChatModel extends DataModel {
       WHERE uid_to = $1 AND received IS NULL
       GROUP BY uid_from
       `,
-      [uid]
+      [this._uid]
     );
     return result.rows;
   }

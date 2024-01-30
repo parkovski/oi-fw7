@@ -30,14 +30,14 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
 
     msg.text = escapeHtml(msg.text);
 
-    const chat = new ChatModel(client);
+    const chat = new ChatModel(client, uid);
     // Make sure the recipient is an approved contact.
-    const contactKind = await chat.getContactKind(uid, msg.to);
+    const contactKind = await chat.getContactKind(msg.to);
     if (contactKind === null || contactKind === ContactKind.Requested) {
       return;
     }
 
-    const row = await chat.insertMessage(uid, msg.to, msg.text);
+    const row = await chat.insertMessage(msg.to, msg.text);
     clients.sendWs<MessageSentMessage>(uid, {
       m: 'message_sent',
       uuid: msg.uuid,
@@ -46,7 +46,7 @@ export async function chatListen(this: WebSocket, msg: ClientChatMessage) {
       text: row.message,
     });
 
-    const nameAndNotification = await chat.getNameAndChatNotification(uid);
+    const nameAndNotification = await chat.getNameAndChatNotification();
     const message: ServerChatMessage = {
       m: 'chat',
       id: row.id,
@@ -76,7 +76,7 @@ export async function chatMessageReceived(this: WebSocket, msg: MessageReceivedM
       validateNumeric(msg.id);
     }
 
-    new ChatModel(client).updateChatReceived(msg.id);
+    ChatModel.updateChatReceived(client, msg.id);
   } catch {
   } finally {
     client && client.release();
@@ -93,7 +93,7 @@ export async function getUserChat(req: Request, res: Response) {
     client = await getPool().connect();
 
     const myUid = await new SessionModel(client, session).getUserId();
-    const messages = await new ChatModel(client).getMessagesInitial(uid, myUid);
+    const messages = await new ChatModel(client, myUid).getMessagesInitial(uid);
     res.json(messages.reverse());
   } catch (e) {
     handleError(e, res, 400);
@@ -112,9 +112,9 @@ export async function getUserChatSummary(req: Request, res: Response) {
     client = await getPool().connect();
 
     const uid = await new SessionModel(client, session).getUserId();
-    const chat = new ChatModel(client);
-    const summary = await chat.getSummary(uid);
-    const unread = await chat.getUnreadMessageCount(uid);
+    const chat = new ChatModel(client, uid);
+    const summary = await chat.getSummary();
+    const unread = await chat.getUnreadMessageCount();
 
     const unreadMap = new Map<string, UnreadMessageSummary>();
     unread.forEach(row => unreadMap.set(row.uid, row));
